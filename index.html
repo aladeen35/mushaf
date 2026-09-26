@@ -219,6 +219,16 @@
         background: rgb(255 255 255 / 18%);
       }
 
+      .version-chip {
+        margin: 0;
+        padding: 4px 14px;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #0b3524;
+        background: var(--gold);
+        border-radius: 999px;
+      }
+
       .hero-note {
         margin: 6px 0 0;
         font-size: 12.5px;
@@ -399,6 +409,82 @@
         }
       }
 
+      /* ===== سجلّ النسخ ===== */
+
+      .changelog-block {
+        background: var(--surface-2);
+      }
+
+      .changelog {
+        list-style: none;
+        display: grid;
+        gap: 14px;
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 0;
+      }
+
+      .release {
+        position: relative;
+        padding: 18px 20px 18px 20px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+      }
+
+      .release.latest {
+        border-color: color-mix(in srgb, #d8b45a 60%, transparent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, #d8b45a 14%, transparent);
+      }
+
+      .release-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+      }
+
+      .release-ver {
+        font-family: var(--serif);
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--brand-700);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) .release-ver {
+          color: var(--gold);
+        }
+      }
+
+      .release-date {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .release-tag {
+        margin-inline-start: auto;
+        padding: 3px 11px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #0b3524;
+        background: var(--gold);
+        border-radius: 999px;
+      }
+
+      .release ul {
+        margin: 0;
+        padding-inline-start: 20px;
+        display: grid;
+        gap: 6px;
+      }
+
+      .release li {
+        font-size: 14px;
+        color: var(--muted);
+      }
+
       /* ===== التذييل ===== */
 
       footer.site {
@@ -447,10 +533,12 @@
           <span aria-hidden="true">❁</span>
         </p>
 
+        <p class="version-chip">النسخة ١٫٢٫١</p>
+
         <div class="cta">
-          <a class="btn btn-primary" href="./mushaf.apk" id="download">
+          <a class="btn btn-primary" href="./mushaf.apk" id="download" download="mushaf-1.2.1.apk">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
-            تنزيل التطبيق
+            تنزيل التطبيق ١٫٢٫١
           </a>
           <a class="btn btn-ghost" href="./app/">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h7v13H4z"/><path d="M13 5.5h7v13h-7z"/></svg>
@@ -590,11 +678,51 @@
         </p>
 
         <p style="text-align: center; margin-top: 26px">
-          <a class="btn btn-primary" href="./mushaf.apk">
+          <a class="btn btn-primary" href="./mushaf.apk" download="mushaf-1.2.1.apk">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
-            تنزيل التطبيق
+            تنزيل التطبيق ١٫٢٫١
           </a>
         </p>
+      </div>
+    </section>
+
+    <section class="block changelog-block">
+      <div class="wrap">
+        <h2 class="title">تتبّع النسخ</h2>
+        <p class="sub">ما جدّ في كل نسخة</p>
+
+        <ol class="changelog"><li class="release latest">
+            <div class="release-head">
+              <span class="release-ver">١٫٢٫١</span>
+              <time class="release-date" datetime="2026-09-26">٢٠٢٦‏/٠٩‏/٢٦</time>
+              <span class="release-tag">الأحدث</span>
+            </div>
+            <ul><li>زرّ إذن التنبيهات يُخبر بنتيجته دائماً، ويرشد إلى إعدادات الهاتف إن كان الجهاز رفض الإذن سابقاً</li><li>سطر «حالة التنبيهات» في الإعدادات يبيّن أمسموحة هي أم مرفوضة أم لم تُطلب بعد</li><li>رقم النسخة على صفحة التطبيق وعلى زرّ التنزيل وفي اسم الملف المحفوظ</li><li>سجلّ النسخ على صفحة التطبيق</li></ul>
+          </li>
+          <li class="release">
+            <div class="release-head">
+              <span class="release-ver">١٫٢٫٠</span>
+              <time class="release-date" datetime="2026-09-26">٢٠٢٦‏/٠٩‏/٢٦</time>
+              
+            </div>
+            <ul><li>تحديد المدينة والحيّ تلقائياً، مع بطاقة تتحقّق بها أنّ الموقع صحيح</li><li>أسماء الأماكن بالعربية، وإن تعذّرت الخدمة رجع التطبيق إلى أقرب مدينة والمواقيت تبقى صحيحة</li><li>رسائل أوضح عند تعذّر إذن التنبيهات، وبيانٌ لحالتها في الإعدادات</li><li>توفير في الجهاز: مواقيت اليوم تُجدوَل مرّةً بدل مرّتين في الدقيقة</li></ul>
+          </li>
+          <li class="release">
+            <div class="release-head">
+              <span class="release-ver">١٫١٫٠</span>
+              <time class="release-date" datetime="2026-09-26">٢٠٢٦‏/٠٩‏/٢٦</time>
+              
+            </div>
+            <ul><li>مواقيت الصلاة محسوبة في الجهاز، بإحدى عشرة طريقة حساب ومذهبَي العصر</li><li>الأذان بصوت الشيخ صديق أحمد حمدون، بشاشة أذان تملأ الشاشة عند دخول الوقت</li><li>الأذكار في ثمانية أقسام بعدّاد تكرار، وتنبيه لكل قسم في وقته</li><li>أحاديث من صحيحَي البخاري ومسلم في سبعة أبواب، معزوّة بأرقامها</li><li>آيات مختارة يُنتقل إلى موضعها في المصحف بضغطة</li><li>زرّ حفظ موضع القراءة يحتسب ما تقرؤه بصوتك دون تشغيل التلاوة</li><li>حجم التطبيق من ٥٢ إلى ٧ ميجابايت: خطوط الصفحات تُنزَّل عند أول تشغيل</li></ul>
+          </li>
+          <li class="release">
+            <div class="release-head">
+              <span class="release-ver">١٫٠٫٠</span>
+              <time class="release-date" datetime="2026-09-24">٢٠٢٦‏/٠٩‏/٢٤</time>
+              
+            </div>
+            <ul><li>المصحف بتخطيط مصحف المدينة: ١٥ سطراً لكل صفحة و٦٠٤ صفحات بخطوطها الرسمية</li><li>الاستماع مع تتبّع التلاوة كلمة بكلمة، وتقليب الصفحة تلقائياً</li><li>التفسير الميسر كاملاً، وبحث في نصّ المصحف، وفهرس ومفضلة وإحصائيات</li></ul>
+          </li></ol>
       </div>
     </section>
 
@@ -608,7 +736,7 @@
           نصّ المصحف وتخطيط الصفحات على رواية حفص عن عاصم بتخطيط مصحف المدينة
           النبوية.
         </p>
-        <p class="ver">المصحف الذكي — النسخة ١٫٢٫٠</p>
+        <p class="ver">المصحف الذكي — النسخة ١٫٢٫١</p>
       </div>
     </footer>
   </body>
