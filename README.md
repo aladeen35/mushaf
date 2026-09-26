@@ -4,7 +4,11 @@
 
 **قارئ القرآن الكريم بتخطيط مصحف المدينة النبوية — مع الاستماع والتتبّع المباشر كلمة بكلمة**
 
-### ⬇️ [تنزيل التطبيق لأندرويد](https://github.com/aladeen35/-/releases/latest/download/mushaf.apk)
+### ⬇️ [تنزيل التطبيق لأندرويد](https://github.com/aladeen35/mushaf/releases/latest/download/mushaf.apk)
+
+### 🌐 [افتح المصحف في المتصفّح](https://aladeen35.github.io/mushaf/app/)
+
+[صفحة التطبيق](https://aladeen35.github.io/mushaf/)
 
 </div>
 
