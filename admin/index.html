@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- لوحةٌ لا يُراد أن تجدها محرّكات البحث -->
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <title>لوحة بشرى</title>
+    <link rel="icon" href="../assets/logo.png" />
+    <style>
+      @font-face {
+        font-family: 'Tajawal';
+        src: url('../assets/tajawal-400.woff2') format('woff2');
+        font-weight: 400;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Tajawal';
+        src: url('../assets/tajawal-700.woff2') format('woff2');
+        font-weight: 700;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Amiri';
+        src: url('../assets/amiri-700.woff2') format('woff2');
+        font-weight: 700;
+        font-display: swap;
+      }
+
+      :root {
+        --brand: #0d4a2e;
+        --brand-700: #12613c;
+        --gold: #d8b45a;
+        --gold-ink: #7a5d24;
+        --paper: #f7f4ec;
+        --surface: #ffffff;
+        --text: #1d2a22;
+        --muted: #66736b;
+        --border: #e3ded0;
+        --danger: #a3372b;
+        --ok: #1d7a4a;
+        --tint: #eef5f0;
+        --tint-gold: #faf3e1;
+        color-scheme: light;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --paper: #0f1512;
+          --surface: #17201b;
+          --text: #e8ece8;
+          --muted: #9aa69f;
+          --border: #2a352f;
+          --tint: #1b2a22;
+          --tint-gold: #2a2415;
+          --gold-ink: #d8b45a;
+          --brand: #3aa06a;
+          --brand-700: #4db27b;
+          color-scheme: dark;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        font-family: 'Tajawal', system-ui, sans-serif;
+        color: var(--text);
+        background: var(--paper);
+        line-height: 1.6;
+      }
+
+      .wrap {
+        width: min(640px, 100%);
+        margin: 0 auto;
+        padding: 20px 16px 48px;
+      }
+
+      header.top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      header.top img {
+        width: 46px;
+        height: 46px;
+      }
+
+      header.top h1 {
+        margin: 0;
+        font-family: 'Amiri', serif;
+        font-size: 24px;
+      }
+
+      header.top p {
+        margin: 0;
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+
+      header.top .grow {
+        flex: 1;
+      }
+
+      .card {
+        margin-bottom: 14px;
+        padding: 18px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+      }
+
+      .card h2 {
+        margin: 0 0 12px;
+        font-size: 16px;
+      }
+
+      label.field {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      label.field small {
+        font-weight: 400;
+        color: var(--muted);
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 11px 13px;
+        font: inherit;
+        font-size: 15px;
+        color: var(--text);
+        background: var(--paper);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+
+      input:focus-visible,
+      textarea:focus-visible,
+      button:focus-visible {
+        outline: 2px solid var(--brand);
+        outline-offset: 2px;
+      }
+
+      textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
+
+      .kinds {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        padding: 4px;
+        margin-bottom: 12px;
+        background: var(--paper);
+        border: 1px solid var(--border);
+        border-radius: 13px;
+      }
+
+      .kinds button {
+        min-height: 40px;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+        background: none;
+        border: 0;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+
+      .kinds button[aria-pressed='true'] {
+        color: #fff;
+        background: var(--brand);
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      button.btn {
+        min-height: 44px;
+        padding: 10px 18px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+        background: var(--brand);
+        border: 0;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+
+      button.btn.ghost {
+        color: var(--text);
+        background: var(--surface);
+        border: 1px solid var(--border);
+      }
+
+      button.btn.danger {
+        color: var(--danger);
+        background: none;
+        border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+      }
+
+      button.btn:disabled {
+        opacity: 0.55;
+        cursor: default;
+      }
+
+      .note {
+        margin: 10px 0 0;
+        font-size: 13px;
+      }
+
+      .note.error {
+        color: var(--danger);
+      }
+
+      .note.ok {
+        color: var(--ok);
+      }
+
+      /* المعاينة كما تظهر الرسالة في التطبيق */
+      .preview {
+        margin: 4px 0 14px;
+        padding: 14px;
+        background: var(--tint);
+        border: 1px dashed var(--border);
+        border-radius: 14px;
+      }
+
+      .preview .tag,
+      .item .tag {
+        display: inline-block;
+        margin-bottom: 4px;
+        padding: 1px 9px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--gold-ink);
+        background: var(--tint-gold);
+        border-radius: 999px;
+      }
+
+      .preview h3,
+      .item h3 {
+        margin: 0;
+        font-size: 15px;
+      }
+
+      .preview p,
+      .item p {
+        margin: 4px 0 0;
+        font-size: 13.5px;
+        white-space: pre-wrap;
+        color: var(--muted);
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: start;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+      }
+
+      .item time {
+        display: block;
+        margin-top: 6px;
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+
+      .stat {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--brand);
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      code {
+        direction: ltr;
+        unicode-bidi: embed;
+        padding: 1px 6px;
+        font-size: 12.5px;
+        background: var(--paper);
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <img src="../assets/logo.png" alt="" width="46" height="46" />
+        <div class="grow">
+          <h1>لوحة بشرى</h1>
+          <p>رسائل التطبيق وتنبيهاته</p>
+        </div>
+        <button class="btn ghost" id="logout" hidden>خروج</button>
+      </header>
+
+      <!-- الخادم لم يُنشر بعد -->
+      <section class="card" id="no-server" hidden>
+        <h2>الخادم غير منشور بعد</h2>
+        <p class="muted">
+          اللوحة تكتب رسائلها في خادم «بشرى» الصغير. انشره بحسابك في Cloudflare (مجّاني)
+          بالخطوات المكتوبة في <code>worker/README.md</code>، ثمّ أعد بناء الموقع بعنوانه
+          فتعمل اللوحة.
+        </p>
+      </section>
+
+      <!-- الدخول -->
+      <section class="card" id="login" hidden>
+        <h2>تسجيل الدخول</h2>
+        <form id="login-form">
+          <label class="field">
+            كلمة المرور
+            <input id="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="btn" type="submit" id="login-go">دخول</button>
+          <p class="note error" id="login-error" role="alert" hidden></p>
+        </form>
+      </section>
+
+      <!-- اللوحة -->
+      <div id="panel" hidden>
+        <section class="card">
+          <h2>رسالة جديدة</h2>
+          <div class="kinds" role="group" aria-label="نوع الرسالة">
+            <button type="button" data-kind="dua" aria-pressed="true">دعاء للوالد</button>
+            <button type="button" data-kind="update" aria-pressed="false">تحديث قادم</button>
+            <button type="button" data-kind="notice" aria-pressed="false">إعلان</button>
+          </div>
+          <form id="compose">
+            <label class="field">
+              العنوان
+              <input id="title" maxlength="80" required />
+            </label>
+            <label class="field">
+              النصّ
+              <textarea id="body" maxlength="600" required></textarea>
+            </label>
+            <label class="field">
+              رابط <small>اختياري — يبدأ بـ https://</small>
+              <input id="link" type="url" inputmode="url" dir="ltr" placeholder="https://" />
+            </label>
+            <label class="field">
+              تبقى حتى <small>اختياري — بعده تختفي من التطبيق</small>
+              <input id="until" type="date" />
+            </label>
+
+            <div class="preview" aria-live="polite">
+              <span class="tag" id="preview-tag">دعاء</span>
+              <h3 id="preview-title">—</h3>
+              <p id="preview-body"></p>
+            </div>
+
+            <div class="row">
+              <button class="btn" type="submit" id="send">أرسل إلى التطبيق</button>
+            </div>
+            <p class="note" id="send-note" role="status" hidden></p>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>الرسائل المنشورة</h2>
+          <ul class="list" id="messages"></ul>
+          <p class="muted" id="messages-empty" hidden>لا رسائل بعد.</p>
+        </section>
+
+        <section class="card">
+          <h2>التنزيلات</h2>
+          <div class="stat" id="downloads">—</div>
+          <p class="muted">مرّةً نُزّل فيها التطبيق من صفحة الهبوط</p>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      /*
+       * اللوحة صفحةٌ ساكنة، وكل ما تكتبه يمرّ بخادم «بشرى» بعد الدخول.
+       * كلمة المرور لا تُحفظ: تُرسل مرّةً فيُردّ عليها بجلسةٍ موقّعة تنتهي
+       * بعد اثنتي عشرة ساعة، وتُحفظ الجلسة في هذا التبويب وحده.
+       */
+      ;(function () {
+        var API = 'https://bushra-sync.aladeen35.workers.dev'.replace(/\/$/, '')
+        var TOKEN_KEY = 'bushra.admin'
+
+        var PRESETS = {
+          dua: {
+            tag: 'دعاء',
+            title: 'ادعُ لوالدي بالرحمة',
+            body: 'هذا التطبيق صدقةٌ جارية عن الوالد أ. البشري محمد الحسن. اللهم اغفر له وارحمه، وعافه واعفُ عنه، وأكرم نُزله، ووسّع مدخله، واجعل قبره روضةً من رياض الجنة.',
+          },
+          update: {
+            tag: 'تحديث',
+            title: 'تحديثٌ قادم',
+            body: '',
+          },
+          notice: {
+            tag: 'إعلان',
+            title: '',
+            body: '',
+          },
+        }
+
+        var $ = function (id) {
+          return document.getElementById(id)
+        }
+        var kind = 'dua'
+
+        function arabic(n) {
+          return String(n).replace(/[0-9]/g, function (d) {
+            return '٠١٢٣٤٥٦٧٨٩'[Number(d)]
+          })
+        }
+
+        function token() {
+          try {
+            var raw = sessionStorage.getItem(TOKEN_KEY)
+            if (!raw) return null
+            var saved = JSON.parse(raw)
+            return saved.expires > Date.now() ? saved.token : null
+          } catch (e) {
+            return null
+          }
+        }
+
+        function show(view) {
+          $('no-server').hidden = view !== 'no-server'
+          $('login').hidden = view !== 'login'
+          $('panel').hidden = view !== 'panel'
+          $('logout').hidden = view !== 'panel'
+        }
+
+        function api(method, path, body) {
+          var headers = { 'content-type': 'application/json' }
+          var t = token()
+          if (t) headers.authorization = 'Bearer ' + t
+          return fetch(API + path, {
+            method: method,
+            headers: headers,
+            body: body ? JSON.stringify(body) : undefined,
+            credentials: 'omit',
+          }).then(function (response) {
+            return response
+              .json()
+              .catch(function () {
+                return {}
+              })
+              .then(function (data) {
+                if (response.status === 401 && path !== '/admin/login') {
+                  // انتهت الجلسة: نعود إلى الدخول
+                  sessionStorage.removeItem(TOKEN_KEY)
+                  show('login')
+                }
+                if (!response.ok) throw new Error(data.error || 'تعذّر الاتصال بالخادم')
+                return data
+              })
+          })
+        }
+
+        // ---------- المعاينة ----------
+        function preview() {
+          $('preview-tag').textContent = PRESETS[kind].tag
+          $('preview-title').textContent = $('title').value.trim() || '—'
+          $('preview-body').textContent = $('body').value.trim()
+        }
+
+        function choose(next) {
+          kind = next
+          var buttons = document.querySelectorAll('.kinds button')
+          for (var i = 0; i < buttons.length; i += 1) {
+            buttons[i].setAttribute('aria-pressed', String(buttons[i].dataset.kind === next))
+          }
+          var preset = PRESETS[next]
+          $('title').value = preset.title
+          $('body').value = preset.body
+          preview()
+          $('title').focus()
+        }
+
+        // ---------- الرسائل ----------
+        var KIND_TAG = { dua: 'دعاء', update: 'تحديث', notice: 'إعلان' }
+
+        function when(ms) {
+          try {
+            return new Intl.DateTimeFormat('ar', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ms))
+          } catch (e) {
+            return new Date(ms).toLocaleString()
+          }
+        }
+
+        function render(messages) {
+          var list = $('messages')
+          list.textContent = ''
+          $('messages-empty').hidden = messages.length > 0
+          messages.forEach(function (message) {
+            var item = document.createElement('li')
+            item.className = 'item'
+            item.dataset.id = String(message.id)
+
+            var text = document.createElement('div')
+            var tag = document.createElement('span')
+            tag.className = 'tag'
+            tag.textContent = KIND_TAG[message.kind] || 'إعلان'
+            var title = document.createElement('h3')
+            title.textContent = message.title
+            var body = document.createElement('p')
+            body.textContent = message.body
+            var stamp = document.createElement('time')
+            stamp.textContent =
+              when(message.at) +
+              (message.until
+                ? message.until < Date.now()
+                  ? ' • انقضت مدّتها'
+                  : ' • حتى ' + when(message.until)
+                : '')
+            text.appendChild(tag)
+            text.appendChild(title)
+            text.appendChild(body)
+            text.appendChild(stamp)
+
+            var remove = document.createElement('button')
+            remove.className = 'btn danger'
+            remove.type = 'button'
+            remove.textContent = 'حذف'
+            remove.addEventListener('click', function () {
+              if (!confirm('تُحذف الرسالة من التطبيق عند كل من لم يقرأها بعد. أتحذفها؟')) return
+              remove.disabled = true
+              api('DELETE', '/admin/messages/' + message.id)
+                .then(load)
+                .catch(function (error) {
+                  remove.disabled = false
+                  alert(error.message)
+                })
+            })
+
+            item.appendChild(text)
+            item.appendChild(remove)
+            list.appendChild(item)
+          })
+        }
+
+        function load() {
+          return Promise.all([
+            api('GET', '/admin/messages').then(function (data) {
+              render(data.messages || [])
+            }),
+            fetch(API + '/stats')
+              .then(function (response) {
+                return response.json()
+              })
+              .then(function (data) {
+                $('downloads').textContent = arabic(Number(data.total) || 0)
+              })
+              .catch(function () {}),
+          ])
+        }
+
+        // ---------- الأحداث ----------
+        $('login-form').addEventListener('submit', function (event) {
+          event.preventDefault()
+          var go = $('login-go')
+          var error = $('login-error')
+          go.disabled = true
+          error.hidden = true
+          api('POST', '/admin/login', { password: $('password').value })
+            .then(function (data) {
+              sessionStorage.setItem(TOKEN_KEY, JSON.stringify({ token: data.token, expires: data.expires }))
+              $('password').value = ''
+              show('panel')
+              choose('dua')
+              return load()
+            })
+            .catch(function (e) {
+              error.textContent = e.message
+              error.hidden = false
+            })
+            .then(function () {
+              go.disabled = false
+            })
+        })
+
+        $('logout').addEventListener('click', function () {
+          sessionStorage.removeItem(TOKEN_KEY)
+          show('login')
+        })
+
+        var kindButtons = document.querySelectorAll('.kinds button')
+        for (var i = 0; i < kindButtons.length; i += 1) {
+          kindButtons[i].addEventListener('click', function (event) {
+            choose(event.currentTarget.dataset.kind)
+          })
+        }
+        $('title').addEventListener('input', preview)
+        $('body').addEventListener('input', preview)
+
+        $('compose').addEventListener('submit', function (event) {
+          event.preventDefault()
+          var send = $('send')
+          var note = $('send-note')
+          var until = $('until').value ? new Date($('until').value + 'T23:59:59').getTime() : null
+          send.disabled = true
+          note.hidden = true
+          api('POST', '/admin/messages', {
+            kind: kind,
+            title: $('title').value,
+            body: $('body').value,
+            link: $('link').value.trim(),
+            until: until,
+          })
+            .then(function () {
+              note.className = 'note ok'
+              note.textContent = 'أُرسلت — تصل المستخدمين حين يفتحون التطبيق، وفي خلفيته خلال ساعات.'
+              note.hidden = false
+              $('link').value = ''
+              $('until').value = ''
+              return load()
+            })
+            .catch(function (e) {
+              note.className = 'note error'
+              note.textContent = e.message
+              note.hidden = false
+            })
+            .then(function () {
+              send.disabled = false
+            })
+        })
+
+        // ---------- البداية ----------
+        if (!API || API.indexOf('http') !== 0) {
+          show('no-server')
+          return
+        }
+        if (token()) {
+          show('panel')
+          choose('dua')
+          load().catch(function () {})
+        } else {
+          show('login')
+        }
+      })()
+    </script>
+  </body>
+</html>
