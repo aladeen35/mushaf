@@ -140,9 +140,21 @@
         text-align: center;
       }
 
+      /* الشعار كاملاً باسمه، فلا يُكتب الاسم تحته مرّةً أخرى */
       .hero img.mark {
-        width: 132px;
-        height: 132px;
+        width: min(232px, 62vw);
+        height: auto;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
       }
 
       .hero h1 {
@@ -564,8 +576,14 @@
   <body>
     <header class="hero">
       <div class="wrap hero-inner">
-        <img class="mark" src="./assets/logo.png" alt="شعار بشرى" width="132" height="132" />
-        <h1>بُشرى</h1>
+        <img
+          class="mark"
+          src="./assets/logo-wordmark.png"
+          alt="شعار بشرى — قرآن وحديث ورقية وأذان"
+          width="886"
+          height="892"
+        />
+        <h1 class="sr-only">بُشرى</h1>
         <p class="pillars">قرآن • حديث • رقية • أذان</p>
         <p class="tagline">
           المصحف بتخطيط المدينة مع الاستماع والتتبّع كلمة بكلمة، ومواقيت الصلاة
@@ -578,13 +596,13 @@
           <span aria-hidden="true">❁</span>
         </p>
 
-        <p class="version-chip">النسخة ٢٫١٫٠</p>
+        <p class="version-chip">النسخة ٢٫٢٫٠</p>
 
         <div class="chips">
           <!-- عدد التحديثات وتاريخ آخرها، يُملآن من سجلّ النسخ عند البناء -->
           <p class="updates">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
-            <a href="#changelog">٨ تحديثات • آخرها ٢٨ سبتمبر ٢٠٢٦</a>
+            <a href="#changelog">٩ تحديثات • آخرها ٢٨ سبتمبر ٢٠٢٦</a>
           </p>
 
           <!-- عدد التنزيلات، يُجلب من خادم العدّاد إن نُشر -->
@@ -595,9 +613,9 @@
         </div>
 
         <div class="cta">
-          <a class="btn btn-primary" href="./mushaf.apk" id="download" download="mushaf-2.1.0.apk">
+          <a class="btn btn-primary" href="./mushaf.apk" id="download" download="mushaf-2.2.0.apk">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
-            تنزيل التطبيق ٢٫١٫٠
+            تنزيل التطبيق ٢٫٢٫٠
           </a>
           <a class="btn btn-ghost" href="./app/">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h7v13H4z"/><path d="M13 5.5h7v13h-7z"/></svg>
@@ -605,7 +623,7 @@
           </a>
         </div>
 
-        <p class="hero-note">أندرويد ٧ فأعلى • نحو ١٠ ميجابايت • بلا إعلانات ولا حسابات</p>
+        <p class="hero-note">أندرويد ٧ فأعلى • نحو ٩ ميجابايت • بلا إعلانات ولا حسابات</p>
       </div>
     </header>
 
@@ -640,6 +658,10 @@
             <span>التفسير في الشريط الجانبي</span>
           </figure>
           <figure class="shot">
+            <img src="./assets/shots/12-fullscreen.jpg" alt="المصحف وحده يملأ الشاشة بلا أشرطة" loading="lazy" />
+            <span>ملء الشاشة: المصحف وحده</span>
+          </figure>
+          <figure class="shot">
             <img src="./assets/shots/11-continuous.jpg" alt="المصحف شريطاً متّصلاً بلا فواصل صفحات" loading="lazy" />
             <span>التصفّح المتتابع بلا فواصل</span>
           </figure>
@@ -652,7 +674,7 @@
             <span>خطّة الختمة وورد اليوم</span>
           </figure>
           <figure class="shot">
-            <img src="./assets/shots/10-memo.jpg" alt="وضع الحفظ وقد سُتر ثلث كلمات الصفحة" loading="lazy" />
+            <img src="./assets/shots/10-memo.jpg" alt="وضع الحفظ وقد سُتر ما عدا مطالع الآيات" loading="lazy" />
             <span>وضع الحفظ بالستر المتدرّج</span>
           </figure>
           <figure class="shot">
@@ -761,9 +783,9 @@
         </p>
 
         <p style="text-align: center; margin-top: 26px">
-          <a class="btn btn-primary" href="./mushaf.apk" download="mushaf-2.1.0.apk">
+          <a class="btn btn-primary" href="./mushaf.apk" download="mushaf-2.2.0.apk">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
-            تنزيل التطبيق ٢٫١٫٠
+            تنزيل التطبيق ٢٫٢٫٠
           </a>
         </p>
       </div>
@@ -776,9 +798,17 @@
 
         <ol class="changelog"><li class="release latest">
             <div class="release-head">
-              <span class="release-ver">٢٫١٫٠</span>
+              <span class="release-ver">٢٫٢٫٠</span>
               <time class="release-date" datetime="2026-09-28">٢٠٢٦‏/٠٩‏/٢٨</time>
               <span class="release-tag">الأحدث</span>
+            </div>
+            <ul><li>زرّ «ملء الشاشة»: لا يبقى إلا المصحف — تنزلق الأشرطة كلّها فتتّسع الصفحة نحو الثلثين، وزرٌّ صغير أسفل الشاشة يردّها، ويردّها زرّ الرجوع في الجهاز ولمسةٌ على الصفحة</li><li>الأشرطة تنزلق وحدها مع بدء التلاوة فلا تحجب المصحف، وتعود بلمسة — وكانت تحجب أعلى الصفحة وأسفلها</li><li>وضع الحفظ صار يعمل في الهيئات الثلاث — المصحف والمطالعة والتصفّح المتتابع — وكان في تخطيط الصفحة وحده</li><li>واختيار ما يُستر: ثلث الكلمات، أو ثلثاها، أو ما عدا مطالع الآيات، أو الصفحة كلّها</li><li>صفحة الإعدادات: العنوان ووصفه في سطرٍ كامل والخيارات تحته موزّعة على العرض — وكان الوصف ينحصر في عمودٍ ضيّق فتتكدّس كلماته كلمةً في كل سطر</li><li>الشعار أُعيد قصّه من أصله فلم يعد مبتوراً، وصار يظهر كاملاً باسم «بشرى» في صدر صفحة الهبوط وفي بطاقة الآية</li></ul>
+          </li>
+          <li class="release">
+            <div class="release-head">
+              <span class="release-ver">٢٫١٫٠</span>
+              <time class="release-date" datetime="2026-09-28">٢٠٢٦‏/٠٩‏/٢٨</time>
+              
             </div>
             <ul><li>التطبيق صار اسمه «بشرى» بشعاره الجديد: قرآن وحديث ورقية وأذان</li><li>الرقية الشرعية في سبعة أبواب: الرقية العامة، والمرض والشفاء، والعين والحسد، والسحر، والأطفال، والمنزل، والحفظ اليومي — بآياتها وأدعيتها النبوية معزوّة، وتُسمع بصوت القارئ الذي تختاره، وبتذكير يوميّ</li><li>الأذان يرفع شاشته والتطبيق مغلق: منبّه أصليّ يخترق وضع الغفوة، وإشعارٌ يؤذّن بالصوت كاملاً وضغطةٌ واحدة تفتح الشاشة</li><li>شاشة أذونات في أول تشغيل تشرح ما يُطلب ولمَ يُطلب، وكلّها اختيارية</li><li>هيئة ثالثة للقراءة: المصحف شريطاً متّصلاً بلا فواصل صفحات، والسطر الجاري يبقى ثانياً من أعلى الشاشة أثناء التلاوة</li><li>خطّة ختمة: تختار مدّتها فيأتيك ورد كل يوم، ويتقدّم بقراءتك، ويذكّرك</li><li>وضع الحفظ: ستر ثلث الكلمات أو ثلثيها أو الصفحة كلّها، والضغط يكشف الكلمة</li><li>اتّجاه القبلة ببوصلة تُحسب في جهازك</li><li>مشاركة الآية بطاقةً مصوّرة فيها تفسيرها وشعار التطبيق</li><li>البحث صار يشمل الأذكار والأحاديث والرقية مع نصّ المصحف</li><li>نسخة من بياناتك في ملفّ تحفظه وتستعيده، ومزامنة برمز بلا حساب ولا بريد</li><li>«إسكات» في شاشة الأذان صارت «إخفاء»</li><li>إصلاح: صفحة المصحف كانت تنهار وتختفي إذا ظهر شريطٌ جديد فوقها</li><li>إصلاح: سطور التصفّح المتتابع كانت تفيض عن حافّتَي العمود في الشاشات الضيّقة فيضيع أوّل الكلام وآخره</li></ul>
           </li>
@@ -851,7 +881,7 @@
           نصّ المصحف وتخطيط الصفحات على رواية حفص عن عاصم بتخطيط مصحف المدينة
           النبوية.
         </p>
-        <p class="ver">بشرى — النسخة ٢٫١٫٠</p>
+        <p class="ver">بشرى — النسخة ٢٫٢٫٠</p>
       </div>
     </footer>
     <script>
