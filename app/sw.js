@@ -3,7 +3,7 @@
  * ليعمل المصحف كاملاً دون إنترنت بعد أول زيارة.
  * ملفات التلاوة لا تُخزَّن — حجمها كبير وتُبثّ من الشبكة.
  */
-const VERSION = 'mushaf-v9'
+const VERSION = 'mushaf-v10'
 const SHELL = `${VERSION}-shell`
 const DATA = `${VERSION}-data`
 const FONTS = `${VERSION}-fonts`
@@ -29,6 +29,8 @@ const CORE_DATA = [
   './data/timings/ayah-shape.json',
   './data/adhkar.json',
   './data/hadith.json',
+  './data/asma.json',
+  './data/verses.json',
   './data/cities.json',
 ]
 
