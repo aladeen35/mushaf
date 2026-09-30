@@ -332,6 +332,86 @@
         scrollbar-color: var(--border) transparent;
       }
 
+      /*
+       * لقطات المتجر لوحةٌ واحدة مقطوعة: تُصفّ متلاصقةً بلا فراغ فيمتدّ
+       * الإفريز والشريط والفوانيس من لقطةٍ إلى التي تليها كما في المتجر.
+       * وترتيبها من اليسار كما يعرضها المتجر.
+       */
+      .shots.store {
+        gap: 0;
+        direction: ltr;
+        padding-block: 8px 22px;
+      }
+
+      .shots.store img {
+        flex: 0 0 auto;
+        width: min(270px, 68vw);
+        height: auto;
+        scroll-snap-align: center;
+        box-shadow: 0 22px 44px -26px rgb(7 45 28 / 70%);
+      }
+
+      .shots.store img:first-child {
+        border-radius: 22px 0 0 22px;
+      }
+
+      .shots.store img:last-child {
+        border-radius: 0 22px 22px 0;
+      }
+
+      /* زرّ Google Play: أسود كشارات المتجر، و«قريباً» حتى يُنشر فيه */
+      .btn-play {
+        position: relative;
+        gap: 10px;
+        padding-inline: 22px 26px;
+        font-family: var(--sans, inherit);
+        color: #fff;
+        background: #111;
+        border-color: rgb(255 255 255 / 28%);
+      }
+
+      .play-text {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
+        line-height: 1.1;
+      }
+
+      .play-text small {
+        font-family: var(--serif);
+        font-size: 12px;
+        font-weight: 700;
+        color: rgb(255 255 255 / 78%);
+      }
+
+      .play-text b {
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        direction: ltr;
+      }
+
+      .btn-play.soon {
+        cursor: default;
+        opacity: 0.92;
+      }
+
+      .soon-tag {
+        position: absolute;
+        top: -10px;
+        inset-inline-start: -6px;
+        padding: 2px 10px;
+        font-family: var(--serif);
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #0b3524;
+        background: var(--gold);
+        border-radius: 999px;
+        box-shadow: 0 4px 10px rgb(0 0 0 / 25%);
+      }
+
       .shots-hint {
         margin: -6px 0 0;
         font-size: 12px;
@@ -617,6 +697,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
             تنزيل التطبيق ٢٫٦٫٠
           </a>
+          <span class="btn btn-play soon" aria-disabled="true" title="قريباً على Google Play"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 3.2 13.6 12l-9.1 8.8a1.4 1.4 0 0 1-.6-1.2V4.4c0-.5.2-.9.6-1.2Z" fill="#34d399"/><path d="m16.7 8.9-3.1 3.1-9.1-8.8c.4-.3 1-.3 1.5 0l10.7 5.7Z" fill="#60a5fa"/><path d="m16.7 15.1-10.7 5.7c-.5.3-1.1.3-1.5 0l9.1-8.8 3.1 3.1Z" fill="#f87171"/><path d="M20.3 10.8c.9.5.9 1.9 0 2.4l-3.6 1.9-3.1-3.1 3.1-3.1 3.6 1.9Z" fill="#fbbf24"/></svg><span class="play-text"><small>تجده على</small><b>Google Play</b></span><span class="soon-tag">قريباً</span></span>
           <a class="btn btn-ghost" href="./app/">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h7v13H4z"/><path d="M13 5.5h7v13h-7z"/></svg>
             افتحه في المتصفّح
@@ -630,63 +711,20 @@
     <section class="block">
       <div class="wrap">
         <h2 class="title">من داخل التطبيق</h2>
-        <p class="sub">لقطات حقيقية من النسخة الحالية</p>
+        <p class="sub">من التطبيق نفسه، كما في متجر Google Play</p>
 
-        <div class="shots">
-          <figure class="shot">
-            <img src="./assets/shots/0-home.jpg" alt="الصفحة الرئيسية للتطبيق" loading="lazy" />
-            <span>الرئيسية: صلاتك وقراءتك ووردك</span>
-          </figure>
-          <figure class="shot">
-            <img src="./assets/shots/1-mushaf.jpg" alt="صفحة المصحف بتخطيط مصحف المدينة" loading="lazy" />
-            <span>المصحف بتخطيطه المطبوع</span>
-          </figure>
-          <figure class="shot">
-            <img src="./assets/shots/2-prayer.jpg" alt="بطاقة مواقيت الصلاة" loading="lazy" />
-            <span>صفحة الصلاة</span>
-          </figure>
-          <figure class="shot">
-            <img src="./assets/shots/5-adhan.jpg" alt="شاشة الأذان" loading="lazy" />
-            <span>شاشة الأذان</span>
-          </figure>
-          <figure class="shot">
-            <img src="./assets/shots/3-adhkar.jpg" alt="صفحة الأذكار" loading="lazy" />
-            <span>الأذكار والأحاديث</span>
-          </figure>
-          <figure class="shot">
-            <img src="./assets/shots/4-tafsir.jpg" alt="التفسير الميسر في شريط المصحف الجانبي" loading="lazy" />
-            <span>التفسير في الشريط الجانبي</span>
-          </figure>
-          <figure class="shot">
-            <img src="./assets/shots/12-fullscreen.jpg" alt="المصحف وحده يملأ الشاشة بلا أشرطة" loading="lazy" />
-            <span>ملء الشاشة: المصحف وحده</span>
-          </figure>
-          <figure class="shot">
-            <img src="./assets/shots/11-continuous.jpg" alt="المصحف شريطاً متّصلاً بلا فواصل صفحات" loading="lazy" />
-            <span>التصفّح المتتابع بلا فواصل</span>
-          </figure>
-          <figure class="shot">
-            <img src="./assets/shots/7-ruqyah.jpg" alt="الرقية الشرعية بآياتها وأدعيتها" loading="lazy" />
-            <span>الرقية الشرعية</span>
-          </figure>
-          <figure class="shot">
-            <img src="./assets/shots/8-khatmah.jpg" alt="خطّة الختمة وورد اليوم" loading="lazy" />
-            <span>خطّة الختمة وورد اليوم</span>
-          </figure>
-          <figure class="shot">
-            <img src="./assets/shots/10-memo.jpg" alt="وضع الحفظ وقد سُتر ما عدا مطالع الآيات" loading="lazy" />
-            <span>وضع الحفظ بالستر المتدرّج</span>
-          </figure>
-          <figure class="shot">
-            <img src="./assets/shots/9-qibla.jpg" alt="بوصلة اتّجاه القبلة" loading="lazy" />
-            <span>اتّجاه القبلة</span>
-          </figure>
-          <figure class="shot">
-            <img src="./assets/shots/6-dark.jpg" alt="المصحف في الوضع الليلي" loading="lazy" />
-            <span>الوضع الليلي</span>
-          </figure>
+        <!-- لقطات متجر Google Play نفسها بترتيبها، تُملأ عند البناء من google-play/screenshots -->
+        <div class="shots store">
+          <img src="./assets/store/01.jpg" alt="بشرى — قرآن • حديث • رقية • أذان: مصحف المدينة، والأذان، والأذكار… في تطبيقٍ واحد" width="720" height="1280" loading="eager" />
+          <img src="./assets/store/02.jpg" alt="المسبحة الإلكترونية: حبّاتٌ تنزلق مع كلّ تسبيحة، وتعدّ بزرّ الصوت" width="720" height="1280" loading="eager" />
+          <img src="./assets/store/03.jpg" alt="أسماء الله الحسنى: بمعانيها وأدلّتها، وتُشارك صورةً" width="720" height="1280" loading="lazy" />
+          <img src="./assets/store/04.jpg" alt="مواقيت الصلاة والأذان: يؤذّن في وقته والتطبيق مغلق" width="720" height="1280" loading="lazy" />
+          <img src="./assets/store/05.jpg" alt="رئيسيةٌ تجمع يومك: صلاتك، وموضع قراءتك، ومناسباتك" width="720" height="1280" loading="lazy" />
+          <img src="./assets/store/06.jpg" alt="جمعة مباركة: سورة الكهف والصلاة على النبيّ ﷺ" width="720" height="1280" loading="lazy" />
+          <img src="./assets/store/07.jpg" alt="ودجتاتٌ على شاشتك: الصلاة، والمسبحة، وآية اليوم، والتاريخ، والختمة" width="720" height="1280" loading="lazy" />
+          <img src="./assets/store/08.jpg" alt="الرقية والأذكار: بآياتها وأدعيتها، تُسمع في الخلفية" width="720" height="1280" loading="lazy" />
         </div>
-        <p class="shots-hint">اسحب لاستعراض بقيّة اللقطات ←</p>
+        <p class="shots-hint">اسحب لاستعراض اللقطات — متّصلةٌ كما في المتجر</p>
       </div>
     </section>
 
@@ -804,11 +842,12 @@
           والقراءة فوراً بخطّ أميري قرآن المضمَّن.
         </p>
 
-        <p style="text-align: center; margin-top: 26px">
+        <p class="cta" style="margin-top: 26px">
           <a class="btn btn-primary" href="https://bushra-sync.aladeen35.workers.dev/dl?v=2.6.0" download="mushaf-2.6.0.apk">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
             تنزيل التطبيق ٢٫٦٫٠
           </a>
+          <span class="btn btn-play soon" aria-disabled="true" title="قريباً على Google Play"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 3.2 13.6 12l-9.1 8.8a1.4 1.4 0 0 1-.6-1.2V4.4c0-.5.2-.9.6-1.2Z" fill="#34d399"/><path d="m16.7 8.9-3.1 3.1-9.1-8.8c.4-.3 1-.3 1.5 0l10.7 5.7Z" fill="#60a5fa"/><path d="m16.7 15.1-10.7 5.7c-.5.3-1.1.3-1.5 0l9.1-8.8 3.1 3.1Z" fill="#f87171"/><path d="M20.3 10.8c.9.5.9 1.9 0 2.4l-3.6 1.9-3.1-3.1 3.1-3.1 3.6 1.9Z" fill="#fbbf24"/></svg><span class="play-text"><small>تجده على</small><b>Google Play</b></span><span class="soon-tag">قريباً</span></span>
         </p>
       </div>
     </section>
