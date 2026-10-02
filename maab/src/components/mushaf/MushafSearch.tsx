@@ -3,9 +3,28 @@
 import { Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { IS_LIVE } from '@/lib/api';
+import { asset } from '@/lib/base';
 import { SURAHS } from '@/lib/quran';
+import { searchKey } from '@/lib/quran/search';
 
 type Hit = { surah: number; ayah: number; page: number; text: string };
+type Row = [number, number, number, string, string];
+
+// النسخة الثابتة بلا خادم: يُنزَّل فهرس الآيات مرة (نحو 500 كيلوبايت مضغوطاً)
+// ويُبحث فيه بالمتصفح بالمفتاح نفسه الذي يستعمله الخادم
+let index: Promise<Row[]> | undefined;
+const loadIndex = () => (index ??= fetch(asset('/data/ayahs.json')).then((r) => r.json()));
+
+async function searchLocally(term: string): Promise<Hit[]> {
+  const key = searchKey(term);
+  const out: Hit[] = [];
+  for (const [surah, ayah, page, text, k] of await loadIndex()) {
+    if (k.includes(key)) out.push({ surah, ayah, page, text });
+    if (out.length >= 40) break;
+  }
+  return out;
+}
 
 /** بحث بالاسم أو رقم الصفحة أو بكلمة من الآيات (يتجاهل التشكيل) */
 export function MushafSearch({ base }: { base: string }) {
@@ -25,6 +44,11 @@ export function MushafSearch({ base }: { base: string }) {
     const t = setTimeout(async () => {
       setLoading(true);
       try {
+        if (!IS_LIVE) {
+          const found = await searchLocally(term);
+          if (!ctrl.signal.aborted) setHits(found);
+          return;
+        }
         const res = await fetch(`/api/v1/quran/search?q=${encodeURIComponent(term)}`, { signal: ctrl.signal });
         const json = await res.json();
         setHits(res.ok ? json.data : []);

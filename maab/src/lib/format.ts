@@ -1,29 +1,60 @@
-// كل الأوقات تُخزَّن UTC وتُعرض بتوقيت الرياض (القسم 7)، بأرقام غربية
-// كما في الواجهات المرجعية، والتاريخ ميلادي مع الهجري حيث يلزم.
+// كل الأوقات تُخزَّن UTC وتُعرض بتوقيت المستخدم نفسه (القسم 7): ولي الأمر في
+// الخرطوم يرى توقيت الخرطوم، وفي لندن توقيت لندن. التوقيت يُضبط مرة لكل طلب
+// من طبقة البيانات، والافتراضي الرياض (توقيت نسخة العرض). الأرقام غربية كما
+// في الواجهات المرجعية، والتاريخ ميلادي مع الهجري حيث يلزم.
+import { cache } from 'react';
 
 export const TZ = 'Asia/Riyadh';
 const LOCALE = 'ar-SA-u-nu-latn-ca-gregory';
 
-const time = new Intl.DateTimeFormat(LOCALE, { timeZone: TZ, hour: 'numeric', minute: '2-digit' });
-const weekday = new Intl.DateTimeFormat(LOCALE, { timeZone: TZ, weekday: 'long' });
-const dayMonth = new Intl.DateTimeFormat(LOCALE, { timeZone: TZ, day: 'numeric', month: 'long' });
-const fullDate = new Intl.DateTimeFormat(LOCALE, { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-const hijri = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-latn', {
-  timeZone: TZ,
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
-const ymd = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
+/** توقيت العرض لهذا الطلب (مخزن React لكل طلب على الخادم) */
+const store = cache(() => ({ tz: TZ }));
 
-export const fmtTime = (d: Date) => time.format(d);
-export const fmtWeekday = (d: Date) => weekday.format(d);
-export const fmtDayMonth = (d: Date) => dayMonth.format(d);
-export const fmtFullDate = (d: Date) => fullDate.format(d);
-export const fmtHijri = (d: Date) => hijri.format(d);
+export function setDisplayTimezone(tz: string) {
+  store().tz = tz;
+}
 
-/** مفتاح اليوم بتوقيت الرياض: 2026-10-04 */
-export const dayKey = (d: Date) => ymd.format(d);
+export function currentTz(): string {
+  try {
+    return store().tz;
+  } catch {
+    return TZ;
+  }
+}
+
+type Kind = 'time' | 'weekday' | 'dayMonth' | 'fullDate' | 'hijri' | 'ymd' | 'hour';
+const OPTIONS: Record<Kind, [string, Intl.DateTimeFormatOptions]> = {
+  time: [LOCALE, { hour: 'numeric', minute: '2-digit' }],
+  weekday: [LOCALE, { weekday: 'long' }],
+  dayMonth: [LOCALE, { day: 'numeric', month: 'long' }],
+  fullDate: [LOCALE, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }],
+  hijri: ['ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }],
+  ymd: ['en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }],
+  hour: ['en-US', { hour: 'numeric', hour12: false }],
+};
+const formatters = new Map<string, Intl.DateTimeFormat>();
+
+function fmt(kind: Kind, tz = currentTz()): Intl.DateTimeFormat {
+  const key = `${kind}|${tz}`;
+  let f = formatters.get(key);
+  if (!f) {
+    const [locale, opts] = OPTIONS[kind];
+    formatters.set(key, (f = new Intl.DateTimeFormat(locale, { ...opts, timeZone: tz })));
+  }
+  return f;
+}
+
+export const fmtTime = (d: Date, tz?: string) => fmt('time', tz).format(d);
+export const fmtWeekday = (d: Date, tz?: string) => fmt('weekday', tz).format(d);
+export const fmtDayMonth = (d: Date, tz?: string) => fmt('dayMonth', tz).format(d);
+export const fmtFullDate = (d: Date, tz?: string) => fmt('fullDate', tz).format(d);
+export const fmtHijri = (d: Date, tz?: string) => fmt('hijri', tz).format(d);
+
+/** مفتاح اليوم بتوقيت المستخدم: 2026-10-04 */
+export const dayKey = (d: Date, tz?: string) => fmt('ymd', tz).format(d);
+
+/** الساعة 0–23 بتوقيت المستخدم (للتحية صباحاً ومساءً) */
+export const localHour = (d: Date, tz?: string) => Number(fmt('hour', tz).format(d)) % 24;
 
 export function fmtRelativeDay(d: Date, now: Date): string {
   const diff = Math.round((Date.parse(dayKey(d)) - Date.parse(dayKey(now))) / 86_400_000);

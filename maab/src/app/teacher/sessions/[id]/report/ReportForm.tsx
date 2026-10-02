@@ -1,17 +1,20 @@
 'use client';
 
 import { CircleCheck, Minus, Plus, Send, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { InkwellIcon } from '@/components/sudan/Lawh';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Segmented } from '@/components/ui/Choice';
 import { Badge } from '@/components/ui/Chip';
 import { TextArea } from '@/components/ui/Field';
 import { ProgressBar } from '@/components/ui/Progress';
+import { api, errorText, IS_LIVE, newKey } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { fmtAyahs } from '@/lib/format';
 import { GRADES, mastery, MEMORIZED_THRESHOLD, NO_MISTAKES, suggestGrade, type Grade, type Mistakes } from '@/lib/domain/mastery';
-import { countAyahs, formatRange, isValidRef, SURAHS, type AyahRef } from '@/lib/quran';
+import { ayahIndex, countAyahs, formatRange, fromIndex, isValidRef, SURAHS, type AyahRef } from '@/lib/quran';
 import { ATTENDANCE_LABEL, SEGMENT_LABEL } from '@/lib/labels';
 import type { Attendance, SegmentType } from '@/lib/types';
 
@@ -93,11 +96,41 @@ function Stepper({ label, value, onChange }: { label: string; value: number; onC
   );
 }
 
-export function ReportForm({ student, initial, backHref }: { student: string; initial: Omit<Draft, 'key'>[]; backHref: string }) {
+/** المقطع التالي للحفظ بعد نهاية المقطع، في اتجاه خطة الطالب */
+function nextNew(to: AyahRef, direction: 'nas_to_baqarah' | 'baqarah_to_nas', count = 10): { from: AyahRef; to: AyahRef } {
+  const s = SURAHS[to.surah - 1];
+  let from: AyahRef;
+  if (to.ayah < s.ayahs) from = { surah: to.surah, ayah: to.ayah + 1 };
+  else if (direction === 'nas_to_baqarah') from = { surah: Math.max(1, to.surah - 1), ayah: 1 };
+  else from = to.surah === 114 ? to : fromIndex(ayahIndex(to) + 1);
+  const end = Math.min(from.ayah + count - 1, SURAHS[from.surah - 1].ayahs);
+  return { from, to: { surah: from.surah, ayah: end } };
+}
+
+export function ReportForm({
+  sessionId,
+  student,
+  direction,
+  initial,
+  backHref,
+}: {
+  sessionId: string;
+  student: string;
+  direction: 'nas_to_baqarah' | 'baqarah_to_nas';
+  initial: Omit<Draft, 'key'>[];
+  backHref: string;
+}) {
+  const router = useRouter();
   const [attendance, setAttendance] = useState<Attendance>('present');
   const [segments, setSegments] = useState<Draft[]>(initial.map((s, i) => ({ ...s, key: i })));
   const [gradeTouched, setGradeTouched] = useState<Grade>();
   const [note, setNote] = useState('');
+  const [internal, setInternal] = useState('');
+  const [homework, setHomework] = useState<{ from: AyahRef; to: AyahRef }>();
+  const [review, setReview] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const [key] = useState(newKey);
   const [sent, setSent] = useState(false);
 
   const held = attendance === 'present' || attendance === 'late';
@@ -127,6 +160,10 @@ export function ReportForm({ student, initial, backHref }: { student: string; in
   const grade = gradeTouched ?? suggested;
   const hasErrors = computed.some((s) => s.error);
   const firstNew = computed.find((s) => s.type === 'new' && !s.error);
+  const counted = Boolean(firstNew && firstNew.pct >= MEMORIZED_THRESHOLD);
+  // الواجب المقترح ما لم تعدّله المعلمة: ما بعد المقطع المتقن، أو إعادته إن لم يُتقن
+  const hw = homework ?? (firstNew ? (counted ? nextNew(firstNew.to, direction) : { from: firstNew.from, to: firstNew.to }) : undefined);
+  const hwError = hw && (!isValidRef(hw.from) || !isValidRef(hw.to) || ayahIndex(hw.to) < ayahIndex(hw.from)) ? 'نطاق الواجب غير صحيح' : undefined;
 
   const update = (key: number, patch: Partial<Draft>) => setSegments((all) => all.map((s) => (s.key === key ? { ...s, ...patch } : s)));
 
@@ -134,7 +171,7 @@ export function ReportForm({ student, initial, backHref }: { student: string; in
     return (
       <Card className="space-y-4 p-6 text-center">
         <CircleCheck className="mx-auto size-14 text-success" strokeWidth={1.5} aria-hidden />
-        <p className="text-lg font-bold text-ink">أُرسل التقرير لولي الأمر</p>
+        <p className="text-lg font-bold text-ink">أُرسل التقرير لولي الأمر، الله يديكِ العافية</p>
         <p className="text-sm leading-6 text-muted">
           {held ? `${student}: ${fmtAyahs(totalAyahs, true)}، إتقان %${Math.round(avg)}، والواجب جاهز للحصة القادمة.` : `سُجّل «${ATTENDANCE_LABEL[attendance]}» للحصة.`}
         </p>
@@ -148,10 +185,30 @@ export function ReportForm({ student, initial, backHref }: { student: string; in
   return (
     <form
       className="space-y-4"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
-        if (held && (hasErrors || !segments.length)) return;
-        setSent(true);
+        if (held && (hasErrors || !segments.length || hwError)) return;
+        if (!IS_LIVE) return setSent(true);
+        setBusy(true);
+        setError(undefined);
+        const done = held ? segments.map((s) => ({ type: s.type, from: s.from, to: s.to, mistakes: s.mistakes })) : [];
+        const hwSegments = held && hw
+          ? [
+              { type: 'new' as const, from: hw.from, to: hw.to, homework: true },
+              ...(review && counted && firstNew ? [{ type: 'near_review' as const, from: firstNew.from, to: firstNew.to, homework: true }] : []),
+            ]
+          : [];
+        try {
+          await api(`/sessions/${sessionId}/report`, {
+            idempotencyKey: key,
+            body: { attendance, ...(held ? { grade } : {}), guardianNote: note || null, internalNote: internal || null, segments: [...done, ...hwSegments] },
+          });
+          setSent(true);
+          router.refresh();
+        } catch (err) {
+          setError(errorText(err));
+          setBusy(false);
+        }
       }}
     >
       <Card className="space-y-2 p-4">
@@ -254,22 +311,43 @@ export function ReportForm({ student, initial, backHref }: { student: string; in
               onChange={(e) => setNote(e.target.value)}
               hint={`${note.length}/280`}
             />
-            <TextArea id="internal" label="ملاحظة داخلية" placeholder="للمشرفة فقط، لا يراها ولي الأمر" rows={2} />
-            {firstNew && (
-              <div className="rounded-ctl bg-field p-3 text-sm">
-                <p className="font-bold text-ink">الواجب المقترح للحصة القادمة</p>
-                <p className="mt-1 text-muted">
-                  {firstNew.pct >= MEMORIZED_THRESHOLD
-                    ? `حفظ ما بعد ${formatRange(firstNew.to, firstNew.to)}، ومراجعة ${formatRange(firstNew.from, firstNew.to)}`
-                    : `إعادة حفظ ${formatRange(firstNew.from, firstNew.to)} — المقطع تحت %${MEMORIZED_THRESHOLD}`}
-                </p>
-              </div>
-            )}
+            <TextArea
+              id="internal"
+              label="ملاحظة داخلية"
+              placeholder="للمشرفة فقط، لا يراها ولي الأمر"
+              rows={2}
+              value={internal}
+              onChange={(e) => setInternal(e.target.value)}
+            />
           </Card>
+
+          {hw && (
+            <Card className="space-y-3 p-4">
+              <p className="flex items-center gap-2 text-sm font-bold text-ink">
+                <InkwellIcon className="size-4 text-gold-text" />
+                الواجب على اللوح للحصة القادمة
+              </p>
+              <p className="text-xs text-muted">
+                {counted ? 'مقترح: ما بعد المقطع المتقن' : `مقترح: إعادة المقطع لأنه تحت %${MEMORIZED_THRESHOLD}`} — عدّليه إن شئتِ.
+              </p>
+              <div className="flex gap-2">
+                <RefPicker id="hw-from" label="حفظ من" value={hw.from} onChange={(from) => setHomework({ from, to: hw.to })} />
+                <RefPicker id="hw-to" label="إلى" value={hw.to} onChange={(to) => setHomework({ from: hw.from, to })} />
+              </div>
+              {hwError && <p className="text-xs font-semibold text-danger">{hwError}</p>}
+              {counted && firstNew && (
+                <label className="flex items-center gap-2 text-sm text-ink">
+                  <input type="checkbox" checked={review} onChange={(e) => setReview(e.target.checked)} className="size-4 accent-[var(--brand-green)]" />
+                  ومراجعة {formatRange(firstNew.from, firstNew.to)}
+                </label>
+              )}
+            </Card>
+          )}
         </>
       )}
 
-      <Button type="submit" block disabled={held && hasErrors}>
+      {error && <p className="rounded-ctl bg-danger/8 px-3 py-2 text-sm text-danger">{error}</p>}
+      <Button type="submit" block disabled={busy || (held && (hasErrors || Boolean(hwError)))}>
         <Send className="size-5" aria-hidden />
         إرسال التقرير
       </Button>

@@ -336,7 +336,9 @@ export async function decideReschedule(viewer: Viewer, requestId: string, accept
     const [s] = await tx.select().from(sessions).where(eq(sessions.id, req.sessionId));
     const party = await partyOf(tx, viewer, s);
     const requesterIsTeacher = (await tx.select({ id: teachers.id }).from(teachers).where(and(eq(teachers.id, s.teacherId), eq(teachers.userId, req.requestedBy)))).length > 0;
-    const allowed = party === 'staff' || (party === 'teacher' && !requesterIsTeacher);
+    // طلب الأسرة تحسمه المعلمة، وطلب المعلمة تحسمه الأسرة، والإدارة تحسم أيّهما
+    const family = party === 'guardian' || party === 'student';
+    const allowed = party === 'staff' || (party === 'teacher' && !requesterIsTeacher) || (family && requesterIsTeacher);
     if (!allowed) throw forbidden();
     if (accept) {
       if (s.status !== 'scheduled') throw conflict('not_reschedulable', 'لا يمكن إعادة جدولة هذه الحصة بحالتها الحالية');

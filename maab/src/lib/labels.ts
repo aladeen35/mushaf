@@ -20,5 +20,7 @@ export const SESSION_STATUS: Record<SessionStatus, { label: string; tone: 'succe
   completed: { label: 'حضور', tone: 'success' },
   student_absent: { label: 'غياب الطالب', tone: 'danger' },
   teacher_absent: { label: 'غياب المعلمة · تعويض', tone: 'warning' },
+  excused: { label: 'غياب بعذر', tone: 'neutral' },
+  technical_issue: { label: 'انقطاع تقني · تعويض', tone: 'warning' },
   cancelled: { label: 'ملغاة', tone: 'neutral' },
 };

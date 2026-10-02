@@ -6,20 +6,21 @@ import { WaveHeader } from '@/components/shell/WaveHeader';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Chip';
 import { PAYMENT_STATUS, plan } from '@/lib/domain/billing';
-import { payments } from '@/lib/demo/data';
-import { getStudent } from '@/lib/demo/queries';
+import { dataset } from '@/lib/data';
 import { formatMoney } from '@/lib/domain/market';
 import { fmtDayMonth } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'المدفوعات' };
 
-export default function Payments() {
-  const list = [...payments].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+export default async function Payments() {
+  const d = await dataset('guardian');
+  const list = [...d.payments].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
   return (
     <>
       <WaveHeader title="المدفوعات والإيصالات" back="/guardian/account" />
       <Page className="-mt-4">
-        <Card className="divide-y divide-line">
+        {!list.length && <Card className="p-4 text-sm text-muted">لسه ما في مدفوعات. تظهر هنا طلباتك وإيصالاتها.</Card>}
+        <Card className="divide-y divide-line empty:hidden">
           {list.map((p) => {
             const st = PAYMENT_STATUS[p.status];
             return (
@@ -29,7 +30,7 @@ export default function Payments() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-bold text-ink">
-                    {plan(p.plan).name} · {getStudent(p.studentId)?.name}
+                    {plan(p.plan).name} · {d.getStudent(p.studentId)?.name}
                   </span>
                   <span dir="ltr" className="tabular block text-end text-xs text-muted">
                     {p.ref}

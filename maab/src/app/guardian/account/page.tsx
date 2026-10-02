@@ -2,7 +2,6 @@ import {
   Bell,
   HandHeart,
   Headset,
-  LogOut,
   Receipt,
   ShieldCheck,
   Sprout,
@@ -19,13 +18,16 @@ import { WaveHeader } from '@/components/shell/WaveHeader';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Chip';
 import { ListRow } from '@/components/ui/ListRow';
-import { guardian } from '@/lib/demo/data';
-import { childrenOf, unreadCount } from '@/lib/demo/queries';
+import { LogoutRow } from '@/components/features/LogoutRow';
+import { dataset } from '@/lib/data';
+import { displayPhone } from '@/lib/phone';
 
 export const metadata: Metadata = { title: 'الحساب' };
 
-export default function Account() {
-  const kids = childrenOf();
+export default async function Account() {
+  const d = await dataset('guardian');
+  const { guardian } = d;
+  const kids = d.childrenOf();
   return (
     <>
       <WaveHeader back="/guardian" curve="swoosh" className="pb-20">
@@ -39,7 +41,7 @@ export default function Account() {
               {guardian.role} · {guardian.city}
             </p>
             <p className="tabular mt-1 text-sm text-gold" dir="ltr">
-              +966 {guardian.phone}
+              {guardian.phone ? displayPhone(guardian.phone) : guardian.email}
             </p>
           </div>
         </div>
@@ -59,7 +61,7 @@ export default function Account() {
           href="/guardian/notifications"
           icon={<Bell className="size-5" />}
           label="الإشعارات"
-          meta={<Badge tone="gold">{unreadCount()} جديدة</Badge>}
+          meta={<Badge tone="gold">{d.unreadCount()} جديدة</Badge>}
         />
         <ListRow href="/guardian/progress" icon={<Sprout className="size-5" />} label="خطط الحفظ والتقارير" />
         <ListRow href="/guardian/mushaf" icon={<MushafIcon className="size-5" />} label="المصحف" />
@@ -72,7 +74,7 @@ export default function Account() {
 
         <ListRow href="/legal/privacy" icon={<ShieldCheck className="size-5" />} label="الخصوصية والموافقات" sub="تنزيل بياناتي أو طلب حذف الحساب" />
         <ListRow href="/legal/cancellation" icon={<Headset className="size-5" />} label="سياسات الحصص والدعم" />
-        <ListRow href="/" icon={<LogOut className="size-5" />} label="تسجيل الخروج" tone="danger" />
+        <LogoutRow />
       </Page>
     </>
   );

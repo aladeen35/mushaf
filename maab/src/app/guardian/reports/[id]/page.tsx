@@ -1,15 +1,16 @@
-import { BookOpenText, ChevronLeft, Quote } from 'lucide-react';
+import { ChevronLeft, Quote } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Page } from '@/components/shell/AppShell';
 import { WaveHeader } from '@/components/shell/WaveHeader';
+import { Lawh, LawhLine } from '@/components/sudan/Lawh';
 import { Card, SectionTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Chip';
 import { ProgressBar, Ring } from '@/components/ui/Progress';
 import { gradeLabel, mastery, MEMORIZED_THRESHOLD } from '@/lib/domain/mastery';
-import { getReport, getStudent, getTeacher, reportMastery, reportSessionDate, segmentAyahs } from '@/lib/demo/queries';
-import { reports } from '@/lib/demo/data';
+import { dataset, IS_LIVE, LIVE_PROBE } from '@/lib/data';
+import { demoDataset } from '@/lib/data/demo';
 import { fmtAyahs, fmtFullDate } from '@/lib/format';
 import { ATTENDANCE_LABEL, SEGMENT_LABEL } from '@/lib/labels';
 import { formatRange } from '@/lib/quran';
@@ -18,7 +19,7 @@ import { pageOf } from '@/lib/quran/server';
 export const metadata: Metadata = { title: 'تقرير الحصة' };
 
 export function generateStaticParams() {
-  return reports.map((r) => ({ id: r.id }));
+  return IS_LIVE ? [{ id: LIVE_PROBE }] : demoDataset.reports.map((r) => ({ id: r.id }));
 }
 
 const MISTAKE_KINDS = [
@@ -30,17 +31,18 @@ const MISTAKE_KINDS = [
 
 export default async function ReportPage({ params }: PageProps<'/guardian/reports/[id]'>) {
   const { id } = await params;
-  const r = getReport(id);
-  if (!r) notFound();
-  const student = getStudent(r.studentId)!;
-  const teacher = getTeacher(r.teacherId);
-  const m = reportMastery(r);
+  const d = await dataset('guardian');
+  const r = d.getReport(id);
+  const student = r && d.getStudent(r.studentId);
+  if (!r || !student) notFound();
+  const teacher = d.getTeacher(r.teacherId);
+  const m = d.reportMastery(r);
 
   return (
     <>
       <WaveHeader title="تقرير الحصة" back={`/guardian/progress?child=${student.id}`}>
         <p className="pb-2 text-center text-sm text-on-hero/80">
-          {student.name} · {fmtFullDate(reportSessionDate(r))}
+          {student.name} · {fmtFullDate(d.reportSessionDate(r))}
         </p>
       </WaveHeader>
 
@@ -48,13 +50,13 @@ export default async function ReportPage({ params }: PageProps<'/guardian/report
         <Card className="flex items-center gap-4 p-4">
           <Ring value={m} label="الإتقان" size={92} stroke={10} />
           <div className="min-w-0 flex-1 space-y-2">
-            <p className="text-lg font-bold text-ink">{gradeLabel(r.grade)}</p>
+            <p className="text-lg font-bold text-ink">{r.grade ? gradeLabel(r.grade) : ATTENDANCE_LABEL[r.attendance]}</p>
             <p className="text-sm text-muted">{teacher.name}</p>
             <div className="flex flex-wrap gap-1.5">
               <Badge tone={r.attendance === 'present' ? 'success' : r.attendance === 'late' ? 'warning' : 'danger'}>
                 {ATTENDANCE_LABEL[r.attendance]}
               </Badge>
-              <Badge tone="gold">{fmtAyahs(r.segments.reduce((n, s) => n + segmentAyahs(s), 0), true)}</Badge>
+              <Badge tone="gold">{fmtAyahs(r.segments.reduce((n, s) => n + d.segmentAyahs(s), 0), true)}</Badge>
             </div>
           </div>
         </Card>
@@ -95,33 +97,46 @@ export default async function ReportPage({ params }: PageProps<'/guardian/report
           </p>
         </section>
 
-        <section className="space-y-3">
-          <SectionTitle>ملاحظة المعلمة</SectionTitle>
-          <Card className="relative border-s-4 border-gold p-4 ps-5">
-            <Quote className="absolute end-3 top-3 size-6 text-gold/40" aria-hidden />
-            <p className="leading-7 text-ink">{r.guardianNote}</p>
-          </Card>
+        {r.internalNote && (
+          <section className="space-y-3">
+            <SectionTitle>ملاحظة داخلية</SectionTitle>
+            <Card className="p-4 text-sm leading-7 text-ink">{r.internalNote}</Card>
+          </section>
+        )}
+
+        <section className="space-y-3 empty:hidden">
+          {r.guardianNote && <SectionTitle>ملاحظة المعلمة</SectionTitle>}
+          {r.guardianNote && (
+            <Card className="relative border-s-4 border-gold p-4 ps-5">
+              <Quote className="absolute end-3 top-3 size-6 text-gold/40" aria-hidden />
+              <p className="leading-7 text-ink">{r.guardianNote}</p>
+            </Card>
+          )}
         </section>
 
-        <section className="space-y-3">
-          <SectionTitle>الواجب للحصة القادمة</SectionTitle>
-          {r.homework.map((h, i) => (
-            <Link
-              key={i}
-              href={`/guardian/mushaf/${pageOf(h.from)}`}
-              className="flex items-center gap-3 rounded-card bg-card p-3.5 shadow-card hover:bg-field"
+        {r.homework.length > 0 && (
+          <section className="space-y-3">
+            <SectionTitle>الواجب للحصة القادمة</SectionTitle>
+            <Lawh
+              label={`لوح ${student.name}`}
+              footer={
+                <span className="flex flex-wrap gap-x-4 gap-y-1">
+                  {r.homework.map((h) => (
+                    <Link key={`${h.from.surah}-${h.from.ayah}`} href={`/guardian/mushaf/${pageOf(h.from)}`} className="flex items-center gap-1 font-bold underline-offset-4 hover:underline">
+                      {SEGMENT_LABEL[h.type]} · صفحة {pageOf(h.from)} <ChevronLeft className="size-3.5" aria-hidden />
+                    </Link>
+                  ))}
+                </span>
+              }
             >
-              <span className="grid size-10 place-items-center rounded-ctl bg-brand/8 text-brand" aria-hidden>
-                <BookOpenText className="size-5" />
-              </span>
-              <span className="flex-1">
-                <span className="block text-sm font-bold text-ink">{SEGMENT_LABEL[h.type]}</span>
-                <span className="block text-xs text-muted">{formatRange(h.from, h.to)}</span>
-              </span>
-              <ChevronLeft className="size-4 text-muted" aria-hidden />
-            </Link>
-          ))}
-        </section>
+              {r.homework.map((h) => (
+                <LawhLine key={`${h.type}-${h.from.surah}-${h.from.ayah}`} kind={SEGMENT_LABEL[h.type]}>
+                  {formatRange(h.from, h.to)}
+                </LawhLine>
+              ))}
+            </Lawh>
+          </section>
+        )}
       </Page>
     </>
   );

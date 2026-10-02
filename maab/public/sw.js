@@ -2,7 +2,7 @@
 // - ملفات البناء والخطوط والصور: من الذاكرة أولاً (أسماؤها تتغيّر مع كل إصدار).
 // - صفحات المصحف: من الشبكة أولاً، ومن الذاكرة عند انقطاع الاتصال.
 // بيانات الحساب والجداول لا تُخزَّن هنا حتى لا تظهر بيانات قديمة أو لمستخدم آخر.
-const VERSION = 'maab-v1';
+const VERSION = 'maab-v2';
 const STATIC = `${VERSION}-static`;
 const PAGES = `${VERSION}-mushaf`;
 
@@ -17,10 +17,17 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-const isStatic = (url) =>
-  url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/brand/') || url.pathname.startsWith('/icons/');
+// المسار الأساسي من نطاق التسجيل: «/» في النسخة الحية و«/maab/» على GitHub Pages
+const BASE = new URL(self.registration.scope).pathname.replace(/\/$/, '');
+const local = (url) => (url.pathname.startsWith(BASE) ? url.pathname.slice(BASE.length) || '/' : null);
 
-const isMushaf = (url) => /^\/(guardian|teacher)\/mushaf(\/\d+)?$/.test(url.pathname);
+const isStatic = (url) => {
+  const p = local(url);
+  return Boolean(p && (p.startsWith('/_next/static/') || p.startsWith('/brand/') || p.startsWith('/icons/') || p === '/data/ayahs.json'));
+};
+
+// الصفحات بشرطة ختامية في النسخة الثابتة (trailingSlash)
+const isMushaf = (url) => /^\/(guardian|teacher)\/mushaf(\/\d+)?\/?$/.test(local(url) ?? '');
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;

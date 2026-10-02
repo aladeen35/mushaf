@@ -44,3 +44,7 @@ next-env.d.ts
 
 # ملفات التخزين المحلي (إيصالات ومستندات التطوير)
 /.storage
+
+# بناء النسخة الثابتة لـGitHub Pages
+/.next-static/
+/public/data/

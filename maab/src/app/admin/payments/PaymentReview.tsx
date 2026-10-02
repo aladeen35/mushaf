@@ -1,14 +1,19 @@
 'use client';
 
-import { Check, FileText, PencilLine, X } from 'lucide-react';
+import { Check, ExternalLink, FileText, PencilLine, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Chip';
 import { TextArea } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
+import { api, errorText, IS_LIVE, newKey } from '@/lib/api';
 import { PAYMENT_STATUS, requiresReason, type PaymentStatus } from '@/lib/domain/billing';
 
 export type ReviewRow = {
+  /** معرّف الدفعة والإيصال في القاعدة (النسخة الحية) */
+  id?: string;
+  fileId?: string;
   ref: string;
   payer: string;
   student: string;
@@ -21,15 +26,44 @@ export type ReviewRow = {
 
 /** مراجعة التحويلات: الاعتماد يفعّل الباقة، والرفض أو التصحيح يتطلب سببًا يُرسل للمستخدم */
 export function PaymentReview({ rows }: { rows: ReviewRow[] }) {
+  const router = useRouter();
   const [status, setStatus] = useState<Record<string, PaymentStatus>>({});
   const [pending, setPending] = useState<{ ref: string; to: PaymentStatus }>();
   const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState<string>();
+  const [error, setError] = useState<{ ref: string; text: string }>();
+
+  /** القرار في الخادم: الاعتماد بمفتاح منع تكرار، والرفض والتصحيح بسبب يصل للمستخدم */
+  const commit = async (ref: string, to: PaymentStatus, why?: string) => {
+    const row = rows.find((r) => r.ref === ref);
+    if (IS_LIVE && row?.id) {
+      setBusy(ref);
+      setError(undefined);
+      try {
+        if (to === 'approved') await api(`/payments/${row.id}/approve`, { method: 'POST', idempotencyKey: newKey() });
+        else await api(`/payments/${row.id}/reject`, { body: { reason: why, needsFix: to === 'needs_fix' } });
+        router.refresh();
+      } catch (e) {
+        setError({ ref, text: errorText(e) });
+        setBusy(undefined);
+        return false;
+      }
+      setBusy(undefined);
+    }
+    setStatus((s) => ({ ...s, [ref]: to }));
+    return true;
+  };
 
   const decide = (ref: string, to: PaymentStatus) => {
     if (requiresReason(to)) {
       setReason('');
       setPending({ ref, to });
-    } else setStatus((s) => ({ ...s, [ref]: to }));
+    } else void commit(ref, to);
+  };
+
+  const openReceipt = async (fileId: string) => {
+    const { url } = await api<{ url: string }>(`/files/${fileId}`);
+    window.open(url, '_blank', 'noopener');
   };
 
   return (
@@ -67,7 +101,13 @@ export function PaymentReview({ rows }: { rows: ReviewRow[] }) {
                     <span className="flex items-center gap-2 text-xs">
                       <FileText className="size-4 shrink-0 text-gold-text" aria-hidden />
                       <span className="min-w-0">
-                        <span className="block truncate font-semibold text-ink">{r.file}</span>
+                        {IS_LIVE && r.fileId ? (
+                          <button type="button" onClick={() => openReceipt(r.fileId!)} className="flex items-center gap-1 font-semibold text-brand underline-offset-4 hover:underline">
+                            {r.file} <ExternalLink className="size-3" aria-hidden />
+                          </button>
+                        ) : (
+                          <span className="block truncate font-semibold text-ink">{r.file}</span>
+                        )}
                         <span className="block truncate text-muted">{r.senderName}</span>
                       </span>
                     </span>
@@ -76,19 +116,20 @@ export function PaymentReview({ rows }: { rows: ReviewRow[] }) {
                     {st ? (
                       <Badge tone={PAYMENT_STATUS[st].tone}>{PAYMENT_STATUS[st].label}</Badge>
                     ) : (
-                      <div className="flex gap-1.5">
-                        <Button size="xs" variant="success" onClick={() => decide(r.ref, 'approved')}>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Button size="xs" variant="success" disabled={busy === r.ref} onClick={() => decide(r.ref, 'approved')}>
                           <Check className="size-3.5" strokeWidth={3} aria-hidden />
                           اعتماد
                         </Button>
-                        <Button size="xs" variant="soft" onClick={() => decide(r.ref, 'needs_fix')}>
+                        <Button size="xs" variant="soft" disabled={busy === r.ref} onClick={() => decide(r.ref, 'needs_fix')}>
                           <PencilLine className="size-3.5" aria-hidden />
                           تصحيح
                         </Button>
-                        <Button size="xs" variant="danger" onClick={() => decide(r.ref, 'rejected')}>
+                        <Button size="xs" variant="danger" disabled={busy === r.ref} onClick={() => decide(r.ref, 'rejected')}>
                           <X className="size-3.5" strokeWidth={3} aria-hidden />
                           رفض
                         </Button>
+                        {error?.ref === r.ref && <p className="w-full text-xs text-danger">{error.text}</p>}
                       </div>
                     )}
                   </td>
@@ -106,11 +147,10 @@ export function PaymentReview({ rows }: { rows: ReviewRow[] }) {
       >
         <form
           className="space-y-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             if (!pending || reason.trim().length < 5) return;
-            setStatus((s) => ({ ...s, [pending.ref]: pending.to }));
-            setPending(undefined);
+            if (await commit(pending.ref, pending.to, reason.trim())) setPending(undefined);
           }}
         >
           <p dir="ltr" className="tabular text-center font-mono text-sm text-muted">
@@ -125,7 +165,8 @@ export function PaymentReview({ rows }: { rows: ReviewRow[] }) {
             required
             minLength={5}
           />
-          <Button type="submit" block disabled={reason.trim().length < 5}>
+          {error && pending && error.ref === pending.ref && <p className="text-sm text-danger">{error.text}</p>}
+          <Button type="submit" block disabled={reason.trim().length < 5 || busy === pending?.ref}>
             إرسال القرار
           </Button>
         </form>

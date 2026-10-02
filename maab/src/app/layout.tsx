@@ -8,6 +8,7 @@ import '@fontsource/amiri/700.css';
 import '@fontsource/amiri-quran/400.css';
 import { ServiceWorker } from '@/components/ServiceWorker';
 import './globals.css';
+import { asset } from '@/lib/base';
 
 export const metadata: Metadata = {
   title: {
@@ -19,10 +20,10 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: 'مآب', statusBarStyle: 'black-translucent' },
   icons: {
     icon: [
-      { url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/icons/favicon-64.png', sizes: '64x64', type: 'image/png' },
+      { url: asset('/icons/favicon-32.png'), sizes: '32x32', type: 'image/png' },
+      { url: asset('/icons/favicon-64.png'), sizes: '64x64', type: 'image/png' },
     ],
-    apple: '/icons/apple-touch-icon.png',
+    apple: asset('/icons/apple-touch-icon.png'),
   },
 };
 

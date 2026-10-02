@@ -1,4 +1,8 @@
 import type { MetadataRoute } from 'next';
+import { asset } from '@/lib/base';
+
+// يُولَّد وقت البناء (والنسخة الثابتة تتطلب ذلك صراحةً)
+export const dynamic = 'force-static';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -7,16 +11,17 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'تحفيظ القرآن الكريم عن بُعد للأطفال والنساء بمعلمات فقط.',
     lang: 'ar',
     dir: 'rtl',
-    start_url: '/',
+    start_url: asset('/'),
+    scope: asset('/'),
     display: 'standalone',
     orientation: 'portrait',
     background_color: '#f5efe2',
     theme_color: '#0e3d31',
     icons: [
-      { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/icons/icon-192-maskable.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-      { src: '/icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: asset('/icons/icon-192.png'), sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: asset('/icons/icon-512.png'), sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: asset('/icons/icon-192-maskable.png'), sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+      { src: asset('/icons/icon-512-maskable.png'), sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
   };
 }

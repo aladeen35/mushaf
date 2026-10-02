@@ -363,16 +363,18 @@ async function seedDemo(tx: Tx) {
   // الاشتراكات الفعّالة لأسرة سلمى (المعتمدة الأحدث لكل طالب)
   for (const s of demo.students) {
     const pay = guardianPayments.filter((p) => p.studentId === s.id && p.status === 'approved').sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+    const sub = s.subscription;
+    if (!sub) continue;
     await tx.insert(t.subscriptions).values({
       id: uid(`sub:${s.id}`),
       orderItemId: uid(`oi:${pay.ref}`),
       studentId: uid(s.id),
-      planId: plans[s.subscription.plan].id,
-      durationMin: s.subscription.duration,
-      sessionsTotal: s.subscription.total,
-      sessionsRemaining: s.subscription.remaining,
-      startsAt: at(s.subscription.startedAt),
-      expiresAt: at(s.subscription.expiresAt),
+      planId: plans[sub.plan].id,
+      durationMin: sub.duration,
+      sessionsTotal: sub.total,
+      sessionsRemaining: sub.remaining,
+      startsAt: at(sub.startedAt),
+      expiresAt: at(sub.expiresAt),
     });
   }
 
@@ -436,7 +438,7 @@ async function seedDemo(tx: Tx) {
         });
       }
       for (const [fromAyah, toAyah] of pieces) {
-        await tx.insert(t.memorizedRanges).values({ studentId: uid(s.id), fromAyah, toAyah, source: 'placement', memorizedOn: day(s.subscription.startedAt) });
+        await tx.insert(t.memorizedRanges).values({ studentId: uid(s.id), fromAyah, toAyah, source: 'placement', memorizedOn: day(s.subscription?.startedAt ?? demo.DEMO_NOW.toISOString()) });
       }
     }
   }

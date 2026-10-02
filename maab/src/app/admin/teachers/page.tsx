@@ -4,16 +4,18 @@ import { Card, SectionTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Chip';
 import { cn } from '@/lib/cn';
 import { APPLICATION_FLOW, APPLICATION_STATUS, REAPPLY_AFTER_DAYS, TEACHER_DOCUMENTS, type ApplicationStatus } from '@/lib/domain/teachers';
-import { applications } from '@/lib/demo/data';
-import { now } from '@/lib/demo/queries';
+import { dataset } from '@/lib/data';
 import { arCount, fmtDayMonth, fmtRelativeDay, fmtTime, YEARS } from '@/lib/format';
+import { ApplicationActions } from './ApplicationActions';
 
 export const metadata: Metadata = { title: 'طلبات المعلمات' };
 
 const COLUMNS: ApplicationStatus[] = ['new', 'under_review', 'needs_info', 'interview', 'accepted', 'rejected'];
 
-export default function AdminTeachers() {
-  const at = now();
+export default async function AdminTeachers() {
+  const d = await dataset('admin');
+  const { applications } = d;
+  const at = d.now();
   return (
     <>
       <div>
@@ -62,7 +64,7 @@ export default function AdminTeachers() {
                       <MapPin className="size-3.5" aria-hidden />
                       {a.city} · {a.riwayah}
                     </p>
-                    <p className="text-xs text-muted">خبرة {arCount(a.experienceYears, YEARS)}</p>
+                    {a.experienceYears > 0 && <p className="text-xs text-muted">خبرة {arCount(a.experienceYears, YEARS)}</p>}
                     {a.missing && (
                       <p className="flex items-start gap-1 rounded-lg bg-warning/10 p-1.5 text-[11px] font-semibold text-warning">
                         <CircleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
@@ -76,6 +78,7 @@ export default function AdminTeachers() {
                       </p>
                     )}
                     <p className="text-[11px] text-muted">قُدّم {fmtDayMonth(new Date(a.submittedAt))}</p>
+                    <ApplicationActions id={a.id} status={a.status} />
                   </Card>
                 ))}
                 {!items.length && <p className="px-1 py-4 text-center text-xs text-muted">لا طلبات</p>}

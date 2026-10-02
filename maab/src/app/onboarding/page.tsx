@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: 'إكمال الحساب' };
 export default function Onboarding() {
   return (
     <PlainShell>
-      <WaveHeader back="/login/verify" title="إكمال الحساب">
+      <WaveHeader back="/login" title="إكمال الحساب">
         <p className="pb-2 text-center text-sm text-on-hero/80">خطوة أخيرة قبل اختيار المعلمة والأوقات</p>
       </WaveHeader>
       <main className="px-5">

@@ -7,14 +7,15 @@ import { ButtonLink } from '@/components/ui/Button';
 import { LeaderRow } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Chip';
 import { ProgressBar } from '@/components/ui/Progress';
-import { teacherRoster } from '@/lib/demo/data';
-import { now } from '@/lib/demo/queries';
+import { dataset } from '@/lib/data';
 import { fmtRelativeDay, fmtTime } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'طلابي' };
 
-export default function TeacherStudents() {
-  const at = now();
+export default async function TeacherStudents() {
+  const d = await dataset('teacher');
+  const { teacherRoster } = d;
+  const at = d.now();
   return (
     <>
       <WaveHeader title="طلابي" back="/teacher" />
@@ -32,6 +33,7 @@ export default function TeacherStudents() {
         <p className="flex items-center justify-between font-bold text-ink">
           الطلاب <span className="tabular text-muted">({teacherRoster.length})</span>
         </p>
+        {!teacherRoster.length && <p className="rounded-card bg-card p-4 text-sm text-muted shadow-card">لسه ما أُسند إليكِ طلاب.</p>}
         <div className="space-y-3">
           {teacherRoster.map((s, i) => (
             <details key={s.id} name="student" open={i === 0} className="group overflow-hidden rounded-card bg-card shadow-card open:ring-1 open:ring-brand/25">
@@ -50,7 +52,7 @@ export default function TeacherStudents() {
                   <span className="font-bold text-ink">{s.current}</span>
                 </div>
                 <div className="rounded-ctl bg-field px-3 py-1">
-                  <LeaderRow label="الحصة القادمة" value={`${fmtRelativeDay(new Date(s.nextAt), at)} ${fmtTime(new Date(s.nextAt))}`} />
+                  <LeaderRow label="الحصة القادمة" value={s.nextAt ? `${fmtRelativeDay(new Date(s.nextAt), at)} ${fmtTime(new Date(s.nextAt))}` : '—'} />
                   <LeaderRow label="متوسط الإتقان" value={`%${s.mastery}`} />
                 </div>
                 <ProgressBar value={s.mastery} label={`إتقان ${s.name}`} />

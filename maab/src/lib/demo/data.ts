@@ -4,7 +4,7 @@
  * ساعة العرض ثابتة (الأحد 4 أكتوبر 2026، 1:30 م) لتبقى الشاشات متّسقة.
  */
 import type { PlanId, Duration } from '../domain/billing';
-import type { Currency, PaymentMethod } from '../domain/market';
+import type { Currency } from '../domain/market';
 import type {
   AppNotification,
   Payment,
@@ -15,6 +15,7 @@ import type {
   Teacher,
   TeacherApplication,
 } from '../types';
+import type { AdminKpis, AdminQueue, PendingPayment, PendingReport, RosterEntry, TeacherSession, TeacherStats } from '../data/types';
 
 /** «2026-10-04», «17:00» بتوقيت الرياض ← ISO بتوقيت UTC */
 export function riyadh(date: string, time = '00:00'): string {
@@ -104,7 +105,7 @@ export const teachers: Teacher[] = [
     id: 't3',
     name: 'أ. أسماء النور',
     headline: 'إجازة في الشاطبية · تحفيظ النساء',
-    riwayah: 'حفص وشعبة',
+    riwayah: 'حفص عن عاصم',
     rating: 4.9,
     categories: ['women'],
     studentsCount: 9,
@@ -182,7 +183,7 @@ export const students: Student[] = [
 ];
 
 /** طلاب المعلمة مزاهر خارج أسرة ولية الأمر — لشاشات المعلمة */
-export const teacherRoster = [
+export const teacherRoster: RosterEntry[] = [
   { id: 's1', name: 'رؤى عمر الطيب', category: 'طفلة · 9 سنوات', current: 'المدثر 32–56', page: 576, mastery: 94, nextAt: riyadh('2026-10-04', '17:00') },
   { id: 's3', name: 'ملاذ حسن', category: 'طالبة بالغة · الخرطوم', current: 'آل عمران 92–120', page: 62, mastery: 88, nextAt: riyadh('2026-10-04', '13:35') },
   { id: 's4', name: 'تسنيم إبراهيم', category: 'طفلة · 8 سنوات', current: 'الفجر 1–14', page: 593, mastery: 81, nextAt: riyadh('2026-10-04', '15:00') },
@@ -300,6 +301,9 @@ export const reports: Report[] = [
   },
 ];
 
+/** رقم الطلب الذي يُنشأ في نسخة العرض عند تأكيد الحجز */
+export const DEMO_NEXT_REF = 'MAAB-2026-000153';
+
 export const payments: Payment[] = [
   {
     ref: 'MAAB-2026-000148',
@@ -340,6 +344,16 @@ export const payments: Payment[] = [
 ];
 
 export const notifications: AppNotification[] = [
+  {
+    id: 'n0',
+    kind: 'sharafa',
+    title: 'مبروك الشرافة',
+    body: 'أتمّت رؤى حفظ الجزء الثلاثون (عمّ)، ربنا يبارك فيها ويجعله في ميزان حسناتكم.',
+    at: riyadh('2026-10-02', '18:05'),
+    read: false,
+    href: '/guardian/progress/map?child=s1',
+    meta: { studentId: 's1', juz: 30 },
+  },
   {
     id: 'n1',
     kind: 'reschedule',
@@ -397,20 +411,34 @@ export const notifications: AppNotification[] = [
 ];
 
 /** حصص المعلمة مزاهر اليوم */
-export const teacherToday = [
-  { id: 'ts1', student: 'ملاذ حسن', category: 'طالبة بالغة · الخرطوم', startsAt: riyadh('2026-10-04', '13:35'), durationMin: 45, focus: 'حفظ جديد: آل عمران 92–120' },
-  { id: 'ts2', student: 'تسنيم إبراهيم', category: 'طفلة · 8 سنوات', startsAt: riyadh('2026-10-04', '15:00'), durationMin: 30, focus: 'مراجعة: الفجر 1–14' },
-  { id: 'x04', student: 'رؤى عمر الطيب', category: 'طفلة · 9 سنوات', startsAt: riyadh('2026-10-04', '17:00'), durationMin: 45, focus: 'حفظ جديد: المدثر 32–56' },
-  { id: 'ts4', student: 'إسراء الفاتح', category: 'طالبة بالغة · دبي', startsAt: riyadh('2026-10-04', '19:30'), durationMin: 60, focus: 'تسميع: الكهف 1–16' },
+export const teacherToday: TeacherSession[] = [
+  { id: 'ts1', studentId: 's3', student: 'ملاذ حسن', category: 'طالبة بالغة · الخرطوم', startsAt: riyadh('2026-10-04', '13:35'), durationMin: 45, focus: 'حفظ جديد: آل عمران 92–120', current: { from: { surah: 3, ayah: 92 }, to: { surah: 3, ayah: 101 } } },
+  { id: 'ts2', studentId: 's4', student: 'تسنيم إبراهيم', category: 'طفلة · 8 سنوات', startsAt: riyadh('2026-10-04', '15:00'), durationMin: 30, focus: 'مراجعة: الفجر 1–14', current: { from: { surah: 89, ayah: 1 }, to: { surah: 89, ayah: 14 } } },
+  { id: 'x04', studentId: 's1', student: 'رؤى عمر الطيب', category: 'طفلة · 9 سنوات', startsAt: riyadh('2026-10-04', '17:00'), durationMin: 45, focus: 'حفظ جديد: المدثر 32–56' },
+  { id: 'ts4', studentId: 's5', student: 'إسراء الفاتح', category: 'طالبة بالغة · دبي', startsAt: riyadh('2026-10-04', '19:30'), durationMin: 60, focus: 'تسميع: الكهف 1–16', current: { from: { surah: 18, ayah: 1 }, to: { surah: 18, ayah: 16 } } },
 ];
+
+/** إتاحة المعلمة مزاهر بتوقيت الخرطوم، كما في بيانات القاعدة التجريبية */
+export const teacherAvailability = {
+  timezone: 'Africa/Khartoum',
+  windows: [
+    { weekday: 0, start: '13:00', end: '21:00' },
+    { weekday: 1, start: '16:00', end: '20:00' },
+    { weekday: 2, start: '13:00', end: '21:00' },
+    { weekday: 4, start: '16:00', end: '21:00' },
+    { weekday: 6, start: '10:00', end: '14:00' },
+  ],
+};
+
+export const teacherStats: TeacherStats = { students: 14, hours30d: 38.5, attendance: 96, rating: 4.9, unread: 2 };
 
 /** حصص بلا تقرير بعد — المهلة 12 ساعة من نهاية الحصة */
-export const teacherPendingReports = [
-  { sessionId: 'ts0', student: 'هديل صالح', startsAt: riyadh('2026-10-04', '09:00'), durationMin: 45 },
-  { sessionId: 'tsy', student: 'آلاء المهدي', startsAt: riyadh('2026-10-03', '20:30'), durationMin: 30 },
+export const teacherPendingReports: PendingReport[] = [
+  { sessionId: 'ts0', studentId: 's7', student: 'هديل صالح', startsAt: riyadh('2026-10-04', '09:00'), durationMin: 45 },
+  { sessionId: 'tsy', studentId: 's6', student: 'آلاء المهدي', startsAt: riyadh('2026-10-03', '20:30'), durationMin: 30 },
 ];
 
-export const adminQueue = {
+export const adminQueue: AdminQueue = {
   payments: 6,
   applications: 3,
   reschedules: 2,
@@ -418,29 +446,30 @@ export const adminQueue = {
   lateReports: 2,
 };
 
-export const adminKpis = {
+export const adminAudit = [
+  { who: 'المالية · سعاد عبدالله', what: 'اعتمدت التحويل MAAB-2026-000141 وفعّلت باقة «منتظمة»', at: riyadh('2026-10-04', '12:52') },
+  { who: 'المشرفة · نجلاء البشير', what: 'أسندت الطالبة هديل صالح إلى أ. مزاهر عبدالرحيم', at: riyadh('2026-10-04', '11:30') },
+  { who: 'الدعم · رشا يوسف', what: 'دخلت بحساب ولي أمر بإذن مسجّل — السبب: تعذّر رفع الإيصال', at: riyadh('2026-10-04', '10:05') },
+  { who: 'المالية · سعاد عبدالله', what: 'طلبت تصحيح الإيصال MAAB-2026-000139: المبلغ غير مطابق', at: riyadh('2026-10-03', '21:14') },
+];
+
+export const adminWeekly = [
+  { label: '30 أغس', value: 512 },
+  { label: '6 سبت', value: 548 },
+  { label: '13 سبت', value: 571 },
+  { label: '20 سبت', value: 603 },
+  { label: '27 سبت', value: 640 },
+  { label: 'هذا الأسبوع', value: 188 },
+];
+
+export const adminKpis: AdminKpis = {
   activeStudents: 312,
   teachers: 27,
   activeSubscriptions: 268,
   endingThisWeek: 14,
   /** إيرادات الشهر المعتمدة بكل عملة — لا تُجمع العملات في رقم واحد */
-  revenueMonth: { SAR: 64_200, SDG: 1_854_000, USD: 2_140 } as Record<Currency, number>,
+  revenueMonth: { SAR: 64_200, SDG: 1_854_000, USD: 2_140 },
   attendance: 93,
-};
-
-type PendingPayment = {
-  ref: string;
-  payer: string;
-  country: string;
-  student: string;
-  plan: PlanId;
-  duration: Duration;
-  amount: number;
-  currency: Currency;
-  method: PaymentMethod;
-  uploadedAt: string;
-  file: string;
-  senderName: string;
 };
 
 export const pendingPayments: PendingPayment[] = [

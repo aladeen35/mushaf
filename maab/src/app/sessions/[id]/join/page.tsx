@@ -3,8 +3,15 @@ import type { Metadata } from 'next';
 import { LogoFull } from '@/components/brand/Brand';
 import { PlainShell } from '@/components/shell/PlainShell';
 import { ButtonLink } from '@/components/ui/Button';
+import { IS_LIVE } from '@/lib/data';
+import { demoDataset } from '@/lib/data/demo';
+import { JoinRedirect } from './JoinRedirect';
 
 export const metadata: Metadata = { title: 'الدخول للحصة' };
+
+export function generateStaticParams() {
+  return IS_LIVE ? [] : [...demoDataset.sessions.map((s) => ({ id: s.id })), ...demoDataset.teacherToday.map((s) => ({ id: s.id }))];
+}
 
 /**
  * زر «ادخل الحصة» يمرّ بالمنصة أولاً فيُسجَّل وقت الضغط (إثبات الحضور دون
@@ -21,8 +28,9 @@ export default async function JoinSession({ params }: PageProps<'/sessions/[id]/
             <LoaderCircle className="size-5 animate-spin text-gold-text" aria-hidden />
             جارٍ تسجيل وقت دخولك
           </p>
-          <p className="text-sm leading-6 text-muted">ثم نحوّلك إلى Google Meet. في نسخة العرض لا يُفتح رابط فعلي.</p>
+          <p className="text-sm leading-6 text-muted">ثم نحوّلك إلى Google Meet.{IS_LIVE ? '' : ' في نسخة العرض لا يُفتح رابط فعلي.'}</p>
         </div>
+        {IS_LIVE && <JoinRedirect id={id} />}
         <ul className="w-full max-w-xs space-y-2 text-start text-sm text-ink">
           <li className="flex items-center gap-2 rounded-ctl bg-card p-3 shadow-card">
             <ShieldCheck className="size-5 shrink-0 text-success" aria-hidden />

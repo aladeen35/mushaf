@@ -1,24 +1,40 @@
 'use client';
 
 import { CircleCheck, FileUp, Mic } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { DayPills } from '@/components/ui/Choice';
-import { PhoneField, SelectField, TextArea, TextField } from '@/components/ui/Field';
+import { TextArea, TextField } from '@/components/ui/Field';
+import { guessCountry, PhoneInput } from '@/components/ui/PhoneInput';
+import { api, errorText, IS_LIVE } from '@/lib/api';
 import { CITIES } from '@/lib/cities';
 import { cn } from '@/lib/cn';
+import type { CountryCode } from '@/lib/domain/market';
+import { parsePhone } from '@/lib/phone';
 import { TEACHER_DOCUMENTS } from '@/lib/domain/teachers';
 
 // الأنواع والأحجام المسموحة (القسم 15)
 const DOC_TYPES = 'application/pdf,image/jpeg,image/png';
 const AUDIO_TYPES = 'audio/mpeg,audio/mp4,audio/x-m4a';
+/** حقل الملف في الخادم لكل مستند */
+const FIELD: Record<string, string> = { national_id: 'id_document', ijazah: 'ijazah', degree: 'certificate', tajweed: 'certificate', recording: 'recording' };
 
 export function ApplicationForm() {
-  const [files, setFiles] = useState<Record<string, string>>({});
+  const [files, setFiles] = useState<Record<string, File>>({});
   const [categories, setCategories] = useState<string[]>(['children']);
   const [missing, setMissing] = useState<string[]>([]);
+  const [country, setCountry] = useState<CountryCode>('SD');
+  const [f, setF] = useState({ name: '', phone: '', city: '', ijazah: '', experience: '', email: '' });
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((x) => ({ ...x, [k]: e.target.value }));
+
+  useEffect(() => {
+    const t = setTimeout(() => setCountry(guessCountry()), 0);
+    return () => clearTimeout(t);
+  }, []);
 
   if (sent) {
     return (
@@ -26,7 +42,7 @@ export function ApplicationForm() {
         <CircleCheck className="mx-auto size-14 text-success" strokeWidth={1.5} aria-hidden />
         <p className="text-lg font-bold text-ink">استلمنا طلبك</p>
         <p className="text-sm leading-6 text-muted">
-          الحالة الآن «طلب جديد». تراجع المشرفة المستندات ثم تحجز معك مقابلة تسميع، ويصلك كل تحديث برسالة.
+          جزاكِ الله خيراً. الحالة الآن «طلب جديد»، تراجع المشرفة المستندات ثم تحجز معك مقابلة تسميع، ويصلك كل تحديث برسالة.
         </p>
         <ButtonLink href="/" variant="secondary" block>
           العودة للرئيسية
@@ -40,22 +56,47 @@ export function ApplicationForm() {
   return (
     <form
       className="space-y-4"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
         const m = docs.filter((d) => d.required && !files[d.key]).map((d) => d.key);
         setMissing(m);
-        if (!m.length) setSent(true);
+        if (m.length) return;
+        const phone = parsePhone(f.phone, country);
+        if (!phone) return setError('رقم الجوال غير صحيح، تأكدي من الدولة والرقم');
+        if (!categories.length) return setError('اختاري فئة واحدة على الأقل');
+        if (!IS_LIVE) return setSent(true);
+        const form = new FormData();
+        form.set('fullName', f.name.trim());
+        form.set('phone', phone.e164);
+        form.set('country', phone.country);
+        if (f.email.trim()) form.set('email', f.email.trim());
+        if (f.city.trim()) form.set('city', f.city.trim());
+        form.set('ijazah', f.ijazah.trim());
+        form.set('experience', f.experience.trim());
+        for (const c of categories) form.append('categories', c);
+        for (const [key, file] of Object.entries(files)) form.append(FIELD[key], file);
+        setBusy(true);
+        setError(undefined);
+        try {
+          await api('/teacher-applications', { form });
+          setSent(true);
+        } catch (err) {
+          setError(errorText(err));
+          setBusy(false);
+        }
       }}
     >
       <Card className="space-y-4 p-4">
-        <TextField id="t-name" label="الاسم الكامل" required autoComplete="name" />
-        <PhoneField id="t-phone" label="رقم الجوال" placeholder="5X XXX XXXX" required />
-        <SelectField id="t-city" label="المدينة" defaultValue="الرياض">
+        <TextField id="t-name" label="الاسم الكامل" required autoComplete="name" value={f.name} onChange={set('name')} />
+        <PhoneInput id="t-phone" label="رقم الجوال (واتساب)" country={country} onCountry={setCountry} value={f.phone} onValue={(v) => setF((x) => ({ ...x, phone: v }))} required />
+        <TextField id="t-email" label="البريد الإلكتروني (اختياري)" type="email" dir="ltr" className="[&_input]:text-left" value={f.email} onChange={set('email')} />
+        <TextField id="t-city" label="المدينة" list="t-cities" placeholder="مثل: الخرطوم، الرياض" value={f.city} onChange={set('city')} />
+        <datalist id="t-cities">
           {CITIES.map((c) => (
-            <option key={c}>{c}</option>
+            <option key={c} value={c} />
           ))}
-        </SelectField>
-        <TextField id="t-ijazah" label="المُجيز والرواية" placeholder="مثال: الشيخة … — حفص عن عاصم" required />
+        </datalist>
+        <TextField id="t-ijazah" label="المُجيز والرواية" placeholder="مثال: الشيخة … — حفص عن عاصم" required value={f.ijazah} onChange={set('ijazah')} />
         <DayPills
           legend="الفئات التي تدرّسينها"
           value={categories}
@@ -65,14 +106,14 @@ export function ApplicationForm() {
             { value: 'women', label: 'النساء' },
           ]}
         />
-        <TextArea id="t-exp" label="الخبرة السابقة" placeholder="الجهات والسنوات والفئات العمرية" required />
+        <TextArea id="t-exp" label="الخبرة السابقة" placeholder="مثال: 5 سنوات في خلوة … مع الأطفال" required value={f.experience} onChange={set('experience')} />
       </Card>
 
       <Card className="space-y-2.5 p-4">
         <p className="font-bold text-ink">المستندات</p>
         {docs.map((d) => {
           const isAudio = d.key === 'recording';
-          const name = files[d.key];
+          const name = files[d.key]?.name;
           return (
             <label
               key={d.key}
@@ -95,9 +136,9 @@ export function ApplicationForm() {
                 className="sr-only"
                 accept={isAudio ? AUDIO_TYPES : DOC_TYPES}
                 onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) {
-                    setFiles((x) => ({ ...x, [d.key]: f.name }));
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setFiles((x) => ({ ...x, [d.key]: file }));
                     setMissing((m) => m.filter((k) => k !== d.key));
                   }
                 }}
@@ -109,7 +150,8 @@ export function ApplicationForm() {
         <p className="text-[11px] leading-5 text-muted">الهوية والإجازة في تخزين خاص لا يراه إلا المشرفة والمدير العام.</p>
       </Card>
 
-      <Button type="submit" block>
+      {error && <p className="rounded-ctl bg-danger/8 px-3 py-2 text-sm text-danger">{error}</p>}
+      <Button type="submit" block disabled={busy}>
         إرسال طلب الانضمام
       </Button>
     </form>

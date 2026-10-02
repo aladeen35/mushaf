@@ -1,4 +1,4 @@
-import { CalendarDays, FileBadge, LogOut, ShieldCheck, Star, UserRound, UsersRound } from 'lucide-react';
+import { CalendarDays, FileBadge, ShieldCheck, Star, UserRound, UsersRound } from 'lucide-react';
 import type { Metadata } from 'next';
 import { MihrabFrame } from '@/components/brand/Brand';
 import { ThemeToggle } from '@/components/features/ThemeToggle';
@@ -9,12 +9,14 @@ import { Badge } from '@/components/ui/Chip';
 import { ListRow } from '@/components/ui/ListRow';
 import { ProgressBar } from '@/components/ui/Progress';
 import { UNEXCUSED_ABSENCE_LIMIT } from '@/lib/domain/teachers';
-import { teachers } from '@/lib/demo/data';
+import { LogoutRow } from '@/components/features/LogoutRow';
+import { dataset } from '@/lib/data';
 
 export const metadata: Metadata = { title: 'حسابي' };
 
-export default function TeacherAccount() {
-  const me = teachers[0];
+export default async function TeacherAccount() {
+  const d = await dataset('teacher');
+  const me = d.me ?? { name: d.guardian.name, riwayah: 'حفص عن عاصم', rating: 0, studentsCount: 0 };
   // الانضباط الشهري: الحضور في الموعد، والغياب، والتقارير في 12 ساعة، وتقييم أولياء الأمور (القسم 5)
   const discipline = { onTime: 97, absences: 0, reportsOnTime: 92 };
   return (
@@ -67,7 +69,7 @@ export default function TeacherAccount() {
           <ThemeToggle />
         </Card>
         <ListRow href="/legal/privacy" icon={<ShieldCheck className="size-5" />} label="الخصوصية وسياسة عدم التسجيل" />
-        <ListRow href="/" icon={<LogOut className="size-5" />} label="تسجيل الخروج" tone="danger" />
+        <LogoutRow />
       </Page>
     </>
   );

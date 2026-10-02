@@ -3,6 +3,7 @@
 import { ChevronDown, Copy, KeyRound, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { ButtonLink } from '@/components/ui/Button';
+import { api, errorText } from '@/lib/api';
 import { cn } from '@/lib/cn';
 
 export type ChildItem = {
@@ -13,7 +14,8 @@ export type ChildItem = {
   plan: string;
   balance: string;
   next: string;
-  code: string;
+  /** رمز العرض، أو '' لإصداره من الخادم، أو null لمن لا يحتاجه */
+  code: string | null;
 };
 
 /** قائمة الأبناء: اختيار بزر راديو وتفاصيل تنسدل، ثم «انتقل» — كقائمة الطلاب في المرجع */
@@ -21,6 +23,18 @@ export function ChildrenPicker({ items }: { items: ChildItem[] }) {
   const [selected, setSelected] = useState(items[0]?.id);
   const [open, setOpen] = useState<string | undefined>(items[0]?.id);
   const [revealed, setRevealed] = useState<string>();
+  const [issued, setIssued] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string>();
+  const issue = async (id: string) => {
+    setError(undefined);
+    try {
+      const { code } = await api<{ code: string }>(`/students/${id}/login-code`, { method: 'POST' });
+      setIssued((m) => ({ ...m, [id]: code }));
+      setRevealed(id);
+    } catch (e) {
+      setError(errorText(e));
+    }
+  };
   const current = items.find((c) => c.id === selected);
 
   return (
@@ -84,31 +98,41 @@ export function ChildrenPicker({ items }: { items: ChildItem[] }) {
                         <span className="font-bold text-ink">{v}</span>
                       </div>
                     ))}
-                    <div className="flex items-center justify-between rounded-ctl bg-field px-3 py-2.5 text-sm">
-                      <span className="flex items-center gap-1.5 text-muted">
-                        <KeyRound className="size-4 text-gold-text" aria-hidden />
-                        رمز دخول الطالب
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="tabular font-bold tracking-[0.25em] text-ink"
-                          onClick={() => setRevealed(revealed === c.id ? undefined : c.id)}
-                          aria-label={revealed === c.id ? 'إخفاء الرمز' : 'إظهار الرمز'}
-                          dir="ltr"
-                        >
-                          {revealed === c.id ? c.code : '••••••'}
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="نسخ الرمز"
-                          className="text-brand"
-                          onClick={() => navigator.clipboard?.writeText(c.code)}
-                        >
-                          <Copy className="size-4" />
-                        </button>
-                      </span>
-                    </div>
+                    {c.code !== null && (
+                      <div className="flex items-center justify-between rounded-ctl bg-field px-3 py-2.5 text-sm">
+                        <span className="flex items-center gap-1.5 text-muted">
+                          <KeyRound className="size-4 text-gold-text" aria-hidden />
+                          رمز دخول الطالب
+                        </span>
+                        {c.code || issued[c.id] ? (
+                          <span className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              className="tabular font-bold tracking-[0.25em] text-ink"
+                              onClick={() => setRevealed(revealed === c.id ? undefined : c.id)}
+                              aria-label={revealed === c.id ? 'إخفاء الرمز' : 'إظهار الرمز'}
+                              dir="ltr"
+                            >
+                              {revealed === c.id ? (issued[c.id] ?? c.code) : '••••••'}
+                            </button>
+                            <button
+                              type="button"
+                              aria-label="نسخ الرمز"
+                              className="text-brand"
+                              onClick={() => navigator.clipboard?.writeText(issued[c.id] ?? c.code ?? '')}
+                            >
+                              <Copy className="size-4" />
+                            </button>
+                          </span>
+                        ) : (
+                          <button type="button" className="text-xs font-bold text-brand" onClick={() => issue(c.id)}>
+                            إصدار رمز
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {issued[c.id] && <p className="px-1 text-xs text-muted">احفظي الرمز الآن؛ لا يظهر مرة أخرى، وإصدار رمز جديد يُبطله.</p>}
+                    {error && open === c.id && <p className="px-1 text-xs text-danger">{error}</p>}
                   </div>
                 )}
               </div>

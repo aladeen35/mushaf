@@ -3,31 +3,36 @@ import type { Metadata } from 'next';
 import { Page } from '@/components/shell/AppShell';
 import { WaveHeader } from '@/components/shell/WaveHeader';
 import { ButtonLink } from '@/components/ui/Button';
+import { dataset } from '@/lib/data';
 import { plan } from '@/lib/domain/billing';
-import { childrenOf, getTeacher, now, upcoming } from '@/lib/demo/queries';
+import { ADULT_AGE } from '@/lib/domain/students';
 import { ageFrom, arCount, fmtRelativeDay, fmtTime, SESSIONS, YEARS } from '@/lib/format';
 import { ChildrenPicker, type ChildItem } from './ChildrenPicker';
 
 export const metadata: Metadata = { title: 'أبنائي' };
 
-// رموز دخول الطلاب القاصرين — يولّدها ولي الأمر ويغيّرها متى شاء
-const CODES: Record<string, string> = { s1: 'R7K2QM', s2: 'A4N9TX' };
+// رموز دخول الطلاب القاصرين في نسخة العرض — في النسخة الحية يصدرها ولي الأمر
+// من هنا، ولا يُخزَّن إلا بصمتها فتظهر مرة واحدة عند الإصدار
+const DEMO_CODES: Record<string, string> = { s1: 'R7K2QM', s2: 'A4N9TX' };
 
-export default function Children() {
-  const at = now();
-  const kids = childrenOf();
+export default async function Children() {
+  const d = await dataset('guardian');
+  const at = d.now();
+  const kids = d.childrenOf();
   const items: ChildItem[] = kids.map((k) => {
-    const next = upcoming([k.id], at)[0];
+    const next = d.upcoming([k.id], at)[0];
     const age = ageFrom(k.birthDate, at);
+    const sub = k.subscription;
     return {
       id: k.id,
       name: k.fullName,
       meta: `${k.gender === 'female' ? 'طالبة' : 'طالب'} · ${arCount(age, YEARS)} · ${k.level}`,
-      teacher: getTeacher(k.teacherId).name,
-      plan: `${plan(k.subscription.plan).name} · ${k.subscription.duration} دقيقة`,
-      balance: `${arCount(k.subscription.remaining, SESSIONS)} من ${k.subscription.total}`,
+      teacher: d.getTeacher(k.teacherId).name,
+      plan: sub ? `${plan(sub.plan).name} · ${sub.duration} دقيقة` : 'لا باقة بعد',
+      balance: sub ? `${arCount(sub.remaining, SESSIONS)} من ${sub.total}` : '—',
       next: next ? `${fmtRelativeDay(new Date(next.startsAt), at)} ${fmtTime(new Date(next.startsAt))}` : '—',
-      code: CODES[k.id],
+      // الطالبة البالغة تدخل برقمها، فلا رمز لها
+      code: age >= ADULT_AGE ? null : d.mode === 'demo' ? (DEMO_CODES[k.id] ?? null) : '',
     };
   });
 

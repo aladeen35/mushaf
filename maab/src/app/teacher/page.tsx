@@ -9,15 +9,16 @@ import { Card, SectionTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Chip';
 import { cn } from '@/lib/cn';
 import { joinState, reportDueAt } from '@/lib/domain/sessions';
-import { teacherPendingReports, teacherToday, teachers } from '@/lib/demo/data';
-import { now } from '@/lib/demo/queries';
-import { fmtFullDate, fmtIn, fmtRelativeDay, fmtTime, fmtTimeRange } from '@/lib/format';
+import { dataset } from '@/lib/data';
+import { arCount, fmtFullDate, fmtIn, fmtRelativeDay, fmtTime, fmtTimeRange, SESSIONS } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'لوحة المعلمة' };
 
-export default function TeacherHome() {
-  const at = now();
-  const me = teachers[0];
+export default async function TeacherHome() {
+  const d = await dataset('teacher');
+  const { teacherToday, teacherPendingReports, teacherStats } = d;
+  const at = d.now();
+  const me = d.me;
   const live = teacherToday.find((s) => joinState(at, new Date(s.startsAt), s.durationMin) === 'open');
   const next = live ?? teacherToday.find((s) => new Date(s.startsAt) > at);
   const pending = teacherPendingReports.map((p) => {
@@ -27,10 +28,10 @@ export default function TeacherHome() {
   });
 
   const kpis = [
-    { label: 'طالباتي وطلابي', value: me.studentsCount },
-    { label: 'ساعات آخر 30 يومًا', value: '38.5' },
-    { label: 'نسبة الحضور', value: '%96' },
-    { label: 'تقييم أولياء الأمور', value: me.rating },
+    { label: 'طالباتي وطلابي', value: teacherStats?.students ?? 0 },
+    { label: 'ساعات آخر 30 يومًا', value: teacherStats?.hours30d ?? 0 },
+    { label: 'نسبة الحضور', value: `%${teacherStats?.attendance ?? 100}` },
+    { label: 'تقييم أولياء الأمور', value: teacherStats?.rating ?? '—' },
   ];
 
   return (
@@ -39,17 +40,17 @@ export default function TeacherHome() {
         overlap
         start={<LogoHorizontal tone="hero" />}
         end={
-          <HeaderIconButton href="/teacher/account" label="الإشعارات" badge={2}>
+          <HeaderIconButton href="/teacher/account" label="الإشعارات" badge={teacherStats?.unread}>
             <Bell className="size-6" />
           </HeaderIconButton>
         }
       >
         <div className="mt-3 space-y-1">
-          <p className="text-2xl font-bold">أهلًا، {me.name}</p>
+          <p className="text-2xl font-bold">حبابك، {me?.name ?? d.guardian.name}</p>
           <p className="text-sm text-on-hero/75">{fmtFullDate(at)}</p>
         </div>
         <div className="mt-4 flex gap-2 text-xs font-bold">
-          <span className="rounded-full bg-white/10 px-3 py-1.5">{teacherToday.length} حصص اليوم</span>
+          <span className="rounded-full bg-white/10 px-3 py-1.5">{teacherToday.length ? `${arCount(teacherToday.length, SESSIONS)} اليوم` : 'لا حصص اليوم'}</span>
           {pending.some((p) => p.late) && <span className="rounded-full bg-danger/80 px-3 py-1.5 text-white">تقرير متأخر</span>}
         </div>
       </WaveHeader>
@@ -89,6 +90,7 @@ export default function TeacherHome() {
 
         <section className="space-y-3">
           <SectionTitle>حصص اليوم</SectionTitle>
+          {!teacherToday.length && <Card className="p-4 text-sm text-muted">ما في حصص اليوم. الله يديكِ العافية.</Card>}
           <ol className="relative space-y-3 before:absolute before:inset-y-3 before:start-[1.1rem] before:w-px before:bg-line">
             {teacherToday.map((s) => {
               const start = new Date(s.startsAt);

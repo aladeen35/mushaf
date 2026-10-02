@@ -16,8 +16,15 @@ export const POST = route({ auth: 'optional', limit: { max: 3, windowSec: 3600 }
   });
   const documents: ApplicationInput['documents'] = [];
   for (const kind of DOCS) {
-    const bytes = await fileFromForm(form, kind);
-    if (bytes) documents.push({ kind, bytes });
+    // الشهادات قد تكون أكثر من ملف (مؤهل علمي، ودورات تجويد)
+    const all = form.getAll(kind).filter((f): f is File => typeof f !== 'string');
+    if (all.length > 3) throw badRequest('too_many_files', 'ثلاثة ملفات على الأكثر لكل نوع');
+    for (let i = 0; i < all.length; i++) {
+      const one = new FormData();
+      one.set(kind, all[i]);
+      const bytes = await fileFromForm(one, kind);
+      if (bytes) documents.push({ kind, bytes });
+    }
   }
   return submitApplication(ctx.viewer, { ...fields, documents }, ctx.ip);
 });

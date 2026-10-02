@@ -37,6 +37,7 @@ export type Student = {
   teacherId: string;
   level: string;
   goal: string;
+  /** الاشتراك الفعّال — لا يوجد قبل أول باقة */
   subscription: {
     plan: PlanId;
     duration: Duration;
@@ -46,13 +47,13 @@ export type Student = {
     expiresAt: string;
     days: string[];
     time: string;
-  };
+  } | null;
   plan: MemorizationPlan;
   memorized: Range[];
   current: Range;
 };
 
-export type SessionStatus = 'scheduled' | 'completed' | 'student_absent' | 'teacher_absent' | 'cancelled';
+export type SessionStatus = 'scheduled' | 'completed' | 'student_absent' | 'teacher_absent' | 'excused' | 'technical_issue' | 'cancelled';
 
 export type Session = {
   id: string;
@@ -62,7 +63,7 @@ export type Session = {
   durationMin: number;
   status: SessionStatus;
   reportId?: string;
-  reschedule?: { proposedAt: string; by: 'teacher' | 'guardian'; reason: string };
+  reschedule?: { proposedAt: string; by: 'teacher' | 'guardian'; reason: string; requestId?: string };
 };
 
 export type SegmentType = 'new' | 'near_review' | 'far_review' | 'recitation' | 'test';
@@ -78,7 +79,8 @@ export type Report = {
   teacherId: string;
   attendance: Attendance;
   segments: Segment[];
-  grade: Grade;
+  /** لا تقدير للحصة التي غاب عنها الطالب أو المعلمة */
+  grade: Grade | null;
   guardianNote: string;
   internalNote?: string;
   homework: (Range & { type: SegmentType })[];
@@ -95,6 +97,8 @@ export type Payment = {
   method: PaymentMethod;
   status: PaymentStatus;
   createdAt: string;
+  /** آخر موعد للتحويل قبل أن تتحرّر الأوقات (يمتدّ عند طلب التصحيح) */
+  holdExpiresAt?: string;
   receipt?: { fileName: string; senderName: string; transferDate: string; uploadedAt: string };
   reason?: string;
 };
@@ -109,7 +113,7 @@ export type PaymentAccount = {
   instructions: string;
 };
 
-export type NotificationKind = 'reminder' | 'report' | 'payment' | 'balance' | 'reschedule' | 'teacher';
+export type NotificationKind = 'reminder' | 'report' | 'payment' | 'balance' | 'reschedule' | 'teacher' | 'sharafa';
 
 export type AppNotification = {
   id: string;
@@ -121,6 +125,8 @@ export type AppNotification = {
   href?: string;
   /** إشعار يتطلب ردّاً (قبول/رفض) */
   actionable?: boolean;
+  /** للشرافة: الطالب والجزء الذي أتمّه */
+  meta?: { studentId?: string; juz?: number };
 };
 
 export type TeacherApplication = {

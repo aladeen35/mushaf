@@ -1,11 +1,12 @@
 import Image from 'next/image';
+import { asset } from '@/lib/base';
 import { cn } from '@/lib/cn';
 
 /** الشعار الكامل (المربع الأخضر): البداية وتسجيل الدخول — لا يقل عن 120 بكسل */
 export function LogoFull({ size = 168, className, priority }: { size?: number; className?: string; priority?: boolean }) {
   return (
     <Image
-      src="/brand/logo-full.png"
+      src={asset('/brand/logo-full.png')}
       alt="مآب لتحفيظ القرآن"
       width={size}
       height={size}

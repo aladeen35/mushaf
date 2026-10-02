@@ -1,12 +1,15 @@
 'use client';
 
-import { Check, Pencil, UserRound, UsersRound } from 'lucide-react';
+import { Check, UserRound, UsersRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { PhoneField, SelectField, TextField } from '@/components/ui/Field';
+import { TextField } from '@/components/ui/Field';
+import { api, errorText, IS_LIVE } from '@/lib/api';
 import { CITIES } from '@/lib/cities';
 import { cn } from '@/lib/cn';
+import { ADULT_AGE } from '@/lib/domain/students';
+import { ageFrom } from '@/lib/format';
 
 type Kind = 'guardian' | 'self';
 
@@ -32,8 +35,10 @@ export function OnboardingForm() {
   const router = useRouter();
   const [kind, setKind] = useState<Kind>('guardian');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [city, setCity] = useState('');
+  const [birth, setBirth] = useState('');
   const [terms, setTerms] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [childConsent, setChildConsent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -41,16 +46,37 @@ export function OnboardingForm() {
     <form
       noValidate
       className="space-y-5"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
         const next: Record<string, string> = {};
         if (name.trim().split(/\s+/).length < 2) next.name = 'اكتبي الاسم الأول واسم العائلة';
-        if (email && !/^\S+@\S+\.\S+$/.test(email)) next.email = 'صيغة البريد غير صحيحة';
+        if (kind === 'self' && !birth) next.birth = 'تاريخ الميلاد مطلوب';
+        else if (kind === 'self' && ageFrom(birth, new Date()) < ADULT_AGE) next.birth = 'التسجيل الذاتي من 18 سنة؛ دون ذلك يسجّل ولي الأمر';
         if (!terms) next.terms = 'الموافقة على الشروط وسياسة الخصوصية مطلوبة';
         if (kind === 'guardian' && !childConsent) next.child = 'موافقة ولي الأمر مطلوبة لتسجيل القاصرين';
         setErrors(next);
         if (Object.keys(next).length) return;
-        router.push(kind === 'guardian' ? '/guardian/children/new' : '/guardian/plans');
+        const dest = kind === 'guardian' ? '/guardian/children/new' : '/guardian/plans';
+        if (!IS_LIVE) return router.push(dest);
+        setBusy(true);
+        try {
+          await api('/me/onboarding', {
+            body: {
+              fullName: name.trim(),
+              kind,
+              city: city.trim() || null,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              acceptTerms: true,
+              ...(kind === 'self' ? { self: { birthDate: birth } } : {}),
+            },
+          });
+          // الأدوار الجديدة في كوكيز الجلسة الذي أعاده الخادم
+          router.push(dest);
+          router.refresh();
+        } catch (err) {
+          setErrors({ form: errorText(err) });
+          setBusy(false);
+        }
       }}
     >
       <fieldset>
@@ -91,25 +117,31 @@ export function OnboardingForm() {
         error={errors.name}
         onChange={(e) => setName(e.target.value)}
       />
-      <SelectField id="city" label="المدينة" defaultValue="الرياض">
-        {CITIES.map((c) => (
-          <option key={c}>{c}</option>
-        ))}
-      </SelectField>
       <TextField
-        id="email"
-        label="البريد الإلكتروني (اختياري)"
-        type="email"
-        dir="ltr"
-        autoComplete="email"
-        placeholder="name@example.com"
-        value={email}
-        error={errors.email}
-        onChange={(e) => setEmail(e.target.value)}
-        adornment={<Pencil className="size-4" aria-hidden />}
-        hint="لإرسال الإيصالات والتقارير الشهرية."
+        id="city"
+        label="المدينة"
+        list="cities"
+        placeholder="مثل: الخرطوم، الرياض، لندن"
+        value={city}
+        onChange={(e) => setCity(e.target.value)}
+        hint="المواعيد تُعرض بتوقيت جهازك، ويُعدَّل من الحساب."
       />
-      <PhoneField id="phone" label="رقم الجوال" value="51 234 5678" readOnly hint="تم التحقق منه برمز OTP." />
+      <datalist id="cities">
+        {CITIES.map((c) => (
+          <option key={c} value={c} />
+        ))}
+      </datalist>
+      {kind === 'self' && (
+        <TextField
+          id="birth"
+          label="تاريخ الميلاد"
+          type="date"
+          value={birth}
+          error={errors.birth}
+          onChange={(e) => setBirth(e.target.value)}
+          hint="لاختيار معلمة النساء المناسبة"
+        />
+      )}
 
       <div className="space-y-3 rounded-ctl bg-field p-3.5">
         <Check2 id="terms" checked={terms} onChange={setTerms}>
@@ -126,7 +158,8 @@ export function OnboardingForm() {
         )}
       </div>
 
-      <Button type="submit" block>
+      {errors.form && <p className="rounded-ctl bg-danger/8 px-3 py-2 text-sm text-danger">{errors.form}</p>}
+      <Button type="submit" block disabled={busy}>
         {kind === 'guardian' ? 'متابعة وإضافة الأبناء' : 'متابعة واختيار الباقة'}
       </Button>
     </form>

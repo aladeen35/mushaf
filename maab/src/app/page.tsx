@@ -1,12 +1,15 @@
-import { BadgeCheck, ClipboardCheck, Video } from 'lucide-react';
+import { BadgeCheck, ClipboardCheck, Globe2, Video } from 'lucide-react';
 import Link from 'next/link';
 import { LogoFull } from '@/components/brand/Brand';
+import { NubianBand } from '@/components/sudan/Nubian';
 import { ButtonLink } from '@/components/ui/Button';
+import { IS_LIVE } from '@/lib/api';
 
 const points = [
   { icon: BadgeCheck, text: 'معلمات مجازات، وبيئة نسائية خاصة' },
-  { icon: Video, text: 'حصص مباشرة فردية في أوقاتكم' },
-  { icon: ClipboardCheck, text: 'تقرير حفظ ومراجعة بعد كل حصة' },
+  { icon: Video, text: 'حصص مباشرة فردية في أوقاتكم أينما كنتم' },
+  { icon: ClipboardCheck, text: 'تقرير حفظ ومراجعة بعد كل حصة، وواجب على اللوح' },
+  { icon: Globe2, text: 'الدفع بالجنيه أو الريال أو الدولار حسب بلدكم' },
 ];
 
 export default function Welcome() {
@@ -15,13 +18,17 @@ export default function Welcome() {
       <div className="relative mx-auto flex min-h-dvh max-w-md flex-col overflow-hidden bg-page md:shadow-[0_0_60px_-30px_rgb(var(--shadow-ink)/0.5)]">
         <section className="flex flex-1 flex-col items-center justify-center px-6 pt-14 pb-10 text-center">
           <LogoFull size={176} priority />
-          <h1 className="mt-7 font-display text-[32px] leading-tight font-bold text-brand">أكاديمية مآب</h1>
+          <p className="mt-6 font-display text-lg font-bold text-gold-text">حبابكم عشرة</p>
+          <h1 className="font-display text-[32px] leading-tight font-bold text-brand">أكاديمية مآب</h1>
           <p className="mt-1 flex items-center gap-3 text-sm font-semibold text-gold-text">
             <span aria-hidden className="h-px w-6 bg-gold" />
             لتحفيظ القرآن الكريم عن بُعد
             <span aria-hidden className="h-px w-6 bg-gold" />
           </p>
-          <p className="mt-4 max-w-72 text-[15px] leading-7 text-muted">للأطفال والنساء، بمعلمات فقط، ومتابعة لولي الأمر خطوةً بخطوة.</p>
+          <NubianBand className="mt-4 w-28" />
+          <p className="mt-4 max-w-72 text-[15px] leading-7 text-muted">
+            للأطفال والنساء، بمعلمات فقط، ومتابعة لولي الأمر خطوةً بخطوة — من الخرطوم إلى الرياض ولندن.
+          </p>
         </section>
 
         <section className="maab-hero relative isolate px-6 pt-20 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
@@ -46,7 +53,7 @@ export default function Welcome() {
             ابدأ برقم الجوال
           </ButtonLink>
           <div className="mt-4 flex items-center justify-between text-sm">
-            <Link href="/login?as=student" className="font-semibold text-on-hero/90 underline-offset-4 hover:underline">
+            <Link href="/login/student" className="font-semibold text-on-hero/90 underline-offset-4 hover:underline">
               دخول الطالب برمز
             </Link>
             <Link href="/join" className="font-semibold text-gold underline-offset-4 hover:underline">
@@ -54,14 +61,16 @@ export default function Welcome() {
             </Link>
           </div>
 
-          <nav aria-label="استعراض الواجهات" className="mt-7 border-t border-white/12 pt-4">
-            <p className="text-center text-[11px] text-on-hero/60">نسخة العرض — استعراض الواجهات</p>
-            <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs font-bold">
-              <Link href="/guardian" className="rounded-ctl bg-white/8 py-2 hover:bg-white/14">ولي الأمر</Link>
-              <Link href="/teacher" className="rounded-ctl bg-white/8 py-2 hover:bg-white/14">المعلمة</Link>
-              <Link href="/admin" className="rounded-ctl bg-white/8 py-2 hover:bg-white/14">الإدارة</Link>
-            </div>
-          </nav>
+          {!IS_LIVE && (
+            <nav aria-label="استعراض الواجهات" className="mt-7 border-t border-white/12 pt-4">
+              <p className="text-center text-[11px] text-on-hero/60">نسخة العرض — استعراض الواجهات</p>
+              <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs font-bold">
+                <Link href="/guardian" className="rounded-ctl bg-white/8 py-2 hover:bg-white/14">ولي الأمر</Link>
+                <Link href="/teacher" className="rounded-ctl bg-white/8 py-2 hover:bg-white/14">المعلمة</Link>
+                <Link href="/admin" className="rounded-ctl bg-white/8 py-2 hover:bg-white/14">الإدارة</Link>
+              </div>
+            </nav>
+          )}
         </section>
       </div>
     </div>

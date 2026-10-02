@@ -1,18 +1,20 @@
 import type { Metadata } from 'next';
 import { plan } from '@/lib/domain/billing';
-import { pendingPayments } from '@/lib/demo/data';
-import { now } from '@/lib/demo/queries';
+import { dataset } from '@/lib/data';
 import { formatMoney } from '@/lib/domain/market';
 import { arCount, fmtRelativeDay, fmtTime } from '@/lib/format';
 import { PaymentReview, type ReviewRow } from './PaymentReview';
 
 export const metadata: Metadata = { title: 'التحويلات' };
 
-export default function AdminPayments() {
-  const at = now();
-  const rows: ReviewRow[] = [...pendingPayments]
+export default async function AdminPayments() {
+  const d = await dataset('admin');
+  const at = d.now();
+  const rows: ReviewRow[] = [...d.pendingPayments]
     .sort((a, b) => Date.parse(a.uploadedAt) - Date.parse(b.uploadedAt))
     .map((p) => ({
+      id: p.id,
+      fileId: p.fileId,
       ref: p.ref,
       payer: p.payer,
       student: p.student,
@@ -31,7 +33,7 @@ export default function AdminPayments() {
           {arCount(rows.length, ['إيصال واحد', 'إيصالان', 'إيصالات', 'إيصالًا'])} · الأقدم أولًا · كل قرار يُسجَّل في سجل التدقيق
         </p>
       </div>
-      <PaymentReview rows={rows} />
+      {rows.length ? <PaymentReview rows={rows} /> : <p className="rounded-card bg-card p-5 text-center text-sm text-muted shadow-card">ما في إيصالات بانتظار المراجعة.</p>}
       <p className="text-xs leading-5 text-muted">
         الاعتماد يفعّل الباقة وينشئ الحصص وروابط Meet ويصدر إيصالًا رقميًا. لا يُعدَّل سجل الدفع بعد إنشائه، والاسترداد حركة عكسية مستقلة.
       </p>

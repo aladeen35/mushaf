@@ -1,12 +1,12 @@
-import { BellRing, CalendarSync, ClipboardCheck, Receipt, TriangleAlert, UserRound } from 'lucide-react';
+import { BellRing, CalendarSync, ClipboardCheck, Receipt, Sparkles, TriangleAlert, UserRound } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { RescheduleRequest } from '@/components/features/RescheduleRequest';
 import { Page } from '@/components/shell/AppShell';
 import { WaveHeader } from '@/components/shell/WaveHeader';
 import { cn } from '@/lib/cn';
-import { notifications } from '@/lib/demo/data';
-import { now } from '@/lib/demo/queries';
+import { MarkAllRead } from '@/components/features/MarkAllRead';
+import { dataset } from '@/lib/data';
 import { fmtRelativeDay, fmtTime } from '@/lib/format';
 import type { NotificationKind } from '@/lib/types';
 
@@ -19,21 +19,24 @@ const KIND: Record<NotificationKind, { icon: typeof BellRing; bar: string; tint:
   balance: { icon: TriangleAlert, bar: 'bg-warning', tint: 'bg-warning/14 text-warning' },
   reschedule: { icon: CalendarSync, bar: 'bg-gold', tint: 'bg-gold/14 text-gold-text' },
   teacher: { icon: UserRound, bar: 'bg-brand', tint: 'bg-brand/10 text-brand' },
+  // الشرافة على لوح الخلوة نفسه
+  sharafa: { icon: Sparkles, bar: 'bg-gold', tint: 'lawh' },
 };
 
-export default function Notifications() {
-  const at = now();
+export default async function Notifications() {
+  const d = await dataset('guardian');
+  const at = d.now();
+  const notifications = d.notifications;
   return (
     <>
       <WaveHeader title="الإشعارات" back="/guardian" />
       <Page className="-mt-4 space-y-0">
         <div className="mb-3 flex items-center justify-between text-sm">
           <span className="font-bold text-ink">الأحدث</span>
-          <button type="button" className="text-xs font-bold text-brand">
-            تحديد الكل كمقروء
-          </button>
+          <MarkAllRead disabled={!d.unreadCount()} />
         </div>
-        <ul className="overflow-hidden rounded-card bg-card shadow-card">
+        {!notifications.length && <p className="rounded-card bg-card p-5 text-center text-sm text-muted shadow-card">لسه ما في إشعارات.</p>}
+        <ul className="overflow-hidden rounded-card bg-card shadow-card empty:hidden">
           {notifications.map((n) => {
             const k = KIND[n.kind];
             const Icon = k.icon;

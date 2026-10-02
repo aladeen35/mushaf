@@ -70,6 +70,26 @@ export function defaultTimezone(code: CountryCode, fallback = 'Asia/Riyadh'): st
   return FEATURED.find((c) => c.code === code)?.tz ?? fallback;
 }
 
+const TZ_CITY: Record<string, string> = {
+  'Africa/Khartoum': 'الخرطوم',
+  'Asia/Riyadh': 'الرياض',
+  'Asia/Dubai': 'دبي',
+  'Asia/Qatar': 'الدوحة',
+  'Asia/Muscat': 'مسقط',
+  'Asia/Kuwait': 'الكويت',
+  'Asia/Bahrain': 'المنامة',
+  'Africa/Cairo': 'القاهرة',
+  'Europe/London': 'لندن',
+  'Europe/Dublin': 'دبلن',
+  'America/New_York': 'نيويورك',
+  'America/Toronto': 'تورنتو',
+  'Australia/Sydney': 'سيدني',
+  'Europe/Istanbul': 'إسطنبول',
+};
+
+/** «بتوقيت الخرطوم» — للمناطق غير المعروفة يُعرض اسمها كما هو */
+export const timezoneLabel = (tz: string) => TZ_CITY[tz] ?? tz.split('/').pop()!.replace(/_/g, ' ');
+
 // ——— طرق الدفع ———
 // كلها في الإطلاق تحويلٌ يدوي برقم مرجعي ثم رفع إيصال تراجعه المالية (القسم 6).
 

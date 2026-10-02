@@ -16,7 +16,7 @@ export type ReportSlide = {
   date: string;
   segments: { label: string; range: string; ayahs: number; mistakes: number; page: number; memorized: boolean }[];
   mastery: number;
-  grade: string;
+  grade: string | null;
   attendance: string;
 };
 

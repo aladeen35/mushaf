@@ -1,14 +1,16 @@
 'use client';
 
 import { CalendarOff, Plus, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { DayPills } from '@/components/ui/Choice';
+import { api, errorText, IS_LIVE } from '@/lib/api';
 import { cn } from '@/lib/cn';
 
 type Window = { from: string; to: string };
-type Day = { key: string; day: string; windows: Window[] };
+type Day = { key: string; weekday: number; day: string; windows: Window[] };
 
 const toMin = (t: string) => {
   const [h, m] = t.split(':').map(Number);
@@ -16,9 +18,31 @@ const toMin = (t: string) => {
 };
 
 /** فترات الإتاحة الأسبوعية والاستثناءات — النظام يولّد منها المواعيد ويمنع التعارض */
-export function AvailabilityEditor({ initial }: { initial: Day[] }) {
+export function AvailabilityEditor({ teacherId, initial }: { teacherId: string; initial: Day[] }) {
+  const router = useRouter();
   const [days, setDays] = useState(initial);
   const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const invalid = days.some((d) => d.windows.some((w) => toMin(w.to) - toMin(w.from) < 30));
+
+  const save = async () => {
+    if (!IS_LIVE) return setSaved(true);
+    setBusy(true);
+    setError(undefined);
+    try {
+      await api(`/teachers/${teacherId}/availability`, {
+        method: 'PUT',
+        body: { windows: days.flatMap((d) => d.windows.map((w) => ({ weekday: d.weekday, start: w.from, end: w.to }))) },
+      });
+      setSaved(true);
+      router.refresh();
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setBusy(false);
+    }
+  };
   const active = days.filter((d) => d.windows.length).map((d) => d.key);
 
   const setWindows = (key: string, windows: Window[]) => {
@@ -102,7 +126,8 @@ export function AvailabilityEditor({ initial }: { initial: Day[] }) {
         <p className="text-xs leading-5 text-muted">تُستثنى أيام الإجازة والمرض من المواعيد المتاحة للحجز.</p>
       </Card>
 
-      <Button block onClick={() => setSaved(true)} disabled={days.some((d) => d.windows.some((w) => toMin(w.to) - toMin(w.from) < 30))}>
+      {error && <p className="rounded-ctl bg-danger/8 px-3 py-2 text-sm text-danger">{error}</p>}
+      <Button block onClick={save} disabled={invalid || busy}>
         {saved ? 'حُفظت الأوقات' : 'حفظ الأوقات'}
       </Button>
       <p className="text-center text-xs leading-5 text-muted">

@@ -18,7 +18,7 @@ export function PlanPicker({
   current,
 }: {
   child: string;
-  prices: Record<PlanId, Record<Duration, number>>;
+  prices: Record<PlanId, Partial<Record<Duration, number>>>;
   currency: Currency;
   current?: PlanId;
 }) {
@@ -39,6 +39,7 @@ export function PlanPicker({
         {PLANS.map((p) => {
           const on = p.id === planId;
           const price = prices[p.id][duration];
+          if (price === undefined) return null;
           return (
             <button
               key={p.id}

@@ -5,10 +5,9 @@ import { Card, SectionTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Chip';
 import { BarChart } from '@/components/ui/Progress';
 import { FLAGS } from '@/lib/flags';
-import { adminKpis, adminQueue, riyadh } from '@/lib/demo/data';
-import { now } from '@/lib/demo/queries';
-import { formatMoney, type Currency } from '@/lib/domain/market';
-import { fmtFullDate, fmtRelativeDay, fmtTime } from '@/lib/format';
+import { dataset } from '@/lib/data';
+import { formatMoney, timezoneLabel, type Currency } from '@/lib/domain/market';
+import { currentTz, fmtFullDate, fmtRelativeDay, fmtTime } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'لوحة اليوم' };
 
@@ -20,21 +19,16 @@ const QUEUE = [
   { key: 'lateReports', label: 'تقارير متأخرة', icon: ClipboardX, href: '/admin#schedule', tone: 'text-danger bg-danger/10' },
 ] as const;
 
-const AUDIT = [
-  { who: 'المالية · ريم الشهري', what: 'اعتمدت التحويل MAAB-2026-000141 وفعّلت باقة «منتظمة»', at: riyadh('2026-10-04', '12:52') },
-  { who: 'المشرفة · منيرة العتيبي', what: 'أسندت الطالبة جود الحربي إلى أ. هند القحطاني', at: riyadh('2026-10-04', '11:30') },
-  { who: 'الدعم · سارا القحطاني', what: 'دخلت بحساب ولي أمر بإذن مسجّل — السبب: تعذّر رفع الإيصال', at: riyadh('2026-10-04', '10:05') },
-  { who: 'المالية · ريم الشهري', what: 'طلبت تصحيح الإيصال MAAB-2026-000139: المبلغ غير مطابق', at: riyadh('2026-10-03', '21:14') },
-];
-
-export default function AdminHome() {
-  const at = now();
+export default async function AdminHome() {
+  const d = await dataset('admin');
+  const { adminKpis, adminQueue } = d;
+  const at = d.now();
   const kpis = [
     { label: 'الطلاب النشطون', value: adminKpis.activeStudents },
     { label: 'المعلمات', value: adminKpis.teachers },
     { label: 'الاشتراكات النشطة', value: adminKpis.activeSubscriptions },
     { label: 'تنتهي هذا الأسبوع', value: adminKpis.endingThisWeek },
-    { label: 'إيرادات الشهر', value: (Object.entries(adminKpis.revenueMonth) as [Currency, number][]).map(([c, n]) => formatMoney(n, c)).join(' · ') },
+    { label: 'إيرادات الشهر', value: (Object.entries(adminKpis.revenueMonth) as [Currency, number][]).map(([c, n]) => formatMoney(n, c)).join(' · ') || '—' },
     { label: 'نسبة الحضور', value: `%${adminKpis.attendance}` },
   ];
   const flags = Object.entries(FLAGS);
@@ -44,9 +38,11 @@ export default function AdminHome() {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold text-ink">لوحة اليوم</h1>
-          <p className="text-sm text-muted">{fmtFullDate(at)} · بتوقيت الرياض</p>
+          <p className="text-sm text-muted">
+            {fmtFullDate(at)} · بتوقيت {timezoneLabel(currentTz())}
+          </p>
         </div>
-        <Badge tone="gold">نسخة العرض</Badge>
+        {d.mode === 'demo' && <Badge tone="gold">نسخة العرض</Badge>}
       </div>
 
       <section className="space-y-3">
@@ -86,14 +82,7 @@ export default function AdminHome() {
             <BarChart
               legend="حصص مكتملة"
               unit="حصة"
-              data={[
-                { label: '30 أغس', value: 512 },
-                { label: '6 سبت', value: 548 },
-                { label: '13 سبت', value: 571 },
-                { label: '20 سبت', value: 603 },
-                { label: '27 سبت', value: 640 },
-                { label: 'هذا الأسبوع', value: 188 },
-              ]}
+              data={d.weeklySessions}
             />
           </Card>
         </section>
@@ -101,7 +90,8 @@ export default function AdminHome() {
         <section id="audit" className="space-y-3">
           <SectionTitle>سجل التدقيق</SectionTitle>
           <Card className="divide-y divide-line">
-            {AUDIT.map((a, i) => (
+            {!d.audit.length && <p className="px-4 py-3 text-sm text-muted">لا يظهر السجل إلا لمن يملك صلاحيته.</p>}
+            {d.audit.map((a, i) => (
               <div key={i} className="px-4 py-3">
                 <p className="flex justify-between gap-2 text-xs text-muted">
                   <span className="font-bold text-gold-text">{a.who}</span>

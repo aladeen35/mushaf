@@ -64,7 +64,12 @@ function readCookie(req: Request, name: string): string | undefined {
 
 /** الجلسة من الكوكيز، ثم المستخدم وأدواره الحالية من القاعدة */
 export async function loadViewer(req: Request): Promise<Viewer | null> {
-  const session = await verifySession(readCookie(req, SESSION_COOKIE));
+  return viewerFromToken(readCookie(req, SESSION_COOKIE));
+}
+
+/** للمكوّنات على الخادم: الرمز من cookies() في next/headers */
+export async function viewerFromToken(token: string | undefined): Promise<Viewer | null> {
+  const session = await verifySession(token);
   if (!session) return null;
   return asSystem(null, async (tx) => {
     const [user] = await tx

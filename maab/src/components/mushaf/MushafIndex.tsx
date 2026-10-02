@@ -1,7 +1,7 @@
 import Link from 'next/link';
+import { ParamPanels, ParamTabs } from '@/components/features/ParamPanels';
 import { WaveHeader } from '@/components/shell/WaveHeader';
 import { Card } from '@/components/ui/Card';
-import { cn } from '@/lib/cn';
 import { fmtAyahs } from '@/lib/format';
 import { JUZ, SURAHS, surah } from '@/lib/quran';
 import { JUZ_NAMES, juzOrdinal } from '@/lib/quran/names';
@@ -20,7 +20,39 @@ function Number8({ n }: { n: number }) {
   );
 }
 
-export function MushafIndex({ base, tab, wirdPage }: { base: string; tab: 'surahs' | 'juz'; wirdPage: number }) {
+export function MushafIndex({ base, wirdPage }: { base: string; wirdPage: number }) {
+  const surahList = (
+    <Card className="divide-y divide-line">
+      {SURAHS.map((s) => (
+        <Link key={s.id} href={`${base}/${s.startPage}`} className="flex items-center gap-3 px-3.5 py-2.5 hover:bg-field">
+          <Number8 n={s.id} />
+          <span className="flex-1">
+            <span className="block font-display text-lg leading-tight font-bold text-ink">{s.name}</span>
+            <span className="text-xs text-muted">
+              {s.place} · {fmtAyahs(s.ayahs)}
+            </span>
+          </span>
+          <span className="tabular text-xs text-muted">ص {s.startPage}</span>
+        </Link>
+      ))}
+    </Card>
+  );
+  const juzList = (
+    <Card className="divide-y divide-line">
+      {JUZ.map((j) => (
+        <Link key={j.juz} href={`${base}/${j.page}`} className="flex items-center gap-3 px-3.5 py-3 hover:bg-field">
+          <Number8 n={j.juz} />
+          <span className="flex-1">
+            <span className="block font-bold text-ink">{juzOrdinal(j.juz)}</span>
+            <span className="text-xs text-muted">
+              {JUZ_NAMES[j.juz - 1]} · من {surah(j.surah).name} {j.ayah}
+            </span>
+          </span>
+          <span className="tabular text-xs text-muted">ص {j.page}</span>
+        </Link>
+      ))}
+    </Card>
+  );
   return (
     <>
       <WaveHeader title="المصحف" className="pb-20">
@@ -29,56 +61,15 @@ export function MushafIndex({ base, tab, wirdPage }: { base: string; tab: 'surah
       <main className="relative z-10 -mt-14 space-y-4 px-4">
         <MushafSearch base={base} />
         <ContinueReading base={base} fallback={wirdPage} />
-
-        <nav aria-label="الفهرس" className="grid grid-cols-2 gap-1 rounded-ctl bg-card p-1 shadow-card">
-          {(
-            [
-              ['surahs', 'السور', base],
-              ['juz', 'الأجزاء', `${base}?tab=juz`],
-            ] as const
-          ).map(([k, label, href]) => (
-            <Link
-              key={k}
-              href={href}
-              aria-current={tab === k ? 'page' : undefined}
-              className={cn('rounded-[10px] py-2.5 text-center text-sm font-bold', tab === k ? 'bg-brand text-on-brand' : 'text-muted hover:text-ink')}
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-
-        {tab === 'surahs' ? (
-          <Card className="divide-y divide-line">
-            {SURAHS.map((s) => (
-              <Link key={s.id} href={`${base}/${s.startPage}`} className="flex items-center gap-3 px-3.5 py-2.5 hover:bg-field">
-                <Number8 n={s.id} />
-                <span className="flex-1">
-                  <span className="block font-display text-lg leading-tight font-bold text-ink">{s.name}</span>
-                  <span className="text-xs text-muted">
-                    {s.place} · {fmtAyahs(s.ayahs)}
-                  </span>
-                </span>
-                <span className="tabular text-xs text-muted">ص {s.startPage}</span>
-              </Link>
-            ))}
-          </Card>
-        ) : (
-          <Card className="divide-y divide-line">
-            {JUZ.map((j) => (
-              <Link key={j.juz} href={`${base}/${j.page}`} className="flex items-center gap-3 px-3.5 py-3 hover:bg-field">
-                <Number8 n={j.juz} />
-                <span className="flex-1">
-                  <span className="block font-bold text-ink">{juzOrdinal(j.juz)}</span>
-                  <span className="text-xs text-muted">
-                    {JUZ_NAMES[j.juz - 1]} · من {surah(j.surah).name} {j.ayah}
-                  </span>
-                </span>
-                <span className="tabular text-xs text-muted">ص {j.page}</span>
-              </Link>
-            ))}
-          </Card>
-        )}
+        <ParamTabs
+          param="tab"
+          label="الفهرس"
+          tabs={[
+            { key: 'surahs', label: 'السور', href: base },
+            { key: 'juz', label: 'الأجزاء', href: `${base}?tab=juz` },
+          ]}
+        />
+        <ParamPanels param="tab" panels={{ surahs: surahList, juz: juzList }} />
       </main>
     </>
   );

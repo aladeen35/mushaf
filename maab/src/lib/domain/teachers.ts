@@ -34,7 +34,7 @@ export const REAPPLY_AFTER_DAYS = 90;
 export type RequiredDocument = { key: string; label: string; required: boolean; note?: string };
 
 export const TEACHER_DOCUMENTS: RequiredDocument[] = [
-  { key: 'national_id', label: 'الهوية الوطنية أو الإقامة', required: true, note: 'تخزين خاص لا يراه إلا المشرفة والمدير العام' },
+  { key: 'national_id', label: 'الهوية أو جواز السفر', required: true, note: 'تخزين خاص لا يراه إلا المشرفة والمدير العام' },
   { key: 'ijazah', label: 'إجازة في القرآن أو شهادة حفظ', required: true, note: 'مع اسم المُجيز والرواية' },
   { key: 'degree', label: 'مؤهل علمي شرعي أو تربوي', required: false },
   { key: 'tajweed', label: 'شهادات دورات التجويد', required: false },

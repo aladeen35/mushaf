@@ -4,12 +4,13 @@ import { Page } from '@/components/shell/AppShell';
 import { WaveHeader } from '@/components/shell/WaveHeader';
 import { Card } from '@/components/ui/Card';
 import { dayKey } from '@/lib/format';
-import { now } from '@/lib/demo/queries';
+import { dataset } from '@/lib/data';
 import { AddChildForm } from './AddChildForm';
 
 export const metadata: Metadata = { title: 'إضافة طالب' };
 
-export default function NewChild() {
+export default async function NewChild() {
+  const d = await dataset('guardian');
   return (
     <>
       <WaveHeader title="إضافة طالب" back="/guardian/children" className="pb-20" />
@@ -24,7 +25,7 @@ export default function NewChild() {
         </div>
         <p className="-mt-2 text-center text-xs text-muted">الصورة اختيارية ولا تظهر إلا لكِ وللمعلمة.</p>
         <Card className="p-5">
-          <AddChildForm today={dayKey(now())} />
+          <AddChildForm today={dayKey(d.now())} />
         </Card>
       </Page>
     </>

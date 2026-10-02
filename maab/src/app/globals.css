@@ -44,6 +44,15 @@
   --shadow-ink: 3 41 31;
   --track: #e9e1d0;
 
+  /* لوح الخلوة: خشب مطليّ بالطين، والكتابة بالعَمار (حبر السَّكَن والصمغ) */
+  --wood-from: #ecdcbc;
+  --wood-to: #dcc196;
+  --wood-edge: #b8915c;
+  --wood-ink: #2b1a0e;
+  /* ألوان زخرفة البيوت النوبية للشرافة: نيلي وطوبي إلى جانب الأخضر والذهبي */
+  --nubian-blue: #2e4a7d;
+  --nubian-red: #a84a32;
+
   color-scheme: light;
 }
 
@@ -71,6 +80,12 @@
     --on-hero: #ece6d8;
     --shadow-ink: 0 0 0;
     --track: #1d3b33;
+    --wood-from: #5a4128;
+    --wood-to: #47321f;
+    --wood-edge: #2f2114;
+    --wood-ink: #f3e6cc;
+    --nubian-blue: #8fb0e6;
+    --nubian-red: #e69a85;
     color-scheme: dark;
   }
 }
@@ -98,6 +113,12 @@
   --on-hero: #ece6d8;
   --shadow-ink: 0 0 0;
   --track: #1d3b33;
+  --wood-from: #5a4128;
+  --wood-to: #47321f;
+  --wood-edge: #2f2114;
+  --wood-ink: #f3e6cc;
+  --nubian-blue: #8fb0e6;
+  --nubian-red: #e69a85;
   color-scheme: dark;
 }
 
@@ -120,6 +141,10 @@
   --color-on-hero: var(--on-hero);
   --color-line: var(--line);
   --color-track: var(--track);
+  --color-wood-ink: var(--wood-ink);
+  --color-wood-edge: var(--wood-edge);
+  --color-nubian-blue: var(--nubian-blue);
+  --color-nubian-red: var(--nubian-red);
 
   --font-sans: "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Amiri", "IBM Plex Sans Arabic", serif;
@@ -170,6 +195,29 @@
       radial-gradient(120% 90% at 85% 0%, color-mix(in oklab, var(--hero-from) 90%, var(--brand-gold) 10%) 0%, transparent 60%),
       linear-gradient(160deg, var(--hero-from) 0%, var(--hero-via) 45%, var(--hero-to) 100%);
     color: var(--on-hero);
+  }
+
+  /*
+   * شريط الزخرفة النوبية: مثلثات ومعيّنات كأطر أبواب البيوت النوبية،
+   * بلون يُورَث من currentColor عبر قناع، فيصلح على الأخضر والكريمي.
+   */
+  .nubian-band {
+    height: 10px;
+    background-color: currentColor;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10' viewBox='0 0 20 10'%3E%3Cpath d='M0 10 5 1.5 10 10z'/%3E%3Cpath d='M15 2.5 17.6 6 15 9.5 12.4 6z'/%3E%3C/svg%3E") repeat-x center / 20px 10px;
+  }
+
+  /* لوح الخلوة: سطح طيني فاتح فوق الخشب، بعروق خشب خفيفة */
+  .lawh {
+    background:
+      repeating-linear-gradient(92deg, rgb(0 0 0 / 0.028) 0 1.5px, transparent 1.5px 11px),
+      radial-gradient(120% 80% at 30% 20%, rgb(255 255 255 / 0.18), transparent 60%),
+      linear-gradient(180deg, var(--wood-from), var(--wood-to));
+    color: var(--wood-ink);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--wood-edge) 45%, transparent),
+      inset 0 -6px 0 color-mix(in oklab, var(--wood-edge) 22%, transparent),
+      var(--shadow-card);
   }
 
   .leader {
