@@ -37,10 +37,6 @@ export function fmtTimeRange(start: Date, durationMin: number): string {
   return `${fmtTime(start)} – ${fmtTime(new Date(start.getTime() + durationMin * 60_000))}`;
 }
 
-export function fmtSAR(n: number): string {
-  return `${n.toLocaleString('en-US', { maximumFractionDigits: 2 })} ر.س`;
-}
-
 /**
  * العدد مع المعدود على قواعد العربية: دقيقة، دقيقتان، 3–10 دقائق، 11+ دقيقة.
  * forms = [مفرد، مثنى، جمع 3–10، تمييز 11 فأكثر]

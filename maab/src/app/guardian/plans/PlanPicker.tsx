@@ -6,7 +6,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import { PillRadio } from '@/components/ui/Choice';
 import { cn } from '@/lib/cn';
 import { DURATIONS, PLAN_VALIDITY_DAYS, PLANS, type Duration, type PlanId } from '@/lib/domain/billing';
-import { fmtSAR } from '@/lib/format';
+import { formatMoney, type Currency } from '@/lib/domain/market';
 
 const PER_WEEK = ['', 'مرة أسبوعيًا', 'مرتين أسبوعيًا', 'ثلاث مرات أسبوعيًا'];
 const ROLLOVER = ['', 'حتى حصة واحدة', 'حتى حصتين', 'حتى 3 حصص'];
@@ -14,10 +14,12 @@ const ROLLOVER = ['', 'حتى حصة واحدة', 'حتى حصتين', 'حتى 3
 export function PlanPicker({
   child,
   prices,
+  currency,
   current,
 }: {
   child: string;
   prices: Record<PlanId, Record<Duration, number>>;
+  currency: Currency;
   current?: PlanId;
 }) {
   const [duration, setDuration] = useState<Duration>(45);
@@ -66,8 +68,8 @@ export function PlanPicker({
                   </span>
                 </span>
                 <span className="text-end">
-                  <span className="tabular block text-xl font-bold text-brand">{fmtSAR(price)}</span>
-                  <span className="tabular block text-[11px] text-muted">{fmtSAR(Math.round(price / p.sessions))} للحصة</span>
+                  <span className="tabular block text-xl font-bold text-brand">{formatMoney(price, currency)}</span>
+                  <span className="tabular block text-[11px] text-muted">{formatMoney(Math.round(price / p.sessions), currency)} للحصة</span>
                 </span>
               </div>
               <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-line pt-3 text-xs text-muted">

@@ -8,7 +8,7 @@ import { Card, LeaderRow } from '@/components/ui/Card';
 import { DayPills, PillRadio } from '@/components/ui/Choice';
 import { cn } from '@/lib/cn';
 import { applyCoupon, PAYMENT_HOLD_HOURS } from '@/lib/domain/billing';
-import { fmtSAR } from '@/lib/format';
+import { formatMoney, type Currency } from '@/lib/domain/market';
 
 type Day = 'sat' | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri';
 
@@ -36,6 +36,7 @@ export function BookingForm({
   sessions,
   duration,
   price,
+  currency,
   teachers,
   nextRef,
 }: {
@@ -47,6 +48,7 @@ export function BookingForm({
   sessions: number;
   duration: number;
   price: number;
+  currency: Currency;
   teachers: TeacherOption[];
   nextRef: string;
 }) {
@@ -125,11 +127,11 @@ export function BookingForm({
         <LeaderRow label="الطالب" value={childName} />
         <LeaderRow label="الباقة" value={`${planName} · ${sessions} حصص`} />
         <LeaderRow label="مدة الحصة" value={`${duration} دقيقة`} />
-        <LeaderRow label="السعر" value={fmtSAR(price)} />
-        {coupon && <LeaderRow label={`الكوبون ${coupon}`} value={`− ${fmtSAR(price - total)}`} />}
+        <LeaderRow label="السعر" value={formatMoney(price, currency)} />
+        {coupon && <LeaderRow label={`الكوبون ${coupon}`} value={`− ${formatMoney(price - total, currency)}`} />}
         <div className="mt-2 flex items-center justify-between border-t border-line pt-3">
           <span className="font-bold text-ink">الإجمالي</span>
-          <span className="tabular text-xl font-bold text-brand">{fmtSAR(total)}</span>
+          <span className="tabular text-xl font-bold text-brand">{formatMoney(total, currency)}</span>
         </div>
 
         <form

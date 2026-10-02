@@ -19,9 +19,10 @@ import {
   type PaymentStatus,
   type PlanId,
 } from '@/lib/domain/billing';
-import { ACADEMY, PRICES } from '@/lib/demo/data';
+import { guardian, PAYMENT_ACCOUNTS, PRICES } from '@/lib/demo/data';
+import { formatMoney, paymentMethodsFor } from '@/lib/domain/market';
 import { getPayment, getStudent, now } from '@/lib/demo/queries';
-import { dayKey, fmtDayMonth, fmtSAR, fmtTime } from '@/lib/format';
+import { dayKey, fmtDayMonth, fmtTime } from '@/lib/format';
 import type { Payment } from '@/lib/types';
 import { ReceiptUpload } from './ReceiptUpload';
 
@@ -49,11 +50,15 @@ export default async function PaymentPage({ params, searchParams }: PageProps<'/
       studentId: typeof sp.child === 'string' ? sp.child : 's1',
       plan: planId,
       duration,
-      amount: Number(sp.amount) || PRICES[planId][duration],
+      amount: Number(sp.amount) || PRICES[guardian.currency][planId][duration],
+      currency: guardian.currency,
+      method: paymentMethodsFor(guardian.currency)[0],
       status: 'awaiting_transfer',
       createdAt: at.toISOString(),
     };
   }
+  const pay: Payment = payment;
+  const account = PAYMENT_ACCOUNTS.find((a) => a.method === pay.method)!;
   const student = getStudent(payment.studentId);
   const st = PAYMENT_STATUS[payment.status];
   const stepIdx = STEPS.findIndex((s) => s.status === payment.status);
@@ -112,7 +117,7 @@ export default async function PaymentPage({ params, searchParams }: PageProps<'/
           </div>
           <LeaderRow label="الطالب" value={student?.fullName ?? '—'} />
           <LeaderRow label="الباقة" value={`${plan(payment.plan).name} · ${payment.duration} دقيقة`} />
-          <LeaderRow label="المبلغ" value={fmtSAR(payment.amount)} />
+          <LeaderRow label="المبلغ" value={formatMoney(payment.amount, payment.currency)} />
           {payment.status === 'awaiting_transfer' && (
             <LeaderRow label="آخر موعد للتحويل" value={`${fmtDayMonth(expires)} ${fmtTime(expires)}`} />
           )}
@@ -124,17 +129,17 @@ export default async function PaymentPage({ params, searchParams }: PageProps<'/
               <p className="flex items-center gap-2 font-bold text-ink">
                 <Landmark className="size-5 text-gold-text" aria-hidden />
                 بيانات الحساب
-                {ACADEMY.bank.demo && <Badge tone="neutral">تجريبية</Badge>}
+                <Badge tone="neutral">تجريبية</Badge>
               </p>
               {[
-                ['البنك', ACADEMY.bank.bankName],
-                ['اسم المستفيد', ACADEMY.bank.beneficiary],
-                ['الآيبان', ACADEMY.bank.iban],
+                ['البنك', account.bankName],
+                ['اسم المستفيد', account.accountName],
+                ['رقم الحساب', account.accountNumber],
               ].map(([k, v]) => (
                 <div key={k} className="flex items-center gap-3 rounded-ctl bg-field px-3 py-2.5">
                   <span className="min-w-0 flex-1">
                     <span className="block text-[11px] text-muted">{k}</span>
-                    <span dir={k === 'الآيبان' ? 'ltr' : undefined} className="tabular block truncate text-sm font-bold text-ink">
+                    <span dir={k === 'رقم الحساب' ? 'ltr' : undefined} className="tabular block truncate text-sm font-bold text-ink">
                       {v}
                     </span>
                   </span>

@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { plan } from '@/lib/domain/billing';
 import { pendingPayments } from '@/lib/demo/data';
 import { now } from '@/lib/demo/queries';
-import { arCount, fmtRelativeDay, fmtSAR, fmtTime } from '@/lib/format';
+import { formatMoney } from '@/lib/domain/market';
+import { arCount, fmtRelativeDay, fmtTime } from '@/lib/format';
 import { PaymentReview, type ReviewRow } from './PaymentReview';
 
 export const metadata: Metadata = { title: 'التحويلات' };
@@ -16,7 +17,7 @@ export default function AdminPayments() {
       payer: p.payer,
       student: p.student,
       plan: `${plan(p.plan).name} · ${p.duration} د`,
-      amount: fmtSAR(p.amount),
+      amount: formatMoney(p.amount, p.currency),
       uploaded: `رُفع ${fmtRelativeDay(new Date(p.uploadedAt), at)} ${fmtTime(new Date(p.uploadedAt))}`,
       file: p.file,
       senderName: p.senderName,

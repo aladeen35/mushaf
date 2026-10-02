@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/Chip';
 import { PAYMENT_STATUS, plan } from '@/lib/domain/billing';
 import { payments } from '@/lib/demo/data';
 import { getStudent } from '@/lib/demo/queries';
-import { fmtDayMonth, fmtSAR } from '@/lib/format';
+import { formatMoney } from '@/lib/domain/market';
+import { fmtDayMonth } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'المدفوعات' };
 
@@ -35,7 +36,7 @@ export default function Payments() {
                   </span>
                 </span>
                 <span className="text-end">
-                  <span className="tabular block text-sm font-bold text-ink">{fmtSAR(p.amount)}</span>
+                  <span className="tabular block text-sm font-bold text-ink">{formatMoney(p.amount, p.currency)}</span>
                   <span className="block text-[11px] text-muted">{fmtDayMonth(new Date(p.createdAt))}</span>
                 </span>
                 <Badge tone={st.tone}>{st.label}</Badge>

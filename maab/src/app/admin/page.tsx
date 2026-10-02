@@ -7,7 +7,8 @@ import { BarChart } from '@/components/ui/Progress';
 import { FLAGS } from '@/lib/flags';
 import { adminKpis, adminQueue, riyadh } from '@/lib/demo/data';
 import { now } from '@/lib/demo/queries';
-import { fmtFullDate, fmtRelativeDay, fmtSAR, fmtTime } from '@/lib/format';
+import { formatMoney, type Currency } from '@/lib/domain/market';
+import { fmtFullDate, fmtRelativeDay, fmtTime } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'لوحة اليوم' };
 
@@ -33,7 +34,7 @@ export default function AdminHome() {
     { label: 'المعلمات', value: adminKpis.teachers },
     { label: 'الاشتراكات النشطة', value: adminKpis.activeSubscriptions },
     { label: 'تنتهي هذا الأسبوع', value: adminKpis.endingThisWeek },
-    { label: 'إيرادات الشهر', value: fmtSAR(adminKpis.revenueMonth) },
+    { label: 'إيرادات الشهر', value: (Object.entries(adminKpis.revenueMonth) as [Currency, number][]).map(([c, n]) => formatMoney(n, c)).join(' · ') },
     { label: 'نسبة الحضور', value: `%${adminKpis.attendance}` },
   ];
   const flags = Object.entries(FLAGS);

@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Chip';
 import { ProgressBar } from '@/components/ui/Progress';
 import { LOW_BALANCE, plan } from '@/lib/domain/billing';
-import { PRICES } from '@/lib/demo/data';
+import { guardian, PRICES } from '@/lib/demo/data';
 import { childrenOf } from '@/lib/demo/queries';
 import { arCount, fmtDayMonth, SESSIONS } from '@/lib/format';
 import { PlanPicker } from './PlanPicker';
@@ -47,7 +47,7 @@ export default async function Plans({ searchParams }: PageProps<'/guardian/plans
           الباقة رصيد حصص لطالب واحد صالح 30 يومًا، ولا تُفعَّل إلا بعد اعتماد المالية للتحويل. يمكن شراء أكثر من باقة لأكثر من طالب في طلب واحد.
         </p>
 
-        <PlanPicker child={child.id} prices={PRICES} current={sub.plan} />
+        <PlanPicker child={child.id} prices={PRICES[guardian.currency]} currency={guardian.currency} current={sub.plan} />
         <p className="text-center text-[11px] text-muted">الأسعار المعروضة تجريبية، وتحدّدها الإدارة من لوحة التحكم.</p>
       </Page>
     </>

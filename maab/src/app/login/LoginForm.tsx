@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { PhoneField, TextField } from '@/components/ui/Field';
-import { normalizeSaudiMobile } from '@/lib/phone';
+import { parsePhone } from '@/lib/phone';
 
 export function LoginForm({ asStudent }: { asStudent: boolean }) {
   const router = useRouter();
@@ -51,7 +51,7 @@ export function LoginForm({ asStudent }: { asStudent: boolean }) {
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
-        const phone = normalizeSaudiMobile(value);
+        const phone = parsePhone(value, 'SA')?.e164.replace('+966', '');
         if (!phone) return setError('الرقم غير صحيح، أدخلي جوالًا سعوديًا يبدأ بـ5');
         router.push(`/login/verify?phone=${phone}`);
       }}

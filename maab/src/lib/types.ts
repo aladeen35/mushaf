@@ -1,4 +1,5 @@
 import type { PaymentStatus, PlanId, Duration } from './domain/billing';
+import type { Currency, PaymentMethod } from './domain/market';
 import type { Grade, Mistakes } from './domain/mastery';
 import type { ApplicationStatus } from './domain/teachers';
 import type { AyahRef } from './quran';
@@ -90,10 +91,22 @@ export type Payment = {
   plan: PlanId;
   duration: Duration;
   amount: number;
+  currency: Currency;
+  method: PaymentMethod;
   status: PaymentStatus;
   createdAt: string;
   receipt?: { fileName: string; senderName: string; transferDate: string; uploadedAt: string };
   reason?: string;
+};
+
+export type PaymentAccount = {
+  method: PaymentMethod;
+  currency: Currency;
+  title: string;
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  instructions: string;
 };
 
 export type NotificationKind = 'reminder' | 'report' | 'payment' | 'balance' | 'reschedule' | 'teacher';

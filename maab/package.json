@@ -12,30 +12,46 @@
     "test": "vitest run",
     "quran:data": "node scripts/build-quran-data.mjs",
     "brand:icons": "node scripts/build-brand-assets.mjs",
-    "content:adhkar": "node scripts/build-adhkar.mjs"
+    "content:adhkar": "node scripts/build-adhkar.mjs",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx --env-file-if-exists=.env.local scripts/db/migrate.ts",
+    "db:migrate:local": "tsx --env-file-if-exists=.env.local scripts/db/migrate.ts --local",
+    "db:seed": "tsx --env-file-if-exists=.env.local scripts/db/seed.ts",
+    "db:reset:local": "tsx --env-file-if-exists=.env.local scripts/db/reset-local.ts",
+    "worker": "tsx --env-file-if-exists=.env.local src/worker/index.ts"
   },
   "dependencies": {
     "@fontsource/amiri": "^5.3.0",
     "@fontsource/amiri-quran": "^5.3.0",
     "@fontsource/ibm-plex-sans-arabic": "^5.3.0",
     "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.3",
+    "jose": "^6.2.12",
+    "libphonenumber-js": "^1.13.14",
     "lucide-react": "^1.50.0",
     "next": "^16.3.8",
+    "nodemailer": "^10.0.13",
+    "pg-boss": "^12.35.1",
+    "postgres": "^3.4.9",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "server-only": "^0.0.1",
-    "tailwind-merge": "^3.7.0"
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.6.4",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "drizzle-kit": "^0.31.11",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.8",
     "postcss": "^8.5.28",
     "sharp": "^0.35.5",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vitest": "^5.0.3"
   }

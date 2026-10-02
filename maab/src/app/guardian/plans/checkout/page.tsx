@@ -3,7 +3,7 @@ import { pickChild } from '@/components/features/ChildTabs';
 import { Page } from '@/components/shell/AppShell';
 import { WaveHeader } from '@/components/shell/WaveHeader';
 import { DURATIONS, paymentReference, plan, PLANS, type Duration, type PlanId } from '@/lib/domain/billing';
-import { payments, PRICES, teachers } from '@/lib/demo/data';
+import { guardian, payments, PRICES, teachers } from '@/lib/demo/data';
 import { childrenOf, now } from '@/lib/demo/queries';
 import { ageFrom } from '@/lib/format';
 import { BookingForm, type TeacherOption } from './BookingForm';
@@ -48,7 +48,8 @@ export default async function Checkout({ searchParams }: PageProps<'/guardian/pl
           perWeek={tier.perWeek}
           sessions={tier.sessions}
           duration={duration}
-          price={PRICES[planId][duration]}
+          price={PRICES[guardian.currency][planId][duration]}
+          currency={guardian.currency}
           teachers={options}
           nextRef={paymentReference(2026, lastSeq + 1)}
         />
