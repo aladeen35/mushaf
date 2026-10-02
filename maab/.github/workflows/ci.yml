@@ -1,0 +1,45 @@
+# الفحص على كل دفع وطلب دمج: ESLint وTypeScript، والاختبارات كلها على Postgres 16
+# حقيقي (سياسات RLS وقيود EXCLUDE ومسار /api/v1 كاملاً)، ثم بناء النسخة الحية.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: maab
+          POSTGRES_PASSWORD: maab
+          POSTGRES_DB: maab_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U maab" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://maab:maab@localhost:5432/maab_test
+      # سرّ للاختبار فقط؛ سرّ الإنتاج في متغيرات بيئة الخادم
+      AUTH_SECRET: ci-only-secret-not-for-production-0123456789
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - name: بناء النسخة الحية
+        run: npm run build
+        env:
+          NEXT_PUBLIC_MAAB_MODE: live
