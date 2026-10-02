@@ -1,0 +1,225 @@
+@import "tailwindcss";
+
+/* dark: يتبع الجهاز ما لم يُفرض وضع بـ data-theme */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
+
+/*
+ * الهوية البصرية لأكاديمية مآب — القسم 16 من المواصفات.
+ * الألوان مستخرجة من الشعار: أخضر مآب الداكن أساساً، والذهبي للأطر
+ * والتمييز فقط، والكريمي خلفيةً لكل الصفحات.
+ * الوضع الداكن تلقائي حسب الجهاز، ويُفرض بـ data-theme على <html>.
+ */
+:root {
+  --brand-green: #0e3d31;
+  --brand-green-deep: #03291f;
+  --brand-green-soft: #2f5f52;
+  --brand-gold: #c9a35f;
+  --brand-gold-text: #7a5c28;
+  --surface-page: #f5efe2;
+  --surface-card: #fffdf8;
+  --text-primary: #1c2b26;
+  --text-muted: #5e6b65;
+  --status-success: #2e7d5b;
+  --status-warning: #b7791f;
+  --status-danger: #b3261e;
+
+  /* مشتقّات للواجهة */
+  --on-brand: #fffdf8;
+  --surface-field: #f6f1e6;
+  --surface-sunken: #efe7d6;
+  --line: #e6dcc8;
+  --hero-from: #14503f;
+  --hero-via: #0e3d31;
+  --hero-to: #03291f;
+  --on-hero: #fffdf8;
+  --shadow-ink: 3 41 31;
+  --track: #e9e1d0;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --brand-green: #7fb8a4;
+    --brand-green-deep: #071712;
+    --brand-green-soft: #a9cfc1;
+    --brand-gold: #e6c98f;
+    --brand-gold-text: #e6c98f;
+    --surface-page: #0b1f1a;
+    --surface-card: #12302a;
+    --text-primary: #ece6d8;
+    --text-muted: #a8b3ad;
+    --status-success: #6fcf9f;
+    --status-warning: #f2b84b;
+    --status-danger: #f2938c;
+    --on-brand: #071712;
+    --surface-field: #0f2924;
+    --surface-sunken: #0e2621;
+    --line: #224139;
+    --hero-from: #17382f;
+    --hero-via: #10291f;
+    --hero-to: #071712;
+    --on-hero: #ece6d8;
+    --shadow-ink: 0 0 0;
+    --track: #1d3b33;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --brand-green: #7fb8a4;
+  --brand-green-deep: #071712;
+  --brand-green-soft: #a9cfc1;
+  --brand-gold: #e6c98f;
+  --brand-gold-text: #e6c98f;
+  --surface-page: #0b1f1a;
+  --surface-card: #12302a;
+  --text-primary: #ece6d8;
+  --text-muted: #a8b3ad;
+  --status-success: #6fcf9f;
+  --status-warning: #f2b84b;
+  --status-danger: #f2938c;
+  --on-brand: #071712;
+  --surface-field: #0f2924;
+  --surface-sunken: #0e2621;
+  --line: #224139;
+  --hero-from: #17382f;
+  --hero-via: #10291f;
+  --hero-to: #071712;
+  --on-hero: #ece6d8;
+  --shadow-ink: 0 0 0;
+  --track: #1d3b33;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-brand: var(--brand-green);
+  --color-brand-deep: var(--brand-green-deep);
+  --color-brand-soft: var(--brand-green-soft);
+  --color-gold: var(--brand-gold);
+  --color-gold-text: var(--brand-gold-text);
+  --color-page: var(--surface-page);
+  --color-card: var(--surface-card);
+  --color-field: var(--surface-field);
+  --color-sunken: var(--surface-sunken);
+  --color-ink: var(--text-primary);
+  --color-muted: var(--text-muted);
+  --color-success: var(--status-success);
+  --color-warning: var(--status-warning);
+  --color-danger: var(--status-danger);
+  --color-on-brand: var(--on-brand);
+  --color-on-hero: var(--on-hero);
+  --color-line: var(--line);
+  --color-track: var(--track);
+
+  --font-sans: "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Amiri", "IBM Plex Sans Arabic", serif;
+  --font-quran: "Amiri Quran", "Amiri", serif;
+
+  /* المربع ذو الزوايا الدائرية في الشعار: 16 للبطاقات و12 للأزرار والحقول */
+  --radius-card: 16px;
+  --radius-ctl: 12px;
+
+  --shadow-card: 0 1px 2px rgb(var(--shadow-ink) / 0.05), 0 10px 28px -16px rgb(var(--shadow-ink) / 0.28);
+  --shadow-lift: 0 2px 6px rgb(var(--shadow-ink) / 0.08), 0 18px 40px -18px rgb(var(--shadow-ink) / 0.4);
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--surface-page);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-feature-settings: "kern";
+    min-height: 100dvh;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--brand-gold);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--brand-gold) 35%, transparent);
+  }
+}
+
+@layer components {
+  /* النمط الهندسي الخافت خلف الاسم في الشعار — رأس الصفحات فقط، بشفافية 4% تقريباً */
+  .maab-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23fffdf8' stroke-width='1'%3E%3Cpath d='M32 6l7.5 18.5L58 32l-18.5 7.5L32 58l-7.5-18.5L6 32l18.5-7.5z'/%3E%3Cpath d='M13.6 13.6h36.8v36.8H13.6z' transform='rotate(45 32 32)'/%3E%3Cpath d='M13.6 13.6h36.8v36.8H13.6z'/%3E%3Ccircle cx='32' cy='32' r='6'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 64px 64px;
+    opacity: 0.05;
+  }
+
+  .maab-hero {
+    background:
+      radial-gradient(120% 90% at 85% 0%, color-mix(in oklab, var(--hero-from) 90%, var(--brand-gold) 10%) 0%, transparent 60%),
+      linear-gradient(160deg, var(--hero-from) 0%, var(--hero-via) 45%, var(--hero-to) 100%);
+    color: var(--on-hero);
+  }
+
+  .leader {
+    flex: 1 1 auto;
+    min-width: 1.5rem;
+    border-bottom: 1.5px dotted var(--line);
+    translate: 0 -0.3em;
+  }
+
+  .quran-line {
+    text-align: justify;
+    text-align-last: justify;
+    white-space: nowrap;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .safe-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+dialog::backdrop {
+  background: color-mix(in oklab, var(--hero-to) 45%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

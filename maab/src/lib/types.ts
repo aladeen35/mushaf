@@ -1,0 +1,123 @@
+import type { PaymentStatus, PlanId, Duration } from './domain/billing';
+import type { Grade, Mistakes } from './domain/mastery';
+import type { ApplicationStatus } from './domain/teachers';
+import type { AyahRef } from './quran';
+
+export type Gender = 'female' | 'male';
+
+export type Teacher = {
+  id: string;
+  name: string;
+  /** وصف قصير يظهر لولي الأمر */
+  headline: string;
+  riwayah: string;
+  rating: number;
+  categories: ('children' | 'women')[];
+  studentsCount: number;
+};
+
+export type Range = { from: AyahRef; to: AyahRef };
+
+export type MemorizationPlan = {
+  direction: 'nas_to_baqarah' | 'baqarah_to_nas';
+  /** الهدف الأسبوعي بالآيات */
+  weeklyTarget: number;
+  newRatio: number;
+};
+
+export type Student = {
+  id: string;
+  name: string;
+  fullName: string;
+  gender: Gender;
+  birthDate: string;
+  /** ولي أمر يدير الملف، أو الطالبة البالغة ولية أمر نفسها */
+  guardianId: string;
+  teacherId: string;
+  level: string;
+  goal: string;
+  subscription: {
+    plan: PlanId;
+    duration: Duration;
+    total: number;
+    remaining: number;
+    startedAt: string;
+    expiresAt: string;
+    days: string[];
+    time: string;
+  };
+  plan: MemorizationPlan;
+  memorized: Range[];
+  current: Range;
+};
+
+export type SessionStatus = 'scheduled' | 'completed' | 'student_absent' | 'teacher_absent' | 'cancelled';
+
+export type Session = {
+  id: string;
+  studentId: string;
+  teacherId: string;
+  startsAt: string;
+  durationMin: number;
+  status: SessionStatus;
+  reportId?: string;
+  reschedule?: { proposedAt: string; by: 'teacher' | 'guardian'; reason: string };
+};
+
+export type SegmentType = 'new' | 'near_review' | 'far_review' | 'recitation' | 'test';
+
+export type Segment = Range & { type: SegmentType; mistakes: Mistakes; note?: string };
+
+export type Attendance = 'present' | 'late' | 'absent' | 'teacher_absent';
+
+export type Report = {
+  id: string;
+  sessionId: string;
+  studentId: string;
+  teacherId: string;
+  attendance: Attendance;
+  segments: Segment[];
+  grade: Grade;
+  guardianNote: string;
+  internalNote?: string;
+  homework: (Range & { type: SegmentType })[];
+  writtenAt: string;
+};
+
+export type Payment = {
+  ref: string;
+  studentId: string;
+  plan: PlanId;
+  duration: Duration;
+  amount: number;
+  status: PaymentStatus;
+  createdAt: string;
+  receipt?: { fileName: string; senderName: string; transferDate: string; uploadedAt: string };
+  reason?: string;
+};
+
+export type NotificationKind = 'reminder' | 'report' | 'payment' | 'balance' | 'reschedule' | 'teacher';
+
+export type AppNotification = {
+  id: string;
+  kind: NotificationKind;
+  title: string;
+  body: string;
+  at: string;
+  read: boolean;
+  href?: string;
+  /** إشعار يتطلب ردّاً (قبول/رفض) */
+  actionable?: boolean;
+};
+
+export type TeacherApplication = {
+  id: string;
+  name: string;
+  city: string;
+  riwayah: string;
+  experienceYears: number;
+  submittedAt: string;
+  status: ApplicationStatus;
+  missing?: string;
+  interviewAt?: string;
+};
