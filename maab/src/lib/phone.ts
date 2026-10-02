@@ -8,7 +8,7 @@ export function westernDigits(s: string): string {
   return s.replace(/[٠-٩]/g, (d) => String(EASTERN.indexOf(d))).replace(/[۰-۹]/g, (d) => String(PERSIAN.indexOf(d)));
 }
 
-export type ParsedPhone = { e164: string; country: CountryCode | undefined; national: string };
+export type ParsedPhone = { e164: string; country: CountryCode; national: string };
 
 /**
  * رقم جوال دولي: يُقبل بمفتاح الدولة (+249…، 00249…) أو محلياً بحسب الدولة
@@ -19,7 +19,8 @@ export function parsePhone(input: string, defaultCountry: CountryCode): ParsedPh
   if (!cleaned) return null;
   const p = parsePhoneNumberFromString(cleaned, defaultCountry);
   if (!p || !p.isValid()) return null;
-  return { e164: p.number, country: p.country, national: p.formatNational() };
+  // الأرقام غير الجغرافية بلا دولة تُنسب للدولة المختارة في النموذج
+  return { e164: p.number, country: p.country ?? defaultCountry, national: p.formatNational() };
 }
 
 /** عرض الرقم بصيغة دولية مقروءة: +249 91 234 5678 */

@@ -122,7 +122,11 @@ export const users = pgTable(
     currency: currency().notNull().default('SAR'),
     locale: text().notNull().default('ar'),
     googleSub: text(),
+    /** حساب فرعي لطالب قاصر يدخل برمز من ولي أمره، بلا جوال ولا بريد */
+    studentLogin: boolean().notNull().default(false),
     avatarFileId: uuid(),
+    /** تفضيلات الإشعار لكل حدث وقناة: {"session_reminder_24h": {"whatsapp": false}} */
+    notificationPrefs: jsonb().$type<Record<string, Partial<Record<'whatsapp' | 'email' | 'sms' | 'push', boolean>>>>().notNull().default({}),
     lastLoginAt: ts(),
     ...timestamps,
     ...softDelete,
@@ -131,7 +135,10 @@ export const users = pgTable(
     uniqueIndex('users_phone_uq').on(t.phone).where(sql`${t.deletedAt} is null`),
     uniqueIndex('users_email_uq').on(sql`lower(${t.email})`).where(sql`${t.deletedAt} is null`),
     uniqueIndex('users_google_uq').on(t.googleSub),
-    check('users_identifier_ck', sql`${t.phone} is not null or ${t.email} is not null or ${t.googleSub} is not null`),
+    check(
+      'users_identifier_ck',
+      sql`${t.phone} is not null or ${t.email} is not null or ${t.googleSub} is not null or ${t.studentLogin}`,
+    ),
     check('users_phone_e164_ck', sql`${t.phone} is null or ${t.phone} ~ '^\\+[1-9][0-9]{6,14}$'`),
   ],
 );
@@ -226,7 +233,11 @@ export const students = pgTable(
     ...timestamps,
     ...softDelete,
   },
-  (t) => [index('students_teacher_idx').on(t.teacherId), check('students_birth_ck', sql`${t.birthDate} > '1920-01-01'`)],
+  (t) => [
+    index('students_teacher_idx').on(t.teacherId),
+    uniqueIndex('students_login_code_uq').on(t.loginCodeHash),
+    check('students_birth_ck', sql`${t.birthDate} > '1920-01-01'`),
+  ],
 );
 
 export const guardianStudents = pgTable(
@@ -700,6 +711,8 @@ export const sessions = pgTable(
   {
     id: id(),
     subscriptionId: uuid().references(() => subscriptions.id),
+    /** بند الطلب الذي حُجزت له الحصة؛ عند اعتماد الدفع تُربط باشتراكه */
+    orderItemId: uuid().references(() => orderItems.id),
     studentId: uuid()
       .notNull()
       .references(() => students.id),
@@ -718,6 +731,7 @@ export const sessions = pgTable(
   (t) => [
     index('sessions_teacher_idx').on(t.teacherId, t.startsAt),
     index('sessions_student_idx').on(t.studentId, t.startsAt),
+    index('sessions_order_item_idx').on(t.orderItemId),
     check('sessions_range_ck', sql`${t.endsAt} > ${t.startsAt}`),
   ],
 );
@@ -1135,4 +1149,25 @@ export const jobs = pgTable(
     createdAt: ts().notNull().defaultNow(),
   },
   (t) => [index('jobs_status_idx').on(t.status, t.runAt)],
+);
+
+/**
+ * مفاتيح منع التكرار (القسم 14): الحجز والدفع يقبلان Idempotency-Key، فإن
+ * ضُغط الزر مرتين أعاد الخادم الاستجابة الأولى نفسها بدل إنشاء طلب ثانٍ.
+ */
+export const idempotencyKeys = pgTable(
+  'idempotency_keys',
+  {
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    key: text().notNull(),
+    route: text().notNull(),
+    /** بصمة جسم الطلب: المفتاح نفسه بجسم مختلف يُرفض */
+    requestHash: text().notNull(),
+    status: smallint(),
+    response: jsonb(),
+    createdAt: ts().notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.key] }), index('idempotency_created_idx').on(t.createdAt)],
 );

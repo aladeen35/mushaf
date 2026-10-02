@@ -15,6 +15,13 @@
       "when": 1790960013566,
       "tag": "0001_security",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790961297846,
+      "tag": "0002_api_support",
+      "breakpoints": true
     }
   ]
 }
