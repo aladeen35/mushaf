@@ -402,6 +402,13 @@
         </section>
 
         <section class="card">
+          <h2>رسائل الناس <span class="muted" id="feedback-count"></span></h2>
+          <p class="muted">ما يُرسل من «اتصل بنا» في التطبيق، ومعه وسيلة الردّ إن تركها صاحبها.</p>
+          <ul class="list" id="feedback"></ul>
+          <p class="muted" id="feedback-empty" hidden>لا رسائل بعد.</p>
+        </section>
+
+        <section class="card">
           <h2>التنزيلات</h2>
           <div class="stat" id="downloads">—</div>
           <p class="muted">مرّةً نُزّل فيها التطبيق من صفحة الهبوط</p>
@@ -575,8 +582,63 @@
           })
         }
 
+        var FEEDBACK_TAG = { idea: 'اقتراح', bug: 'مشكلة', thanks: 'شكرٌ ودعاء', other: 'أخرى' }
+        var CHANNEL_TAG = { play: 'من المتجر', direct: 'من الصفحة', web: 'من المتصفّح', beta: 'من التجريبية' }
+
+        function renderFeedback(entries) {
+          var list = $('feedback')
+          list.textContent = ''
+          $('feedback-empty').hidden = entries.length > 0
+          $('feedback-count').textContent = entries.length ? '(' + arabic(entries.length) + ')' : ''
+          entries.forEach(function (entry) {
+            var item = document.createElement('li')
+            item.className = 'item'
+            var text = document.createElement('div')
+            var tag = document.createElement('span')
+            tag.className = 'tag'
+            tag.textContent = FEEDBACK_TAG[entry.kind] || 'أخرى'
+            var body = document.createElement('p')
+            body.textContent = entry.message
+            body.style.whiteSpace = 'pre-wrap'
+            var meta = document.createElement('time')
+            meta.textContent =
+              when(entry.at) +
+              ' • ' + (CHANNEL_TAG[entry.channel] || '') +
+              (entry.version ? ' • النسخة ' + entry.version : '') +
+              (entry.reply ? ' • للردّ: ' + entry.reply : ' • بلا وسيلة ردّ')
+            text.appendChild(tag)
+            text.appendChild(body)
+            text.appendChild(meta)
+            var remove = document.createElement('button')
+            remove.className = 'btn danger'
+            remove.type = 'button'
+            remove.textContent = 'حذف'
+            remove.addEventListener('click', function () {
+              if (!confirm('أتحذف هذه الرسالة؟')) return
+              remove.disabled = true
+              api('DELETE', '/admin/feedback/' + entry.id)
+                .then(load)
+                .catch(function (error) {
+                  remove.disabled = false
+                  alert(error.message)
+                })
+            })
+            item.appendChild(text)
+            item.appendChild(remove)
+            list.appendChild(item)
+          })
+        }
+
         function load() {
           return Promise.all([
+            api('GET', '/admin/feedback')
+              .then(function (data) {
+                renderFeedback(data.feedback || [])
+              })
+              // خادمٌ أقدم بلا «اتصل بنا»: يبقى القسم فارغاً
+              .catch(function () {
+                renderFeedback([])
+              }),
             api('GET', '/admin/messages').then(function (data) {
               render(data.messages || [])
             }),
