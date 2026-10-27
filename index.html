@@ -290,6 +290,43 @@
         color: rgb(242 239 228 / 62%);
       }
 
+      /* ===== خلود: موسوعة الأنبياء (رابط فرعي) ===== */
+      .sister {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 22px;
+        align-items: center;
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 20px 22px;
+        color: #f2efe4;
+        background: linear-gradient(150deg, var(--brand-700), var(--brand-900));
+        border: 1px solid var(--gold);
+        border-radius: 22px;
+      }
+      .sister img {
+        width: 150px;
+        max-width: 100%;
+        background: var(--paper);
+        border-radius: 16px;
+      }
+      .sister h3 {
+        margin: 0 0 6px;
+        font-family: var(--serif);
+        font-size: 26px;
+        color: var(--gold);
+      }
+      .sister p {
+        margin: 0 0 14px;
+        font-size: 14.5px;
+        line-height: 1.8;
+        color: rgb(242 239 228 / 85%);
+      }
+      @media (max-width: 560px) {
+        .sister { grid-template-columns: 1fr; text-align: center; }
+        .sister img { margin: 0 auto; width: 130px; }
+      }
+
       /* ===== الأقسام ===== */
 
       section.block {
@@ -707,6 +744,22 @@
         <p class="hero-note">أندرويد ٧ فأعلى • نحو ١٠ ميجابايت • بلا إعلانات ولا حسابات</p>
       </div>
     </header>
+
+    <section class="block" id="khulood">
+      <div class="wrap">
+        <div class="sister">
+          <img src="./khulood/img/khulood-logo.webp" alt="شعار خلود — لتخليد ذكرى الأنبياء والتابعين" width="150" height="150" loading="lazy" />
+          <div>
+            <h3>خلود — موسوعة الأنبياء والصالحين</h3>
+            <p>كتاب إلكتروني تفاعلي من بداية الخلق إلى العصر الحاضر: قرابة ٧٠٠ قصة تُعرض كل منها بلون مصدرها (القرآن والسنة، والإسرائيليات، وكتب التاريخ، والتراث المسيحي)، مع كتاب تُقلَّب صفحاته، والاستماع، وشجرة الأنساب، والأطلس، والمقارنة بين الروايات.</p>
+            <a class="btn btn-primary" href="./khulood/">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h7v13H4z"/><path d="M13 5.5h7v13h-7z"/></svg>
+              افتح موسوعة خلود
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="block">
       <div class="wrap">

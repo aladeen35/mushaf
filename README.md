@@ -11,7 +11,7 @@
 
 ### 🌐 [افتح بُشرى في المتصفّح](https://aladeen35.github.io/mushaf/app/)
 
-[صفحة التطبيق](https://aladeen35.github.io/mushaf/) • [سجلّ النسخ](https://aladeen35.github.io/mushaf/#changelog) • [ملصق للطباعة](https://aladeen35.github.io/mushaf/assets/bushra-poster.pdf)
+[صفحة التطبيق](https://aladeen35.github.io/mushaf/) • [📖 خلود: موسوعة الأنبياء](https://aladeen35.github.io/mushaf/khulood/) • [سجلّ النسخ](https://aladeen35.github.io/mushaf/#changelog) • [ملصق للطباعة](https://aladeen35.github.io/mushaf/assets/bushra-poster.pdf)
 
 </div>
 
