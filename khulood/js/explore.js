@@ -1,6 +1,7 @@
 /* explore: home, compare, genealogy tree + timeline, atlas, saved, search */
 (function () {
   const { $, $$, esc, CATS, chapters, chapterById, storyIndex, rich, store } = Core;
+  const APK_URL = "https://aladeen35.github.io/mushaf/khulood/khulood-1.0.0.apk";
   const X = window.EXTRA || { compare: [], tree: { nodes: [], edges: [], timeline: [] }, places: [] };
 
   /* ---------- home ---------- */
@@ -18,6 +19,7 @@
         <div class="cta">
           <a class="btn gold" href="#book-${(last || chapters[0] || {}).id || "ch01"}">📖 افتح الكتاب</a>
           <a class="btn light" href="#read-${(last || chapters[0] || {}).id || "ch01"}">📰 القراءة كمدونة</a>
+          ${window.AndroidTTS ? "" : `<a class="btn light" href="${APK_URL}" target="_blank" rel="noopener">⬇ تطبيق أندرويد</a>`}
         </div>
       </div>
       <div class="hero-cover"><img src="img/khulood-logo.webp" alt="شعار خلود — لتخليد ذكرى الأنبياء والتابعين"><div class="s">موسوعة الأنبياء والرسل والصالحين<br>ترتيب م. علاء الدين البشري عمر</div></div>

@@ -68,7 +68,7 @@
   Core.initFirebase();
   route();
 
-  if ("serviceWorker" in navigator && location.protocol === "https:" && !/claude|claudeusercontent/.test(location.hostname)) {
+  if ("serviceWorker" in navigator && location.protocol === "https:" && !window.AndroidTTS && !/claude|claudeusercontent|androidplatform/.test(location.hostname)) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
 })();
