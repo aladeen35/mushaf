@@ -7,11 +7,13 @@
 قارئ القرآن الكريم بتخطيط مصحف المدينة النبوية — مع الاستماع والتتبّع المباشر
 كلمة بكلمة، ومواقيت الصلاة والأذان، والرقية الشرعية، والأذكار وأحاديث الصحيحين.
 
-### ⬇️ [تنزيل التطبيق لأندرويد](https://bushra-sync.aladeen35.workers.dev/dl?v=2.8.0)
+### ▶️ [بشرى على Google Play](https://play.google.com/store/apps/details?id=sa.mushaf.albushra)
+
+**المعرّف:** `sa.mushaf.albushra` • [انضم للمختبرين (Google Group)](https://groups.google.com/g/albushratc) • [رابط الاختبار](https://play.google.com/apps/testing/sa.mushaf.albushra) • [ملف APK مباشر](https://bushra-sync.aladeen35.workers.dev/dl?v=2.8.0)
 
 ### 🌐 [افتح بُشرى في المتصفّح](https://aladeen35.github.io/mushaf/app/)
 
-[صفحة التطبيق](https://aladeen35.github.io/mushaf/) • [📖 خلود: موسوعة الأنبياء](https://aladeen35.github.io/mushaf/khulood/) ([⬇️ APK](https://aladeen35.github.io/mushaf/khulood/khulood-1.0.0.apk)) • [سجلّ النسخ](https://aladeen35.github.io/mushaf/#changelog) • [ملصق للطباعة](https://aladeen35.github.io/mushaf/assets/bushra-poster.pdf)
+[صفحة التطبيق](https://aladeen35.github.io/mushaf/) • [📖 خلود: موسوعة الأنبياء](https://aladeen35.github.io/mushaf/khulood/) ([⬇️ APK](https://aladeen35.github.io/mushaf/khulood/khulood-1.0.0.apk) • قريباً على Google Play) • [سجلّ النسخ](https://aladeen35.github.io/mushaf/#changelog) • [ملصق للطباعة](https://aladeen35.github.io/mushaf/assets/bushra-poster.pdf)
 
 </div>
 
@@ -21,9 +23,9 @@
 
 ## التثبيت
 
-1. اضغط زرّ التنزيل أعلاه من متصفّح هاتفك.
-2. افتح الملف بعد تنزيله.
-3. قد يطلب أندرويد السماح بالتثبيت من هذا المصدر — اسمح ثم أكمل.
+1. ثبّت التطبيق من [Google Play](https://play.google.com/store/apps/details?id=sa.mushaf.albushra)، وتصلك التحديثات تلقائياً.
+2. **للمختبرين:** انضم إلى [مجموعة المختبرين](https://groups.google.com/g/albushratc)، ثم فعّل الاختبار من [رابط الاختبار](https://play.google.com/apps/testing/sa.mushaf.albushra).
+3. **بلا Google Play:** نزّل [ملف APK](https://bushra-sync.aladeen35.workers.dev/dl?v=2.8.0) وافتحه، واسمح بالتثبيت من هذا المصدر إن طُلب منك.
 
 يعمل على أندرويد ٧ فأعلى. حجم التطبيق نحو ٩ ميجابايت. بلا إعلانات ولا حسابات.
 
