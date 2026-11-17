@@ -9,7 +9,7 @@
 
 ### ▶️ [بشرى على Google Play](https://play.google.com/store/apps/details?id=sa.mushaf.albushra)
 
-**المعرّف:** `sa.mushaf.albushra` • [انضم للمختبرين (Google Group)](https://groups.google.com/g/albushratc) • [رابط الاختبار](https://play.google.com/apps/testing/sa.mushaf.albushra) • [ملف APK مباشر](https://bushra-sync.aladeen35.workers.dev/dl?v=2.8.0)
+**المعرّف:** `sa.mushaf.albushra` • [انضم للمختبرين (Google Group)](https://groups.google.com/g/albushratc) • [رابط الاختبار](https://play.google.com/apps/testing/sa.mushaf.albushra) • [ملف APK مباشر](https://bushra-sync.aladeen35.workers.dev/dl?v=2.9.1)
 
 ### 🌐 [افتح بُشرى في المتصفّح](https://aladeen35.github.io/mushaf/app/)
 
@@ -25,7 +25,7 @@
 
 1. ثبّت التطبيق من [Google Play](https://play.google.com/store/apps/details?id=sa.mushaf.albushra)، وتصلك التحديثات تلقائياً.
 2. **للمختبرين:** انضم إلى [مجموعة المختبرين](https://groups.google.com/g/albushratc)، ثم فعّل الاختبار من [رابط الاختبار](https://play.google.com/apps/testing/sa.mushaf.albushra).
-3. **بلا Google Play:** نزّل [ملف APK](https://bushra-sync.aladeen35.workers.dev/dl?v=2.8.0) وافتحه، واسمح بالتثبيت من هذا المصدر إن طُلب منك.
+3. **بلا Google Play:** نزّل [ملف APK](https://bushra-sync.aladeen35.workers.dev/dl?v=2.9.1) وافتحه، واسمح بالتثبيت من هذا المصدر إن طُلب منك.
 
 يعمل على أندرويد ٧ فأعلى. حجم التطبيق نحو ٩ ميجابايت. بلا إعلانات ولا حسابات.
 

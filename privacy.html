@@ -60,6 +60,11 @@
     ولمعرفة اسم مدينتك يُرسَل الموقع التقريبي مرّةً إلى خدمة OpenStreetMap (Nominatim) فتردّ باسم المدينة،
     ولا يُحفظ عندنا. ويمكنك اختيار مدينتك يدوياً بلا إذن الموقع.
   </p>
+  <p>
+    ومع «تحديث الموقع عند التنقّل» يُنظر في موقعك عند فتح التطبيق وكلّ بضع دقائق — والتطبيق مغلق أيضاً في نسخة
+    الموقع إن سمحت به «طوال الوقت» — فإذا ابتعدت كيلومتراً أو أكثر حُسبت المواقيت لموقعك الجديد وأُرسل إلى
+    OpenStreetMap ليُسمّى حيّك. لا يُحفظ سجلٌّ لتنقّلك، ولا يُرسل موقعك إلى خادم «بشرى»، ويُطفأ من الإعدادات.
+  </p>
 
   <h2>ما يُجلب من الشبكة</h2>
   <ul>
@@ -83,6 +88,13 @@
     ومن لم يستعمل المزامنة لا يُرسل شيئاً. والنسخة الاحتياطية في ملف لا تمرّ بأيّ خادم.
   </p>
 
+  <h2>الختمة الجماعية (اختيارية)</h2>
+  <p>
+    إن أنشأت ختمةً جماعية أو انضممت إليها، يُحفظ في خادم «بشرى» اسم الختمة، والاسم الذي كتبته لنفسك، والأجزاء
+    التي أخذتها وأتممتها — يراها كلّ من معه رمز الختمة. لا رقم هاتف ولا بريد. تُحذف الختمة بعد ٤٠٠ يومٍ من آخر
+    نشاطٍ فيها، ومن غادرها حُذف اسمه منها.
+  </p>
+
   <h2>عدّاد التنزيلات</h2>
   <p>يُعدّ تنزيل التطبيق من صفحته عدداً لا غير، بلا أيّ معلومةٍ عمّن نزّله.</p>
 
@@ -92,11 +104,12 @@
     <li><strong>الظهور فوق التطبيقات وشاشة الأذان الكاملة:</strong> لترتفع شاشة الأذان في وقته.</li>
     <li><strong>تشغيل الصوت في الخلفية:</strong> لتمضي التلاوة والرقية والأذكار والراديو والشاشة مطفأة.</li>
     <li><strong>الموقع التقريبي:</strong> للمواقيت والقبلة، كما سبق.</li>
+    <li><strong>الكاميرا:</strong> لـ«القبلة بالكاميرا» وحدها: تُعرض الصورة على شاشتك وعليها سهم القبلة، ولا تُحفظ ولا تُرسل إلى أحد.</li>
   </ul>
   <p>كلّها اختيارية، وتُمنح أو تُمنع من إعدادات الهاتف.</p>
 
   <h2>الأطفال</h2>
-  <p>لا يجمع التطبيق بياناتٍ من أحد، صغيراً كان أو كبيراً.</p>
+  <p>لا يجمع التطبيق بياناتٍ من أحد، صغيراً كان أو كبيراً، إلا ما يختار صاحبه إرساله كما سبق («اتصل بنا»، والمزامنة، والختمة الجماعية).</p>
 
   <h2>التواصل</h2>
   <p>لأيّ سؤالٍ عن الخصوصية: من صفحة «اتصل بنا» في التطبيق، أو بريد المطوّر المذكور في صفحة «بشرى» على Google Play.</p>
@@ -108,7 +121,11 @@
       reading position, bookmarks and statistics stay on your device.</p>
     <p><strong>Location:</strong> approximate location (if you allow it) is used on-device to compute prayer times and the
       Qibla direction. To show your city's name, the approximate coordinates are sent once to OpenStreetMap (Nominatim);
-      we do not store them. You may pick your city manually instead.</p>
+      we do not store them. You may pick your city manually instead. With "update location while moving" the app checks
+      your location when opened and every few minutes (and, in the website build, in the background if you allow location
+      "all the time"); after a move of 1 km or more, prayer times are recomputed on-device and the coordinates are sent to
+      OpenStreetMap to name the neighbourhood. No movement history is kept, and your location is never sent to the Bushra
+      server.</p>
     <p><strong>Network:</strong> recitation audio and timings are fetched from quran.com (qurancdn), mp3quran.net and
       everyayah.com; Mushaf page fonts from qurancdn; app messages and the latest version from the Bushra server and the
       app's website. These requests carry no personal data.</p>
@@ -119,9 +136,14 @@
     <p><strong>Optional sync:</strong> if you choose to move your data with a code, a copy of your settings, reading position,
       bookmarks, statistics and khatmah plan is stored on the Bushra server under that code only, with no name or e-mail,
       and deleted 400 days after last use. File backups never pass through any server.</p>
+    <p><strong>Group khatmah (optional):</strong> if you create or join a group khatmah, the Bushra server stores the group's
+      name, the name you type for yourself and the parts (juz) you take and finish, visible to anyone holding the group's code.
+      No phone number or e-mail. Groups are deleted 400 days after their last activity, and leaving a group removes your name.</p>
+    <p><strong>Offline recitation:</strong> surahs you download are saved inside the app on your device only.</p>
     <p><strong>Download counter:</strong> downloads from the website are counted as a number only.</p>
     <p><strong>Permissions</strong> (notifications, exact alarms, full-screen/overlay for the Adhan screen, background audio,
-      approximate location) are optional and used only for the features described above.</p>
+      approximate location, and the camera for the camera Qibla — the picture is shown on your screen only, never saved or
+      sent) are optional and used only for the features described above.</p>
     <p><strong>Contact:</strong> the in-app “Contact us” page, or the developer e-mail shown on Bushra's Google Play listing.</p>
   </section>
 </main>

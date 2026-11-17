@@ -290,56 +290,6 @@
         color: rgb(242 239 228 / 62%);
       }
 
-      /* ===== خلود: موسوعة الأنبياء (رابط فرعي) ===== */
-      .sister {
-        display: grid;
-        grid-template-columns: 150px 1fr;
-        gap: 22px;
-        align-items: center;
-        max-width: 760px;
-        margin: 0 auto;
-        padding: 20px 22px;
-        color: #f2efe4;
-        background: linear-gradient(150deg, var(--brand-700), var(--brand-900));
-        border: 1px solid var(--gold);
-        border-radius: 22px;
-      }
-      .sister img {
-        width: 150px;
-        max-width: 100%;
-        background: var(--paper);
-        border-radius: 16px;
-      }
-      .sister h3 {
-        margin: 0 0 6px;
-        font-family: var(--serif);
-        font-size: 26px;
-        color: var(--gold);
-      }
-      .sister .btn { margin: 8px 0 0 8px; }
-      .testers {
-        max-width: 640px;
-        margin: 26px auto 0;
-        padding: 18px 22px;
-        background: var(--surface);
-        border: 1px solid var(--gold);
-        border-radius: 18px;
-      }
-      .testers h3 { margin: 0 0 4px; font-family: var(--serif); font-size: 22px; color: var(--brand); }
-      .testers p { margin: 0 0 8px; }
-      .testers a { color: var(--brand-700); font-weight: 700; }
-      .steps li > span { min-width: 0; overflow-wrap: anywhere; }
-      .sister p {
-        margin: 0 0 14px;
-        font-size: 14.5px;
-        line-height: 1.8;
-        color: rgb(242 239 228 / 85%);
-      }
-      @media (max-width: 560px) {
-        .sister { grid-template-columns: 1fr; text-align: center; }
-        .sister img { margin: 0 auto; width: 130px; }
-      }
-
       /* ===== الأقسام ===== */
 
       section.block {
@@ -726,13 +676,13 @@
           <span aria-hidden="true">❁</span>
         </p>
 
-        <p class="version-chip">النسخة ٢٫٨٫٠</p>
+        <p class="version-chip">النسخة ٢٫٩٫١</p>
 
         <div class="chips">
           <!-- عدد التحديثات وتاريخ آخرها، يُملآن من سجلّ النسخ عند البناء -->
           <p class="updates">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
-            <a href="#changelog">١٥ تحديثاً • آخرها ١٣ أكتوبر ٢٠٢٦</a>
+            <a href="#changelog">١٧ تحديثاً • آخرها ١٦ نوفمبر ٢٠٢٦</a>
           </p>
 
           <!-- عدد التنزيلات، يُجلب من خادم العدّاد إن نُشر -->
@@ -743,41 +693,20 @@
         </div>
 
         <div class="cta">
-          <a class="btn btn-play" href="https://play.google.com/store/apps/details?id=sa.mushaf.albushra" target="_blank" rel="noopener" title="بشرى على Google Play"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 3.2 13.6 12l-9.1 8.8a1.4 1.4 0 0 1-.6-1.2V4.4c0-.5.2-.9.6-1.2Z" fill="#34d399"/><path d="m16.7 8.9-3.1 3.1-9.1-8.8c.4-.3 1-.3 1.5 0l10.7 5.7Z" fill="#60a5fa"/><path d="m16.7 15.1-10.7 5.7c-.5.3-1.1.3-1.5 0l9.1-8.8 3.1 3.1Z" fill="#f87171"/><path d="M20.3 10.8c.9.5.9 1.9 0 2.4l-3.6 1.9-3.1-3.1 3.1-3.1 3.6 1.9Z" fill="#fbbf24"/></svg><span class="play-text"><small>احصل عليه من</small><b>Google Play</b></span></a>
-          <a class="btn btn-primary" href="https://bushra-sync.aladeen35.workers.dev/dl?v=2.8.0" id="download" download="mushaf-2.8.0.apk">
+          <a class="btn btn-primary" href="https://bushra-sync.aladeen35.workers.dev/dl?v=2.9.1" id="download" download="mushaf-2.9.1.apk">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
-            ملف APK ٢٫٨٫٠
+            تنزيل التطبيق ٢٫٩٫١
           </a>
+          <span class="btn btn-play soon" aria-disabled="true" title="قريباً على Google Play"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 3.2 13.6 12l-9.1 8.8a1.4 1.4 0 0 1-.6-1.2V4.4c0-.5.2-.9.6-1.2Z" fill="#34d399"/><path d="m16.7 8.9-3.1 3.1-9.1-8.8c.4-.3 1-.3 1.5 0l10.7 5.7Z" fill="#60a5fa"/><path d="m16.7 15.1-10.7 5.7c-.5.3-1.1.3-1.5 0l9.1-8.8 3.1 3.1Z" fill="#f87171"/><path d="M20.3 10.8c.9.5.9 1.9 0 2.4l-3.6 1.9-3.1-3.1 3.1-3.1 3.6 1.9Z" fill="#fbbf24"/></svg><span class="play-text"><small>تجده على</small><b>Google Play</b></span><span class="soon-tag">قريباً</span></span>
           <a class="btn btn-ghost" href="./app/">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h7v13H4z"/><path d="M13 5.5h7v13h-7z"/></svg>
             افتحه في المتصفّح
           </a>
         </div>
 
-        <p class="hero-note">متوفّر على Google Play • أندرويد ٧ فأعلى • نحو ١٠ ميجابايت • بلا إعلانات ولا حسابات</p>
+        <p class="hero-note">أندرويد ٧ فأعلى • نحو ١٠ ميجابايت • بلا إعلانات ولا حسابات</p>
       </div>
     </header>
-
-    <section class="block" id="khulood">
-      <div class="wrap">
-        <div class="sister">
-          <img src="./khulood/img/khulood-logo.webp" alt="شعار خلود — لتخليد ذكرى الأنبياء والتابعين" width="150" height="150" loading="lazy" />
-          <div>
-            <h3>خلود — موسوعة الأنبياء والصالحين</h3>
-            <p>كتاب إلكتروني تفاعلي من بداية الخلق إلى العصر الحاضر: قرابة ٧٠٠ قصة تُعرض كل منها بلون مصدرها (القرآن والسنة، والإسرائيليات، وكتب التاريخ، والتراث المسيحي)، مع كتاب تُقلَّب صفحاته، والاستماع، وشجرة الأنساب، والأطلس، والمقارنة بين الروايات.</p>
-            <a class="btn btn-primary" href="./khulood/">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h7v13H4z"/><path d="M13 5.5h7v13h-7z"/></svg>
-              افتح موسوعة خلود
-            </a>
-            <a class="btn btn-ghost" href="./khulood/khulood-1.0.0.apk" download="khulood-1.0.0.apk">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
-              تنزيل تطبيق خلود ١٫٠٫٠
-            </a>
-            <span class="btn btn-play soon" aria-disabled="true" title="خلود قريباً على Google Play"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 3.2 13.6 12l-9.1 8.8a1.4 1.4 0 0 1-.6-1.2V4.4c0-.5.2-.9.6-1.2Z" fill="#34d399"/><path d="m16.7 8.9-3.1 3.1-9.1-8.8c.4-.3 1-.3 1.5 0l10.7 5.7Z" fill="#60a5fa"/><path d="m16.7 15.1-10.7 5.7c-.5.3-1.1.3-1.5 0l9.1-8.8 3.1 3.1Z" fill="#f87171"/><path d="M20.3 10.8c.9.5.9 1.9 0 2.4l-3.6 1.9-3.1-3.1 3.1-3.1 3.6 1.9Z" fill="#fbbf24"/></svg><span class="play-text"><small>قريباً على</small><b>Google Play</b></span><span class="soon-tag">قريباً</span></span>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <section class="block">
       <div class="wrap">
@@ -787,13 +716,13 @@
         <!-- لقطات متجر Google Play نفسها بترتيبها، تُملأ عند البناء من google-play/screenshots -->
         <div class="shots store">
           <img src="./assets/store/01.jpg" alt="بشرى — قرآن • حديث • رقية • أذان: مصحف المدينة، والأذان، والأذكار… في تطبيقٍ واحد" width="720" height="1280" loading="eager" />
-          <img src="./assets/store/02.jpg" alt="المسبحة الإلكترونية: حبّاتٌ تنزلق مع كلّ تسبيحة، وتعدّ بزرّ الصوت" width="720" height="1280" loading="eager" />
-          <img src="./assets/store/03.jpg" alt="أسماء الله الحسنى: بمعانيها وأدلّتها، وتُشارك صورةً" width="720" height="1280" loading="lazy" />
-          <img src="./assets/store/04.jpg" alt="مواقيت الصلاة والأذان: يؤذّن في وقته والتطبيق مغلق" width="720" height="1280" loading="lazy" />
-          <img src="./assets/store/05.jpg" alt="رئيسيةٌ تجمع يومك: صلاتك، وموضع قراءتك، ومناسباتك" width="720" height="1280" loading="lazy" />
-          <img src="./assets/store/06.jpg" alt="جمعة مباركة: سورة الكهف والصلاة على النبيّ ﷺ" width="720" height="1280" loading="lazy" />
-          <img src="./assets/store/07.jpg" alt="ودجتاتٌ على شاشتك: الصلاة، والمسبحة، وآية اليوم، والتاريخ، والختمة" width="720" height="1280" loading="lazy" />
-          <img src="./assets/store/08.jpg" alt="الرقية والأذكار: بآياتها وأدعيتها، تُسمع في الخلفية" width="720" height="1280" loading="lazy" />
+          <img src="./assets/store/02.jpg" alt="الختمة الجماعية: اختموا القرآن مع أهلكم: يأخذ كلٌّ جزءه، ويرى الجميع ما بقي" width="720" height="1280" loading="eager" />
+          <img src="./assets/store/03.jpg" alt="أذكارٌ تُسمع: بتسجيلات حصن المسلم، وتُحفظ فتُسمع بلا إنترنت" width="720" height="1280" loading="lazy" />
+          <img src="./assets/store/04.jpg" alt="مواقيت تتبعك: إذا تنقّلت بين الأحياء تحدّث الأذان والإقامة وحدهما" width="720" height="1280" loading="lazy" />
+          <img src="./assets/store/05.jpg" alt="الحفظ والمراجعة: مراجعةٌ متباعدة لما حفظت، وتلاوةٌ تُحمَّل للاستماع بلا إنترنت" width="720" height="1280" loading="lazy" />
+          <img src="./assets/store/06.jpg" alt="التقويم الهجري والقضاء: المناسبات والأيام البيض، وسجلّ الفوائت والصيام" width="720" height="1280" loading="lazy" />
+          <img src="./assets/store/07.jpg" alt="وردي اليوم: صلواتك وأذكارك وصفحاتك… باسمك، وفي جهازك وحده" width="720" height="1280" loading="lazy" />
+          <img src="./assets/store/08.jpg" alt="ودجتاتٌ على شاشتك: الصلاة، والأذكار، والمسبحة، وآية اليوم، والتاريخ، والختمة" width="720" height="1280" loading="lazy" />
         </div>
         <p class="shots-hint">اسحب لاستعراض اللقطات — متّصلةٌ كما في المتجر</p>
       </div>
@@ -899,27 +828,13 @@
     <section class="block install">
       <div class="wrap">
         <h2 class="title">التثبيت على أندرويد</h2>
-        <p class="sub">التطبيق الآن على Google Play، وليس فيه حساب ولا إعلان</p>
+        <p class="sub">ثلاث خطوات، وليس فيه حساب ولا إعلان</p>
 
         <ol class="steps">
-          <li><span>افتح <a href="https://play.google.com/store/apps/details?id=sa.mushaf.albushra" target="_blank" rel="noopener">صفحة بشرى على Google Play</a> من هاتفك.</span></li>
-          <li><span>اضغط «تثبيت»، وستصلك التحديثات تلقائياً من المتجر.</span></li>
+          <li>اضغط «تنزيل التطبيق» من متصفّح هاتفك.</li>
+          <li>افتح الملف بعد اكتمال تنزيله.</li>
+          <li>إن سألك أندرويد عن السماح بالتثبيت من هذا المصدر، فاسمح ثم أكمل.</li>
         </ol>
-
-        <div class="testers" id="testers">
-          <h3>انضم إلى فريق الاختبار</h3>
-          <p>جرّب النسخ الجديدة قبل غيرك، وشاركنا ملاحظاتك:</p>
-          <ol class="steps">
-            <li><span>انضم إلى مجموعة المختبرين: <a href="https://groups.google.com/g/albushratc" target="_blank" rel="noopener" dir="ltr">groups.google.com/g/albushratc</a></span></li>
-            <li><span>ثم فعّل الاختبار بالحساب نفسه من <a href="https://play.google.com/apps/testing/sa.mushaf.albushra" target="_blank" rel="noopener">رابط الاختبار على Google Play</a>.</span></li>
-            <li><span>ثبّت التطبيق أو حدّثه من Google Play، فتصلك النسخة التجريبية.</span></li>
-          </ol>
-        </div>
-
-        <p class="note">
-          لا يتوفّر Google Play في جهازك؟ نزّل ملف APK مباشرة من الزرّ أدناه، ثم افتحه
-          واسمح بالتثبيت من هذا المصدر إن سألك أندرويد.
-        </p>
 
         <p class="note">
           عند أول تشغيل ينزّل التطبيق خطوط صفحات المصحف مرّةً واحدة ويحفظها في
@@ -928,11 +843,11 @@
         </p>
 
         <p class="cta" style="margin-top: 26px">
-          <a class="btn btn-play" href="https://play.google.com/store/apps/details?id=sa.mushaf.albushra" target="_blank" rel="noopener" title="بشرى على Google Play"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 3.2 13.6 12l-9.1 8.8a1.4 1.4 0 0 1-.6-1.2V4.4c0-.5.2-.9.6-1.2Z" fill="#34d399"/><path d="m16.7 8.9-3.1 3.1-9.1-8.8c.4-.3 1-.3 1.5 0l10.7 5.7Z" fill="#60a5fa"/><path d="m16.7 15.1-10.7 5.7c-.5.3-1.1.3-1.5 0l9.1-8.8 3.1 3.1Z" fill="#f87171"/><path d="M20.3 10.8c.9.5.9 1.9 0 2.4l-3.6 1.9-3.1-3.1 3.1-3.1 3.6 1.9Z" fill="#fbbf24"/></svg><span class="play-text"><small>احصل عليه من</small><b>Google Play</b></span></a>
-          <a class="btn btn-primary" href="https://bushra-sync.aladeen35.workers.dev/dl?v=2.8.0" download="mushaf-2.8.0.apk">
+          <a class="btn btn-primary" href="https://bushra-sync.aladeen35.workers.dev/dl?v=2.9.1" download="mushaf-2.9.1.apk">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
-            ملف APK ٢٫٨٫٠
+            تنزيل التطبيق ٢٫٩٫١
           </a>
+          <span class="btn btn-play soon" aria-disabled="true" title="قريباً على Google Play"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 3.2 13.6 12l-9.1 8.8a1.4 1.4 0 0 1-.6-1.2V4.4c0-.5.2-.9.6-1.2Z" fill="#34d399"/><path d="m16.7 8.9-3.1 3.1-9.1-8.8c.4-.3 1-.3 1.5 0l10.7 5.7Z" fill="#60a5fa"/><path d="m16.7 15.1-10.7 5.7c-.5.3-1.1.3-1.5 0l9.1-8.8 3.1 3.1Z" fill="#f87171"/><path d="M20.3 10.8c.9.5.9 1.9 0 2.4l-3.6 1.9-3.1-3.1 3.1-3.1 3.6 1.9Z" fill="#fbbf24"/></svg><span class="play-text"><small>تجده على</small><b>Google Play</b></span><span class="soon-tag">قريباً</span></span>
         </p>
       </div>
     </section>
@@ -944,9 +859,25 @@
 
         <ol class="changelog"><li class="release latest">
             <div class="release-head">
+              <span class="release-ver">٢٫٩٫١</span>
+              <time class="release-date" datetime="2026-11-16">٢٠٢٦‏/١١‏/١٦</time>
+              <span class="release-tag">الأحدث</span>
+            </div>
+            <ul><li>صفحات ترحيب لمن يفتح التطبيق أوّل مرّة: خمسٌ تعرّف بالقرآن والصلاة والأذكار والختمة مع الأهل، تُقلَّب بالسحب أو بالزرّ، والأخيرة تسأل عن اسمك ليُدعى لك به</li><li>حركةٌ هادئة في الواجهة: الصفحة تدخل أقسامها متتابعة، والعدّادات تنبض إذا زادت، والحلقات تمتلئ إلى قيمتها — ومن اختار في هاتفه تقليل الحركة لا يرى شيئاً منها</li><li>نجومٌ ذهبية تنتثر إذا أتممت باباً من الأذكار، أو دورة التسبيح ومائته، أو جزءاً من الختمة الجماعية — وأكثر منها إذا تمّت الختمة</li><li>شاشة الأذان تظهر أجزاؤها متتابعة: القبّة، ثمّ التكبير، ثمّ اسم الصلاة ووقتها</li></ul>
+          </li>
+          <li class="release">
+            <div class="release-head">
+              <span class="release-ver">٢٫٩٫٠</span>
+              <time class="release-date" datetime="2026-10-21">٢٠٢٦‏/١٠‏/٢١</time>
+              
+            </div>
+            <ul><li>المواقيت تتبعك: إذا تنقّلت بين الأحياء أو سافرت تُحدَّث المدينة والحيّ ومواقيت الأذان والإقامة وحدها — والتطبيق مفتوح، ومغلقاً أيضاً في نسخة الصفحة</li><li>الختمة الجماعية: أنشئ ختمةً لأهلك برمزٍ يتشاركونه، يأخذ كلٌّ جزءه ويعلّمه إذا قرأه ويرى الجميع ما بقي — فإذا تمّت الثلاثون عُدّت ختمة، ودار الدور: كلٌّ إلى الجزء الذي بعد جزئه</li><li>الحفظ والمراجعة: أضف ما تحفظه فتأتيك مراجعته بمواعيد تتباعد كلّما أتقنت؛ تُفتح الصفحة مستورةً فتستظهرها ثمّ تقيّم نفسك — وحفظٌ جديد صفحةً صفحة</li><li>تحميل التلاوة: سورةٌ أو جزءٌ كامل بصوت قارئك يُحفظ في جهازك، فتسمعه وتتبع كلماته بلا إنترنت</li><li>التقويم الهجري: الشهر كلّه بمناسباته والأيام البيض والاثنين والخميس، وتعديل يومٍ أو يومين بحسب رؤية الهلال في بلدك</li><li>القضاء والصيام: سجلّ الصلوات الفائتة وما قضيت منها، وأيّام الصيام رمضاناً وقضاءً وتطوّعاً — وفي رمضان عدّادٌ للسحور والإفطار وتذكيرٌ بالسحور</li><li>ودجت أذكار الوقت: أذكار الصباح أو المساء على شاشتك بما أتممت منها، تفتحها بلمسة</li><li>القبلة بالكاميرا: وجّه الهاتف فيظهر سهم القبلة فوق صورة الكاميرا، ويهتزّ إذا استقام</li><li>واجهةٌ إنجليزية لمن أرادها (English): من أوّل شاشة أو من الإعدادات — والقرآن والأذكار والأحاديث بلسانها</li><li>إصلاح: بطاقة الصلاة القادمة في صفحة الصلاة كانت باهتة، وكلّ صفحةٍ تُفتح الآن من أوّلها</li></ul>
+          </li>
+          <li class="release">
+            <div class="release-head">
               <span class="release-ver">٢٫٨٫٠</span>
               <time class="release-date" datetime="2026-10-13">٢٠٢٦‏/١٠‏/١٣</time>
-              <span class="release-tag">الأحدث</span>
+              
             </div>
             <ul><li>الاستماع للأذكار: الآيات بصوت قارئك، والأذكار من تسجيلات «حصن المسلم» المعروفة — يُسمع الباب ذكراً ذكراً بعدد مرّاته ويتقدّم العدّاد مع الصوت، ويُحفظ في جهازك فيُسمع بعدها بلا إنترنت</li><li>آية الكرسي والإخلاص والمعوذتان في أوّل أذكار الصباح والمساء، وفي أذكار النوم مع خاتمتي البقرة — بنصّ المصحف وفضلها</li><li>تقدّم الأذكار يُحفظ طوال اليوم ولا يُصفَّر إن خرجت، وعلامة «أتممتها اليوم»، وبطاقة أذكار الوقت في الرئيسية</li><li>وضع «ذكرٌ ذكر»: ذكرٌ واحد بخطٍّ كبير، تعدّه بلمسةٍ في أيّ موضع من الشاشة وينتقل وحده إلى الذي بعده</li><li>حجم خطّ الأذكار: تكبيرٌ وتصغير يُحفظ</li><li>تذكيرٌ أذكى: صوتٌ يقول «حان وقت أذكار الصباح» باسمك، ويُطفأ من الإعدادات — وما أتممته قبل وقته لا يأتيك تذكيره</li><li>«وردي اليوم» باسمك في صفحتي: الصلوات الخمس تعلّمها، وأذكار الصباح والمساء تُعلَّم وحدها، وصفحات اليوم، والأيام المتتالية، وملخّص الأسبوع — في جهازك وحده</li></ul>
           </li>
@@ -1075,7 +1006,7 @@
           نصّ المصحف وتخطيط الصفحات على رواية حفص عن عاصم بتخطيط مصحف المدينة
           النبوية.
         </p>
-        <p class="ver">بشرى — النسخة ٢٫٨٫٠</p>
+        <p class="ver">بشرى — النسخة ٢٫٩٫١</p>
       </div>
     </footer>
     <script>
