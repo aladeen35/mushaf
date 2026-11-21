@@ -1,5 +1,5 @@
 /* HafM.list service worker — offline app shell (cache-first for local files, network-first for pages). */
-const CACHE = 'hafm-list-v4';
+const CACHE = 'hafm-list-v5';
 const SHELL = ['./', 'index.html', 'home.html', 'list.html', 'entry.html', 'reports.html', 'branches.html', 'review.html', 'account.html', 'admin.html',
   'assets/css/app.css', 'assets/css/auth.css', 'assets/js/config.js', 'assets/js/data.js', 'assets/js/branch-geo.js', 'assets/js/core.js', 'assets/js/learn.js', 'assets/js/export.js',
   'assets/js/pages/login.js', 'assets/js/pages/home.js', 'assets/js/pages/list.js', 'assets/js/pages/entry.js', 'assets/js/pages/reports.js',

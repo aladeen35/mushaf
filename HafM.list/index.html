@@ -70,6 +70,17 @@
     <button class="btn primary block" type="submit" data-ar="متابعة" data-en="Continue">متابعة</button>
   </form>
   <!-- step: name (new user) -->
+  <!-- step: e-mail verification code -->
+  <form class="l-step hidden" id="stepCode" novalidate>
+    <h1 data-ar="تحقق من إيميلك" data-en="Check your e-mail">تحقق من إيميلك</h1>
+    <p class="muted"><span data-ar="أرسلنا رمزاً من 6 أرقام إلى:" data-en="We sent a 6-digit code to:">أرسلنا رمزاً من 6 أرقام إلى:</span> <b class="ltr" id="codeEmailLbl"></b></p>
+    <label class="lbl" for="codeIn" data-ar="رمز التحقق" data-en="Verification code">رمز التحقق</label>
+    <input class="input ltr code-in" id="codeIn" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">
+    <p class="err" id="codeErr"></p>
+    <button class="btn primary block" type="submit" data-ar="تحقق" data-en="Verify">تحقق</button>
+    <button class="link-btn" id="resendBtn" type="button"></button>
+  </form>
+
   <form class="l-step hidden" id="stepName" novalidate>
     <h1 data-ar="أهلاً بك 👋" data-en="Welcome 👋">أهلاً بك 👋</h1>
     <p class="muted"><span data-ar="حساب جديد على هذا الجهاز:" data-en="New account on this device:">حساب جديد على هذا الجهاز:</span> <b class="ltr" id="newEmailLbl"></b></p>

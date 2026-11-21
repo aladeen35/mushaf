@@ -374,8 +374,23 @@ async function api(fn, body) {
   }
   return data;
 }
+async function sendEmailCode(email) {
+  let res;
+  try {
+    res = await fetch(`${CFG.SUPABASE_URL}/functions/v1/hafm-send-code`, {method: 'POST',
+      headers: {'apikey': CFG.SUPABASE_KEY, 'Content-Type': 'application/json'}, body: JSON.stringify({email, lang})});
+  } catch (e) { throw new ApiError('network', e.message); }
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) throw new ApiError(d.error || 'server', d.error);
+  return true;
+}
 function apiErrorText(err) {
   const c = err && err.code;
+  if (c === 'wrong_code') return L('رمز التحقق غير صحيح.', 'Wrong verification code.');
+  if (c === 'code_expired') return L('انتهت صلاحية الرمز — اطلب رمزاً جديداً.', 'The code expired — request a new one.');
+  if (c === 'too_soon') return L('انتظر دقيقة قبل طلب رمز جديد.', 'Wait a minute before requesting a new code.');
+  if (c === 'too_many') return L('طلبات كثيرة — حاول بعد ساعة.', 'Too many requests — try again in an hour.');
+  if (c === 'email_not_configured' || c === 'send_failed') return L('تعذّر إرسال الإيميل حالياً — تواصل مع المشرف.', 'Could not send the e-mail right now — contact the admin.');
   if (c === 'network') return L('لا يوجد اتصال بالإنترنت.', 'No internet connection.');
   if (c === 'email_domain') return L('الدخول بإيميل العمل فقط (@halfm.sa).', 'Work e-mail only (@halfm.sa).');
   if (c === 'forbidden') return L('ليست لديك صلاحية لهذا الإجراء.', 'You do not have permission for this.');

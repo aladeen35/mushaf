@@ -13,6 +13,7 @@
 
   const pin = {mode: null, email: null, value: '', first: ''};
   let pendingEmail = null, pendingName = null;
+  let pendingCode = null, codeFlow = null, codeRequired = false, resendTimer = null; // codeFlow: 'new' | 'reset'
   const show = id => { $$('.screen').forEach(s => s.classList.toggle('on', s.id === id)); window.scrollTo(0, 0); };
   const step = id => { $$('.l-step').forEach(s => s.classList.toggle('hidden', s.id !== id)); };
 
@@ -28,6 +29,7 @@
 
   $('#startBtn').addEventListener('click', () => { show('login'); step('stepEmail'); setTimeout(() => $('#emailIn').focus(), 300); });
   $('#loginBack').addEventListener('click', () => {
+    if (!$('#stepCode').classList.contains('hidden')) { step('stepEmail'); return; }
     if (!$('#stepName').classList.contains('hidden') || (pin.mode && pin.mode !== 'enter')) { step('stepEmail'); pin.mode = null; return; }
     if (!$('#stepPin').classList.contains('hidden')) { step('stepEmail'); pin.mode = null; return; }
     show('welcome');
@@ -48,7 +50,9 @@
     if (REMOTE) {
       const btn = $('#stepEmail button[type=submit]'); btn.disabled = true;
       api('hafm_user_status', {p_email: em}).then(st => {
+        codeRequired = !!st.code_required;
         if (st.exists && st.has_pin) { pendingName = st.name; openPin('enter', em); }
+        else if (codeRequired) { pendingName = st.exists ? st.name : null; startCode(st.exists ? 'reset' : 'new', em); }
         else if (st.exists) { pendingName = st.name; openPin('create', em); }
         else { $('#newEmailLbl').textContent = em; step('stepName'); setTimeout(() => $('#nameIn').focus(), 200); }
       }).catch(err => { $('#emailErr').textContent = apiErrorText(err); }).finally(() => { btn.disabled = false; });
@@ -59,6 +63,30 @@
     else if (u && !u.pinHash) { pendingName = u.name; openPin('create', em); } // PIN was reset by an admin
     else { $('#newEmailLbl').textContent = em; step('stepName'); setTimeout(() => $('#nameIn').focus(), 200); }
   });
+  /* verification code step (shared mode, when the admin turned codes on) */
+  function startResendTimer() {
+    let s = 60; const b = $('#resendBtn'); clearInterval(resendTimer); b.disabled = true;
+    const tick = () => { b.textContent = L(`إعادة الإرسال بعد ${s} ث`, `Resend in ${s}s`); if (s-- <= 0) { clearInterval(resendTimer); b.disabled = false; b.textContent = L('إعادة إرسال الرمز', 'Resend code'); } };
+    tick(); resendTimer = setInterval(tick, 1000);
+  }
+  async function startCode(flow, em) {
+    codeFlow = flow; pendingEmail = em; pendingCode = null;
+    $('#codeEmailLbl').textContent = em; $('#codeIn').value = ''; $('#codeErr').textContent = '';
+    step('stepCode'); pin.mode = null;
+    try { await sendEmailCode(em); startResendTimer(); setTimeout(() => $('#codeIn').focus(), 200); toast(L('أُرسل الرمز إلى إيميلك', 'Code sent to your e-mail')); }
+    catch (err) { $('#codeErr').textContent = apiErrorText(err); $('#resendBtn').disabled = false; $('#resendBtn').textContent = L('إعادة المحاولة', 'Try again'); }
+  }
+  $('#resendBtn').addEventListener('click', () => startCode(codeFlow, pendingEmail));
+  $('#codeIn').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6); if (e.target.value.length === 6) $('#stepCode').requestSubmit(); });
+  $('#stepCode').addEventListener('submit', e => {
+    e.preventDefault();
+    const c = $('#codeIn').value;
+    if (!/^\d{6}$/.test(c)) { $('#codeErr').textContent = L('الرمز 6 أرقام.', 'The code has 6 digits.'); return; }
+    pendingCode = c; $('#codeErr').textContent = '';
+    if (codeFlow === 'new') { $('#newEmailLbl').textContent = pendingEmail; step('stepName'); setTimeout(() => $('#nameIn').focus(), 200); }
+    else openPin('create', pendingEmail);
+  });
+
   /* name step */
   $('#stepName').addEventListener('submit', e => {
     e.preventDefault();
@@ -115,9 +143,12 @@
     }
     if (REMOTE && pin.mode === 'confirm' && pin.value === pin.first) {
       if (busy) return; busy = true;
-      api('hafm_register', {p_email: em, p_name: pendingName || '', p_pin: pin.value})
-        .then(res => { toast(L('تم إنشاء حسابك', 'Account created')); remoteDone(res); })
-        .catch(err => { pin.mode = 'create'; pin.first = ''; renderPinText(); fail(apiErrorText(err)); })
+      api('hafm_register', {p_email: em, p_name: pendingName || '', p_pin: pin.value, p_code: pendingCode})
+        .then(res => { toast(codeFlow === 'reset' ? L('تم تعيين رمزك الجديد', 'New PIN set') : L('تم إنشاء حسابك', 'Account created')); remoteDone(res); })
+        .catch(err => {
+          if (err.code === 'wrong_code' || err.code === 'code_expired') { step('stepCode'); $('#codeIn').value = ''; $('#codeErr').textContent = apiErrorText(err); pin.mode = null; return; }
+          pin.mode = 'create'; pin.first = ''; renderPinText(); fail(apiErrorText(err));
+        })
         .finally(() => { busy = false; });
       return;
     }
@@ -153,12 +184,24 @@
     if ($('#stepPin').classList.contains('hidden') || !$('#login').classList.contains('on')) return;
     if (/^\d$/.test(e.key)) press(e.key); else if (e.key === 'Backspace') press('del');
   });
-  $('#forgotBtn').addEventListener('click', () => dialog({
+  $('#forgotBtn').addEventListener('click', async () => {
+    if (REMOTE) {
+      let st = null; try { st = await api('hafm_user_status', {p_email: pin.email}); } catch (e) {}
+      if (st && st.code_required) {
+        if (await dialog({title: L('نسيت رمز الدخول؟', 'Forgot your PIN?'), body: esc(L(`سنرسل رمز تحقق إلى ${pin.email} لتختار رمز دخول جديداً.`, `We will e-mail a code to ${pin.email} so you can choose a new PIN.`)), okText: L('أرسل الرمز', 'Send code')})) {
+          codeRequired = true; pendingName = st.name; startCode('reset', pin.email);
+        }
+        return;
+      }
+    }
+    forgotInfo();
+  });
+  const forgotInfo = () => dialog({
     title: L('نسيت رمز الدخول؟', 'Forgot your PIN?'),
     body: esc(REMOTE ? L('اطلب من المشرف إعادة تعيين رمزك من: حسابي ← المستخدمون. بعدها اكتب إيميلك واختر رمزاً جديداً — يعمل على أي جهاز.',
       'Ask an admin to reset your PIN from: Account → Users. Then enter your e-mail and choose a new PIN — on any device.')
       : L('اطلب من مشرف النظام إعادة تعيين رمزك من: حسابي ← المستخدمون على هذا الجهاز. بعدها اكتب إيميلك واختر رمزاً جديداً.',
       'Ask an admin to reset your PIN from: Account → Users on this device. Then enter your e-mail and choose a new PIN.')),
     okText: L('حسناً', 'OK'), cancelText: L('إغلاق', 'Close')
-  }));
+  });
 })();

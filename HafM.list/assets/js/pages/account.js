@@ -3,6 +3,7 @@ hafmBoot(function () {
   renderShell({active: 'account', title: t('account')});
   const u = currentUser();
   const myRole = roleOf(u.email);
+  let codeOn = null; // admins: is the e-mail verification code required?
   let remoteUsers = null; // admins in shared mode: everyone registered (from the database)
   const loadUsers = () => api('hafm_list_users', {p_token: getSession().token}).then(list => { remoteUsers = list; render(); }).catch(err => toast(apiErrorText(err), 'error'));
 
@@ -41,6 +42,13 @@ hafmBoot(function () {
       </div>
 
       ${myRole === 'admin' ? `
+      ${REMOTE ? `${sectionHead(L('رمز التحقق بالإيميل', 'E-mail verification code'), L('عند التفعيل: يصل رمز من 6 أرقام لإيميل العمل عند التسجيل أو نسيان رمز الدخول.', 'When on: a 6-digit code is e-mailed at sign-up and for a forgotten PIN.'))}
+      <div class="card">
+        <div class="row spread"><b>${codeOn == null ? L('جارٍ التحميل…', 'Loading…') : codeOn ? L('مفعّل ✅', 'On ✅') : L('غير مفعّل', 'Off')}</b>
+          <button class="btn sm ${codeOn ? 'ghost' : 'primary'}" id="codeToggle" type="button" ${codeOn == null ? 'disabled' : ''}>${codeOn ? L('إيقاف', 'Turn off') : L('تفعيل', 'Turn on')}</button></div>
+        <button class="btn sm ghost" id="codeTest" type="button" style="margin-top:10px">${ic('mail')} ${L('أرسل رمزاً تجريبياً إلى إيميلي', 'Send a test code to my e-mail')}</button>
+        <p class="hint">${L('جرّب الإرسال أولاً — إن لم يصل الرمز فخدمة الإيميل (Resend) لم تُربط بعد.', 'Test first — if no code arrives, the e-mail service (Resend) is not connected yet.')}</p>
+      </div>` : ''}
       ${sectionHead(L('الصلاحيات', 'Permissions'), L('امنح «محرّر قوائم» لمن يحق له إضافة القوائم وتعديلها.', 'Grant “list editor” to people allowed to add and edit lists.'))}
       <form class="card" id="grantForm">
         <label class="lbl" for="gEmail" style="margin-top:0">${L('إيميل الموظف', 'Employee e-mail')}</label>
@@ -125,6 +133,18 @@ hafmBoot(function () {
     });
     if (myRole !== 'admin') return;
     if (REMOTE && !remoteUsers) loadUsers();
+    if (REMOTE && codeOn == null) api('hafm_get_code_required', {p_token: getSession().token}).then(v => { codeOn = !!v; render(); }).catch(() => {});
+    if ($('#codeToggle')) $('#codeToggle').addEventListener('click', async () => {
+      const on = !codeOn;
+      if (on && !(await dialog({title: L('تفعيل رمز التحقق', 'Turn on verification'), body: esc(L('تأكد أن الرمز التجريبي وصل إلى إيميلك قبل التفعيل، وإلا لن يستطيع الموظفون الجدد التسجيل.', 'Make sure the test code reached your inbox first, or new employees will not be able to sign up.')), okText: L('تفعيل', 'Turn on')}))) return;
+      try { codeOn = await api('hafm_set_code_required', {p_token: getSession().token, p_on: on}); render(); toast(t('saved')); } catch (err) { toast(apiErrorText(err), 'error'); }
+    });
+    if ($('#codeTest')) $('#codeTest').addEventListener('click', async e => {
+      const b = e.currentTarget; b.disabled = true;
+      try { await sendEmailCode(u.email); toast(L('أُرسل — افحص بريدك (والبريد غير المرغوب)', 'Sent — check your inbox (and spam)')); }
+      catch (err) { toast(apiErrorText(err), 'error'); }
+      b.disabled = false;
+    });
     let gRole = 'editor';
     $$('#gRole button').forEach(b => b.addEventListener('click', () => { gRole = b.dataset.r; $$('#gRole button').forEach(x => x.classList.toggle('on', x === b)); }));
     $('#grantForm').addEventListener('submit', e => {

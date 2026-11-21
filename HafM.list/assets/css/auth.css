@@ -73,3 +73,6 @@ body.auth{background:var(--warm);overflow-x:hidden}
 .keypad button:active{transform:scale(.94);background:var(--teal-l)}
 .keypad .k-alt{background:transparent;box-shadow:none;font-size:15px;color:var(--muted);display:grid;place-items:center}
 .link-btn{background:none;border:0;color:var(--teal-dd);font-weight:700;margin-top:18px;cursor:pointer;font-size:14px;align-self:center}
+
+.code-in{font-size:30px;font-weight:800;letter-spacing:12px;text-align:center}
+.link-btn:disabled{color:var(--muted);cursor:default}
