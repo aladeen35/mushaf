@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2a2622">
+<meta name="description" content="قوائم جودة فروع هاف مليون — 1/2 Million Quality list">
+<title>HafM.list — قوائم الجودة</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icons/icon-192.png">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="assets/css/auth.css">
+</head>
+<body class="auth">
+<!-- 1. Splash / opening -->
+<div class="splash" id="splash" aria-hidden="true">
+  <div class="splash-circle"></div>
+  <div class="splash-ring"></div>
+  <svg class="splash-logo" viewBox="0 0 177 80" aria-label="½M">
+    <path class="p1" d="M18.6315 53.0343V0H8.434L0.4834 3.678V13.8664L6.4752 11.0161H6.6389V53.0343H18.6315Z"/>
+    <path class="p2" d="M37.1184 0L15.2588 79.9972H28.337L48.6592 0H37.1184Z"/>
+    <path class="p3" d="M60.4088 69.639L65.3059 65.5576C73.0564 58.7046 79.4211 51.6061 79.4211 42.6336C79.4211 33.088 72.8926 26.0714 60.8181 26.0714C53.7196 26.0714 47.4367 28.5184 43.5221 31.5355L47.0304 40.3473C49.8049 38.3066 53.8014 36.0233 58.3711 36.0233C64.4902 36.0233 67.0191 39.4497 67.0191 43.7737C66.9372 49.9747 61.3063 55.9301 49.6412 66.3732L42.8701 72.4924V80.0002H80.4794V69.7997H60.4088V69.639Z"/>
+    <path class="p4" d="M169.078 0H153.04L136.517 60.4724L119.991 0H96.5186V79.9972H112.556V33.8612L124.276 79.9972H148.755L160.475 33.8612V79.9972H176.516V0H169.078Z"/>
+  </svg>
+  <div class="splash-title"><b>Quality list</b><span>قوائم الجودة</span></div>
+</div>
+<!-- 2. Welcome -->
+<section class="screen welcome" id="welcome">
+  <div class="w-hero">
+    <div class="w-top">
+      <img src="assets/img/logo-light.svg" alt="½M" width="70" height="32">
+      <div class="lang-switch light" role="group">
+        <button type="button" data-lang="ar">ع</button><button type="button" data-lang="en">En</button>
+      </div>
+    </div>
+    <div class="w-deco"><i></i><i></i><i></i></div>
+    <div class="w-text">
+      <span class="eyebrow" data-ar="هاف مليون · إدارة الجودة" data-en="Half Million · Quality">هاف مليون · إدارة الجودة</span>
+      <h1 data-ar="قوائم جودة الفروع" data-en="Branch quality lists">قوائم جودة الفروع</h1>
+      <p data-ar="فحوصات الفروع الـ106 في مكان واحد — بدل الواتساب والإكسل." data-en="All 106 branch checks in one place — instead of WhatsApp and Excel.">فحوصات الفروع الـ106 في مكان واحد — بدل الواتساب والإكسل.</p>
+    </div>
+  </div>
+  <div class="w-body">
+    <ul class="w-feats">
+      <li><span class="f-ic" data-icon="clipboard"></span><div><b data-ar="قائمة لكل فحص" data-en="A page per checklist">قائمة لكل فحص</b><small data-ar="المشروبات، Hot Cookies، وقوائم جديدة" data-en="Beverages, Hot Cookies and new lists">المشروبات، Hot Cookies، وقوائم جديدة</small></div></li>
+      <li><span class="f-ic" data-icon="calendar"></span><div><b data-ar="تقرير أسبوعي تلقائي" data-en="Automatic weekly report">تقرير أسبوعي تلقائي</b><small data-ar="من السبت إلى الجمعة — وتصدير Excel" data-en="Saturday to Friday — with Excel export">من السبت إلى الجمعة — وتصدير Excel</small></div></li>
+      <li><span class="f-ic" data-icon="book"></span><div><b data-ar="مخالفة اليوم والاختبار" data-en="Daily issue & quiz">مخالفة اليوم والاختبار</b><small data-ar="56 مخالفة تدقيق باللغتين" data-en="56 audit issues, bilingual">56 مخالفة تدقيق باللغتين</small></div></li>
+    </ul>
+    <button class="btn btn-arrow dark block" id="startBtn" type="button"><span class="circ" data-icon="arrow"></span><span data-ar="ابدأ — تسجيل الدخول" data-en="Get started — sign in">ابدأ — تسجيل الدخول</span></button>
+  </div>
+</section>
+<!-- 3. Sign in: e-mail → (new: name + create PIN) / (existing: PIN) -->
+<section class="screen login" id="login">
+  <div class="l-head">
+    <button class="icon-btn" id="loginBack" type="button" data-icon="back" data-icon-cls="flip-ltr" aria-label="back"></button>
+    <img src="assets/img/logo.svg" alt="½M" width="62" height="28">
+    <div class="lang-switch" role="group"><button type="button" data-lang="ar">ع</button><button type="button" data-lang="en">En</button></div>
+  </div>
+  <!-- step: email -->
+  <form class="l-step" id="stepEmail" novalidate>
+    <h1 data-ar="تسجيل الدخول" data-en="Sign in">تسجيل الدخول</h1>
+    <p class="muted" data-ar="اكتب إيميل العمل الخاص بك. إن كانت أول مرة سنطلب اسمك وتختار رمز دخول من 4 أرقام." data-en="Enter your work e-mail. First time? We'll ask your name and you'll choose a 4-digit PIN.">اكتب إيميل العمل الخاص بك. إن كانت أول مرة سنطلب اسمك وتختار رمز دخول من 4 أرقام.</p>
+    <label class="lbl" for="emailIn" data-ar="إيميل العمل" data-en="Work e-mail">إيميل العمل</label>
+    <div class="search-box"><span data-icon="mail"></span><input class="input ltr" id="emailIn" type="email" inputmode="email" autocomplete="email" placeholder="name@halfm.sa" required></div>
+    <p class="err" id="emailErr"></p>
+    <button class="btn primary block" type="submit" data-ar="متابعة" data-en="Continue">متابعة</button>
+  </form>
+  <!-- step: name (new user) -->
+  <form class="l-step hidden" id="stepName" novalidate>
+    <h1 data-ar="أهلاً بك 👋" data-en="Welcome 👋">أهلاً بك 👋</h1>
+    <p class="muted"><span data-ar="حساب جديد على هذا الجهاز:" data-en="New account on this device:">حساب جديد على هذا الجهاز:</span> <b class="ltr" id="newEmailLbl"></b></p>
+    <label class="lbl" for="nameIn" data-ar="الاسم الكامل (يظهر مع كل فرع تفحصه)" data-en="Full name (shown on every branch you check)">الاسم الكامل (يظهر مع كل فرع تفحصه)</label>
+    <input class="input" id="nameIn" type="text" autocomplete="name" maxlength="60" placeholder="مثال: محمد أحمد">
+    <p class="err" id="nameErr"></p>
+    <button class="btn primary block" type="submit" data-ar="التالي — اختر رمز الدخول" data-en="Next — choose your PIN">التالي — اختر رمز الدخول</button>
+  </form>
+  <!-- step: PIN pad (create / confirm / enter) -->
+  <div class="l-step hidden" id="stepPin">
+    <div class="pin-who" id="pinWho"></div>
+    <h1 id="pinTitle"></h1>
+    <p class="muted" id="pinSub"></p>
+    <div class="pin-dots" id="pinDots" aria-live="polite"><i></i><i></i><i></i><i></i></div>
+    <p class="err center" id="pinErr"></p>
+    <div class="keypad" id="keypad">
+      <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+      <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+      <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+      <button type="button" class="k-alt" id="forgotBtn" data-ar="نسيت؟" data-en="Forgot?">نسيت؟</button>
+      <button type="button" data-k="0">0</button>
+      <button type="button" class="k-alt" data-k="del" aria-label="delete" data-icon="x"></button>
+    </div>
+    <button class="link-btn" id="switchAcc" type="button" data-ar="ليس حسابك؟ دخول بإيميل آخر" data-en="Not you? Use another e-mail">ليس حسابك؟ دخول بإيميل آخر</button>
+  </div>
+  <p class="l-note" data-ar="الدخول محفوظ على هذا الجهاز فقط. يُطلب رمزك في كل زيارة جديدة." data-en="Your sign-in lives on this device only. Your PIN is asked on every new visit.">الدخول محفوظ على هذا الجهاز فقط. يُطلب رمزك في كل زيارة جديدة.</p>
+</section>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/core.js"></script>
+<script src="assets/js/pages/login.js"></script>
+</body>
+</html>

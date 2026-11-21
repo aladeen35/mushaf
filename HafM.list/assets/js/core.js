@@ -1,0 +1,432 @@
+/* HafM.list — core: storage, auth, i18n, dates, icons, page shell.
+   Loaded on every page after config.js and data.js. Vanilla JS, no build step. */
+'use strict';
+const CFG = window.HAFM_CONFIG || {};
+const LS_KEY = 'hafmList.v2';
+const LS_V1 = 'halfMillionQualityAppV1';
+const SS_SESSION = 'hafmList.session';
+const TOTAL_BRANCHES = BRANCHES.length;
+
+/* ---------- tiny DOM helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const qs = k => new URLSearchParams(location.search).get(k);
+const go = url => { location.href = url; };
+
+/* ---------- SHA-256 (sync, for PIN + admin hashes; works on file:// and http) ---------- */
+function sha256(ascii) {
+  const bytes = new TextEncoder().encode(ascii);
+  const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const l = bytes.length, withPad = ((l + 9 + 63) >> 6) << 6;
+  const m = new Uint8Array(withPad); m.set(bytes); m[l] = 0x80;
+  const dv = new DataView(m.buffer); dv.setUint32(withPad - 4, l * 8); dv.setUint32(withPad - 8, Math.floor(l / 0x20000000));
+  const w = new Uint32Array(64); const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+  for (let i = 0; i < withPad; i += 64) {
+    for (let j = 0; j < 16; j++) w[j] = dv.getUint32(i + j * 4);
+    for (let j = 16; j < 64; j++) {
+      const s0 = rotr(w[j-15],7) ^ rotr(w[j-15],18) ^ (w[j-15] >>> 3);
+      const s1 = rotr(w[j-2],17) ^ rotr(w[j-2],19) ^ (w[j-2] >>> 10);
+      w[j] = (w[j-16] + s0 + w[j-7] + s1) | 0;
+    }
+    let [a,b,c,d,e,f,g,h] = H;
+    for (let j = 0; j < 64; j++) {
+      const t1 = (h + (rotr(e,6) ^ rotr(e,11) ^ rotr(e,25)) + ((e & f) ^ (~e & g)) + K[j] + w[j]) | 0;
+      const t2 = ((rotr(a,2) ^ rotr(a,13) ^ rotr(a,22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+    }
+    H[0]=(H[0]+a)|0; H[1]=(H[1]+b)|0; H[2]=(H[2]+c)|0; H[3]=(H[3]+d)|0; H[4]=(H[4]+e)|0; H[5]=(H[5]+f)|0; H[6]=(H[6]+g)|0; H[7]=(H[7]+h)|0;
+  }
+  return H.map(x => (x >>> 0).toString(16).padStart(8, '0')).join('');
+}
+
+/* ---------- i18n ---------- */
+const I18N = {
+  ar: {
+    appName:'قوائم الجودة', appFull:'1/2 Million Quality list', brand:'هاف مليون',
+    home:'الرئيسية', reports:'التقارير', branches:'الفروع', review:'المراجعة', account:'حسابي', lists:'القوائم',
+    hello:'أهلاً', goodMorning:'صباح الجودة', goodEvening:'مساء الجودة',
+    checklists:'قوائم الفحص والسيرفي', checklistsHint:'اختر بطاقة القائمة لتنتقل إلى صفحتها، ثم المنطقة والفرع.',
+    fixed:'فحص ثابت', survey:'سيرفي', items:'بنود', item:'بند', branchesWord:'فرع', submitted:'مُرسَل', pending:'لم يُدخل',
+    current:'الحالية', thisWeek:'هذا الأسبوع', week:'الأسبوع', weekRange:'السبت {a} — الجمعة {b}',
+    newList:'قائمة جديدة', manageLists:'إدارة القوائم', open:'فتح', start:'ابدأ',
+    dailyIssue:'مخالفة اليوم', example:'مثال', quiz:'سؤال المراجعة', nextQuestion:'سؤال آخر', yourScore:'نتيجتك',
+    correct:'إجابة صحيحة', wrong:'إجابة غير صحيحة', correctAnswer:'الإجابة الصحيحة', trueText:'صح', falseText:'خطأ',
+    critical:'حرجة', major:'كبرى', minor:'بسيطة', all:'الكل',
+    chooseRegion:'اختر المنطقة', chooseBranch:'اختر الفرع', search:'بحث…', noResults:'لا نتائج',
+    back:'رجوع', save:'حفظ', saved:'تم الحفظ', saveNext:'حفظ والفرع التالي', markAllOk:'الكل سليم', copyPrev:'نسخ من آخر تقرير', clear:'مسح',
+    remarks:'ملاحظات', remarksPh:'اكتب ملاحظة عن الفرع (اختياري)…', auditor:'الفاحص', date:'التاريخ',
+    deviation:'انحراف — يحتاج إجراءً / تدريباً. أبلغ فوراً.', notFixedWarn:'مشكلة غير مصلحة — اذكر السبب في الملاحظات.',
+    incomplete:'بنود لم تُعبّأ: {n}. هل تريد الحفظ على أي حال؟', noPrev:'لا يوجد تقرير سابق لهذا الفرع.',
+    logout:'تسجيل الخروج', language:'اللغة', role:'الصلاحية', admin:'مشرف', editor:'محرّر قوائم', auditorRole:'فاحص',
+    cancel:'إلغاء', confirm:'تأكيد', delete:'حذف', edit:'تعديل', archive:'أرشفة', restore:'استعادة', create:'إنشاء',
+    exportExcel:'تصدير Excel', print:'طباعة', offline:'أنت غير متصل — البيانات تُحفظ على هذا الجهاز.',
+    progress:'التقدم', okay:'سليمة', notFixed:'غير مصلحة', fixedLbl:'أُصلحت', notChecked:'لم تُفحص', na:'غير متوفر',
+    noPermission:'هذه الصفحة للمشرفين ومحرري القوائم فقط.', viewOnly:'عرض فقط'
+  },
+  en: {
+    appName:'Quality Lists', appFull:'1/2 Million Quality list', brand:'Half Million',
+    home:'Home', reports:'Reports', branches:'Branches', review:'Review', account:'Account', lists:'Lists',
+    hello:'Hello', goodMorning:'Good morning', goodEvening:'Good evening',
+    checklists:'Checklists & surveys', checklistsHint:'Tap a list card to open its page, then pick a region and a branch.',
+    fixed:'Fixed check', survey:'Survey', items:'items', item:'item', branchesWord:'branches', submitted:'submitted', pending:'Pending',
+    current:'Current', thisWeek:'This week', week:'Week', weekRange:'Sat {a} — Fri {b}',
+    newList:'New list', manageLists:'Manage lists', open:'Open', start:'Start',
+    dailyIssue:'Issue of the day', example:'Example', quiz:'Review question', nextQuestion:'Another question', yourScore:'Your score',
+    correct:'Correct', wrong:'Not correct', correctAnswer:'Correct answer', trueText:'True', falseText:'False',
+    critical:'Critical', major:'Major', minor:'Minor', all:'All',
+    chooseRegion:'Choose a region', chooseBranch:'Choose a branch', search:'Search…', noResults:'No results',
+    back:'Back', save:'Save', saved:'Saved', saveNext:'Save & next branch', markAllOk:'All okay', copyPrev:'Copy last report', clear:'Clear',
+    remarks:'Remarks', remarksPh:'Add a note about the branch (optional)…', auditor:'Auditor', date:'Date',
+    deviation:'Deviation — action / training needed. Report immediately.', notFixedWarn:'Not fixed — explain the reason in remarks.',
+    incomplete:'{n} item(s) not filled. Save anyway?', noPrev:'No previous report for this branch.',
+    logout:'Sign out', language:'Language', role:'Role', admin:'Admin', editor:'List editor', auditorRole:'Auditor',
+    cancel:'Cancel', confirm:'Confirm', delete:'Delete', edit:'Edit', archive:'Archive', restore:'Restore', create:'Create',
+    exportExcel:'Export Excel', print:'Print', offline:'You are offline — data is saved on this device.',
+    progress:'Progress', okay:'Okay', notFixed:'Not fixed', fixedLbl:'Fixed', notChecked:'Not checked', na:'N/A',
+    noPermission:'This page is for admins and list editors only.', viewOnly:'View only'
+  }
+};
+let lang = 'ar';
+/* isolate ISO dates / codes so they stay left-to-right inside Arabic sentences */
+const D = s => '\u2066' + String(s).replace(/-/g, '\u2011') + '\u2069';
+function t(k, vars) {
+  let s = (I18N[lang] && I18N[lang][k]) || I18N.ar[k] || k;
+  if (vars) Object.keys(vars).forEach(v => { s = s.replace('{' + v + '}', /^\d{4}-\d{2}-\d{2}$/.test(vars[v]) ? D(vars[v]) : vars[v]); });
+  return s;
+}
+const L = (ar, en) => (lang === 'ar' ? ar : en);
+const listName = l => (lang === 'ar' ? (l.nameAr || l.name) : (l.name || l.nameAr));
+const itemLabel = it => (lang === 'ar' ? (it.labelAr || it.label) : (it.label || it.labelAr));
+const itemSub = it => (lang === 'ar' ? (it.label !== it.labelAr ? it.label : '') : (it.labelAr !== it.label ? it.labelAr : ''));
+const cityName = b => (lang === 'ar' ? b.cityAr : b.cityEn);
+const levelName = l => (lang === 'ar' ? ({Critical:'حرجة', Major:'كبرى', Minor:'بسيطة'}[l] || l) : l);
+const issueTitle = i => (lang === 'ar' ? (i.titleAr || i.titleEn) : (i.titleEn || i.titleAr));
+const issueDesc = i => (lang === 'ar' ? (i.descAr || i.descEn) : (i.descEn || i.descAr));
+const issueExample = i => (lang === 'ar' ? (i.exampleAr || i.exampleEn) : (i.exampleEn || i.exampleAr));
+const fmtNum = n => Number(n || 0).toLocaleString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-US');
+
+/* ---------- dates (Asia/Riyadh, weeks Saturday → Friday) ---------- */
+function riyadhToday() {
+  const p = {}; new Intl.DateTimeFormat('en-CA', {timeZone: CFG.TIME_ZONE || 'Asia/Riyadh', year:'numeric', month:'2-digit', day:'2-digit'})
+    .formatToParts(new Date()).forEach(x => { p[x.type] = x.value; });
+  return new Date(Date.UTC(+p.year, +p.month - 1, +p.day));
+}
+function riyadhHour() { return +new Intl.DateTimeFormat('en-GB', {timeZone: CFG.TIME_ZONE || 'Asia/Riyadh', hour:'2-digit', hour12:false}).format(new Date()); }
+const fmtDate = d => d.toISOString().slice(0, 10);
+const parseDate = s => new Date(s + 'T00:00:00Z');
+function addDays(d, n) { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x; }
+function weekStartOf(d) { const sd = CFG.WEEK_START_DAY == null ? 6 : CFG.WEEK_START_DAY; return addDays(d, -((d.getUTCDay() - sd + 7) % 7)); }
+const todayStr = () => fmtDate(riyadhToday());
+const currentWeekStart = () => fmtDate(weekStartOf(riyadhToday()));
+const riyadhDayNumber = () => Math.floor(riyadhToday().getTime() / 86400000);
+function niceDate(s) {
+  try { return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone:'UTC'}).format(parseDate(s)); }
+  catch (e) { return s; }
+}
+function timeAgo(iso) {
+  if (!iso) return '';
+  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (m < 1) return L('الآن', 'now');
+  if (m < 60) return L(`قبل ${m} د`, `${m}m ago`);
+  const h = Math.round(m / 60); if (h < 24) return L(`قبل ${h} س`, `${h}h ago`);
+  const d = Math.round(h / 24); return L(`قبل ${d} يوم`, `${d}d ago`);
+}
+
+/* ---------- statuses ---------- */
+const SURVEY_STATUSES = ['✅', '❌', 'N/A'];
+const statusesFor = list => (list.kind === 'survey' ? SURVEY_STATUSES : BEVERAGE_STATUSES);
+function statusKey(s) {
+  if (s == null || s === '') return '';
+  if (s === 'Okay' || s === '✅') return 'ok';
+  if (s === 'Not okay and fixed') return 'fixed';
+  if (s === 'Not fixed' || s === '❌') return 'bad';
+  if (String(s).trim() === 'Not checked') return 'nc';
+  if (s === 'not available' || s === 'N/A') return 'na';
+  return '';
+}
+function statusText(s) {
+  const k = statusKey(s);
+  if (!k) return '—';
+  const ar = {ok:'سليم', fixed:'غير سليم وأُصلح', bad:'غير مصلح', nc:'لم يُفحص', na:'غير متوفر'};
+  if (lang === 'ar') return (s === '✅' || s === '❌' || s === 'N/A') ? ({ok:'نعم ✅', bad:'لا ❌', na:'لا ينطبق'}[k]) : ar[k];
+  return (s === '✅' ? 'Yes ✅' : s === '❌' ? 'No ❌' : String(s).trim());
+}
+
+/* ---------- default data ---------- */
+const BEV_AR = {'Hibiscus':'كركديه','Passion Fruit':'باشن فروت','Matcha':'ماتشا','Hot Chocolate':'شوكولاتة ساخنة','Espresso':'إسبريسو',
+  'Ethiopian Drip (Hot)':'تقطير إثيوبي ساخن','Ethiopian Drip (Cold)':'تقطير إثيوبي بارد','Brazil (Hot)':'برازيلي ساخن','Brazil (Cold)':'برازيلي بارد'};
+const slugify = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'item';
+function defaultChecklists() {
+  return [
+    {id:1, name:'Beverage Quality Checklist', nameAr:'فحص جودة المشروبات', kind:'fixed', slug:'beverage', icon:'coffee', locked:true,
+     items: PRODUCTS.map(p => ({id: slugify(p), label: p, labelAr: BEV_AR[p] || p}))},
+    {id:2, name:'Hot Cookies', nameAr:'هوت كوكيز', kind:'survey', slug:'hot-cookies', icon:'cookie', locked:true,
+     items:[
+       {id:'staff-knowledge', label:'Staff knowledge — Hot Cookies SOPs & specifications', labelAr:'معرفة الموظفين — إجراءات ومواصفات Hot Cookies'},
+       {id:'parchment-paper', label:'Small parchment paper usage', labelAr:'استخدام ورق الزبدة الصغير'},
+       {id:'turbo-chef-280', label:'Turbo Chef temperature at 280 °C', labelAr:'حرارة توربو شيف 280°'}]}
+  ];
+}
+function seedBeverageReport(list) {
+  // Original file: date 2026-11-01 — 50 of 106 submitted: 425 Okay / 9 fixed / 3 Not fixed / 9 Not checked / 4 not available.
+  const checks = {};
+  BRANCHES.forEach(b => {
+    const vals = PRODUCTS.map(p => b.checks[p]);
+    if (vals.some(v => v != null)) {
+      const s = {}; list.items.forEach((it, i) => { s[it.id] = vals[i]; });
+      checks[b.no] = {s, remarks: b.remarks || '', auditor: null, email: null, at: '2026-11-01T09:00:00Z', seed: true};
+    }
+  });
+  return {id: 1, checklistId: 1, weekStart: '2026-10-31', weekEnd: '2026-11-06', date: '2026-11-01', seed: true, checks};
+}
+function freshState() {
+  const checklists = defaultChecklists();
+  return {version: 2, lang: 'ar', users: {}, perms: {}, checklists, reports: [seedBeverageReport(checklists[0])],
+    quiz: {correct: 0, total: 0, streak: 0, best: 0}, nextId: 100, lastEmail: null, createdAt: new Date().toISOString()};
+}
+/* migrate data typed in the first standalone version (localStorage key halfMillionQualityAppV1) */
+function migrateV1(st) {
+  try {
+    const v1 = JSON.parse(localStorage.getItem(LS_V1) || 'null');
+    if (!v1 || !Array.isArray(v1.checklists)) return st;
+    const idMap = {};
+    v1.checklists.forEach(l => {
+      let target = st.checklists.find(x => x.id === l.id && x.slug && x.slug === l.slug);
+      if (!target) {
+        target = {id: st.nextId++, name: l.name, nameAr: l.nameAr || l.name, kind: l.kind, slug: null, icon: l.kind === 'survey' ? 'clipboard' : 'list',
+          items: l.items.map((it, i) => ({id: slugify(it.label) + '-' + i, label: it.label, labelAr: it.labelAr || it.label}))};
+        st.checklists.push(target);
+      }
+      idMap[l.id] = target;
+    });
+    (v1.reports || []).forEach(r => {
+      const list = idMap[r.checklistId]; if (!list) return;
+      if (list.id === 1 && r.weekStart === '2026-10-31') return; // seed already present
+      let rep = st.reports.find(x => x.checklistId === list.id && x.weekStart === r.weekStart);
+      if (!rep) { rep = {id: st.nextId++, checklistId: list.id, weekStart: r.weekStart, weekEnd: r.weekEnd, date: r.date, checks: {}}; st.reports.push(rep); }
+      Object.entries(r.checks || {}).forEach(([no, c]) => {
+        const s = {}; list.items.forEach((it, i) => { s[it.id] = (c.statuses || [])[i] == null ? null : c.statuses[i]; });
+        rep.checks[no] = {s, remarks: c.remarks || '', auditor: c.auditor || null, email: null, at: null};
+      });
+    });
+    if (v1.quizScore) { st.quiz.correct += v1.quizScore.correct || 0; st.quiz.total += v1.quizScore.total || 0; }
+    st.migratedV1 = new Date().toISOString();
+  } catch (e) { console.warn('v1 migration skipped', e); }
+  return st;
+}
+function loadState() {
+  try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s && s.version === 2 && Array.isArray(s.checklists)) return s; } catch (e) {}
+  const st = migrateV1(freshState());
+  try { localStorage.setItem(LS_KEY, JSON.stringify(st)); } catch (e) {}
+  return st;
+}
+let state = loadState();
+lang = state.lang || 'ar';
+function save() {
+  state.lang = lang;
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+  catch (e) { toast(L('تعذّر الحفظ — مساحة التخزين ممتلئة.', 'Could not save — storage is full.'), 'error'); }
+}
+window.addEventListener('storage', e => { if (e.key === LS_KEY && e.newValue) { try { state = JSON.parse(e.newValue); } catch (x) {} } });
+
+const activeLists = () => state.checklists.filter(l => !l.archived);
+const getList = id => state.checklists.find(l => l.id === +id);
+function ensureCurrentWeek(listId) {
+  const ws = currentWeekStart();
+  let r = state.reports.find(x => x.checklistId === listId && x.weekStart === ws);
+  if (!r) {
+    r = {id: state.nextId++, checklistId: listId, weekStart: ws, weekEnd: fmtDate(addDays(parseDate(ws), 6)), date: ws, checks: {}};
+    state.reports.push(r); save();
+  }
+  return r;
+}
+const reportsOf = listId => state.reports.filter(r => r.checklistId === listId).sort((a, b) => b.weekStart.localeCompare(a.weekStart));
+const doneCount = rep => Object.keys(rep.checks).length;
+function cities() {
+  const m = new Map();
+  BRANCHES.forEach(b => { if (!m.has(b.cityEn)) m.set(b.cityEn, {en: b.cityEn, ar: b.cityAr, count: 0}); m.get(b.cityEn).count++; });
+  return Array.from(m.values()).sort((a, b) => b.count - a.count || a.en.localeCompare(b.en));
+}
+const branchByNo = no => BRANCHES.find(b => b.no === +no);
+
+/* ---------- auth: name + work e-mail + 4-digit PIN (device-local) ---------- */
+const normEmail = e => String(e || '').trim().toLowerCase();
+const pinHash = (email, pin) => sha256('hafm-pin|' + normEmail(email) + '|' + pin);
+const adminHash = email => sha256('hafm-admin|' + normEmail(email));
+function emailAllowed(email) {
+  const e = normEmail(email);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return false;
+  const doms = CFG.ALLOWED_EMAIL_DOMAINS || [];
+  return !doms.length || doms.some(d => e.endsWith('@' + d.toLowerCase()));
+}
+function roleOf(email) {
+  const e = normEmail(email); if (!e) return 'auditor';
+  if ((CFG.ADMIN_EMAIL_HASHES || []).includes(adminHash(e))) return 'admin';
+  return state.perms[e] || 'auditor';
+}
+const roleName = r => t(r === 'admin' ? 'admin' : r === 'editor' ? 'editor' : 'auditorRole');
+function getSession() {
+  try { const s = JSON.parse(sessionStorage.getItem(SS_SESSION) || 'null'); if (s && s.email && state.users[s.email]) return s; } catch (e) {}
+  return null;
+}
+function currentUser() { const s = getSession(); return s ? state.users[s.email] : null; }
+const canEditLists = () => { const u = currentUser(); return !!u && ['admin', 'editor'].includes(roleOf(u.email)); };
+const isAdmin = () => { const u = currentUser(); return !!u && roleOf(u.email) === 'admin'; };
+function signIn(email) {
+  const e = normEmail(email);
+  sessionStorage.setItem(SS_SESSION, JSON.stringify({email: e, at: new Date().toISOString()}));
+  state.lastEmail = e; state.users[e].lastLogin = new Date().toISOString(); save();
+}
+function signOut() { sessionStorage.removeItem(SS_SESSION); go('index.html'); }
+function requireAuth() {
+  if (!getSession()) {
+    const page = location.pathname.split('/').pop() + location.search;
+    location.replace('index.html?next=' + encodeURIComponent(page));
+    return false;
+  }
+  return true;
+}
+const initials = name => String(name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+
+/* ---------- icons (line style, 24px grid, currentColor) ---------- */
+const ICONS = {
+  home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
+  chart:'<path d="M3 21h18"/><rect x="5" y="11" width="3" height="7" rx="1"/><rect x="10.5" y="6" width="3" height="12" rx="1"/><rect x="16" y="13" width="3" height="5" rx="1"/>',
+  store:'<path d="M4 4h16l1.5 5H2.5z"/><path d="M2.5 9a3.2 3.2 0 0 0 6.3 0 3.2 3.2 0 0 0 6.4 0 3.2 3.2 0 0 0 6.3 0"/><path d="M4.5 12v9h15v-9"/><path d="M10 21v-5h4v5"/>',
+  book:'<path d="M12 6c-2-1.5-5-2-8-1.5V19c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V4.5c-3-.5-6 0-8 1.5z"/><path d="M12 6v14.5"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18 14.8c2.2.6 3.5 2.4 3.5 5.2"/>',
+  list:'<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  arrow:'<path d="M17 17 7 7"/><path d="M7 16V7h9"/>',
+  back:'<path d="M9 5l7 7-7 7"/>',
+  chevron:'<path d="M15 5l-7 7 7 7"/>',
+  up:'<path d="M6 15l6-6 6 6"/>',
+  down:'<path d="M6 9l6 6 6-6"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  x:'<path d="M6 6l12 12M18 6 6 18"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/>',
+  download:'<path d="M12 3v12"/><path d="M7 10.5l5 5 5-5"/><path d="M4 20h16"/>',
+  upload:'<path d="M12 16V4"/><path d="M7 8.5l5-5 5 5"/><path d="M4 20h16"/>',
+  logout:'<path d="M14 4h5v16h-5"/><path d="M9 8l-4 4 4 4"/><path d="M5 12h11"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
+  shield:'<path d="M12 3l8 3v6c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V6z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/>',
+  coffee:'<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c-.8 1 .8 2 0 3M12 3c-.8 1 .8 2 0 3"/>',
+  cookie:'<path d="M20.5 12.5A8.5 8.5 0 1 1 11.5 3.5a3 3 0 0 0 4 3.5 3 3 0 0 0 5 5.5z"/><circle cx="8.5" cy="10" r=".9"/><circle cx="13" cy="15" r=".9"/><circle cx="8.5" cy="15.5" r=".9"/><circle cx="12" cy="10.5" r=".6"/>',
+  clipboard:'<rect x="5" y="4.5" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5"/><path d="M8.5 10.5l1.3 1.3 2.4-2.4M14 11h2M8.5 16.5l1.3 1.3 2.4-2.4M14 17h2"/>',
+  calendar:'<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  pin:'<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  trash:'<path d="M4 7h16"/><path d="M9.5 7V4h5v3"/><path d="M6 7l1 14h10l1-14"/>',
+  copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
+  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  key:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l2 2M15 8l2 2"/>',
+  star:'<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  bulb:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/>',
+  alert:'<path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.2v.1"/>',
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
+  archive:'<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9"/><path d="M10 13h4"/>',
+  refresh:'<path d="M20 11a8 8 0 0 0-14.7-4.3L4 8.5"/><path d="M4 4v4.5h4.5"/><path d="M4 13a8 8 0 0 0 14.7 4.3l1.3-1.8"/><path d="M20 20v-4.5h-4.5"/>',
+  printer:'<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>',
+  filter:'<path d="M3 5h18l-7 8.5V20l-4-2v-4.5z"/>',
+  flag:'<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+  sparkle:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6l8.5 7 8.5-7"/>',
+  grid:'<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
+  droplet:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+  thermo:'<path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z"/><path d="M12 9v7"/>',
+  broom:'<path d="M14 4l6 6"/><path d="M17 7l-6.5 6.5"/><path d="M10.5 13.5c-3 0-6 2-6.5 6.5 4.5-.5 6.5-3.5 6.5-6.5z"/><path d="M7 17l2-2"/>',
+  box:'<path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/>'
+};
+const LIST_ICONS = ['coffee', 'cookie', 'clipboard', 'list', 'droplet', 'thermo', 'broom', 'box', 'shield', 'star', 'flag', 'grid'];
+function ic(name, cls) { return `<svg class="ic ${cls || ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ICONS.list}</svg>`; }
+const listIcon = l => l.icon || (l.kind === 'survey' ? 'clipboard' : 'list');
+const listTone = l => (l.tone || (l.kind === 'survey' ? 'havan' : 'teal'));
+
+/* ---------- toasts / dialogs ---------- */
+function toast(msg, type) {
+  let box = $('#toasts'); if (!box) { box = document.createElement('div'); box.id = 'toasts'; box.setAttribute('aria-live', 'polite'); document.body.appendChild(box); }
+  const el = document.createElement('div'); el.className = 'toast ' + (type || '');
+  el.innerHTML = ic(type === 'error' ? 'alert' : 'check') + '<span>' + esc(msg) + '</span>';
+  box.appendChild(el); requestAnimationFrame(() => el.classList.add('in'));
+  setTimeout(() => { el.classList.remove('in'); setTimeout(() => el.remove(), 300); }, 2600);
+}
+function dialog({title, body, okText, cancelText, danger}) {
+  return new Promise(res => {
+    const wrap = document.createElement('div'); wrap.className = 'dialog-wrap';
+    wrap.innerHTML = `<div class="dialog" role="dialog" aria-modal="true"><h3>${esc(title || '')}</h3><div class="dialog-body">${body || ''}</div>
+      <div class="dialog-actions"><button class="btn ghost" data-r="0" type="button">${esc(cancelText || t('cancel'))}</button>
+      <button class="btn ${danger ? 'danger' : 'primary'}" data-r="1" type="button">${esc(okText || t('confirm'))}</button></div></div>`;
+    document.body.appendChild(wrap); requestAnimationFrame(() => wrap.classList.add('in'));
+    const close = v => { wrap.classList.remove('in'); setTimeout(() => wrap.remove(), 200); res(v); };
+    wrap.addEventListener('click', e => { if (e.target === wrap) close(false); const b = e.target.closest('[data-r]'); if (b) close(b.dataset.r === '1'); });
+  });
+}
+function sheet(html, onMount) {
+  const wrap = document.createElement('div'); wrap.className = 'sheet-wrap';
+  wrap.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><div class="sheet-handle"></div>${html}</div>`;
+  document.body.appendChild(wrap); requestAnimationFrame(() => wrap.classList.add('in'));
+  const close = () => { wrap.classList.remove('in'); setTimeout(() => wrap.remove(), 250); };
+  wrap.addEventListener('click', e => { if (e.target === wrap || e.target.closest('[data-close]')) close(); });
+  if (onMount) onMount(wrap, close);
+  return close;
+}
+
+/* ---------- shell: top bar + bottom navigation ---------- */
+const NAV = [
+  {id:'home', href:'home.html', icon:'home'},
+  {id:'reports', href:'reports.html', icon:'chart'},
+  {id:'branches', href:'branches.html', icon:'store'},
+  {id:'review', href:'review.html', icon:'book'},
+  {id:'account', href:'account.html', icon:'user'}
+];
+function renderShell(opts) {
+  opts = opts || {};
+  const u = currentUser();
+  const top = document.createElement('header'); top.className = 'topbar' + (opts.hero ? ' on-hero' : '');
+  top.innerHTML = `
+    ${opts.back ? `<a class="icon-btn" href="${esc(opts.back)}" aria-label="${t('back')}">${ic('back', 'flip-ltr')}</a>` : `<a class="brand" href="home.html" aria-label="Half Million"><img src="assets/img/${opts.hero ? 'logo-light' : 'logo'}.svg" alt="½M" width="62" height="28"></a>`}
+    <div class="top-title">${opts.title ? `<b>${esc(opts.title)}</b>` : `<b>${t('appName')}</b>`}${opts.sub ? `<small>${esc(opts.sub)}</small>` : `<small>${t('appFull')}</small>`}</div>
+    <div class="lang-switch" role="group" aria-label="${t('language')}">
+      <button type="button" data-lang="ar" class="${lang === 'ar' ? 'on' : ''}">ع</button>
+      <button type="button" data-lang="en" class="${lang === 'en' ? 'on' : ''}">En</button>
+    </div>
+    ${u ? `<a class="avatar" href="account.html" title="${esc(u.name)}">${esc(initials(u.name))}</a>` : ''}`;
+  document.body.prepend(top);
+  $$('.lang-switch button', top).forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.lang === lang) return; lang = b.dataset.lang; save(); location.reload();
+  }));
+  if (opts.nav !== false) {
+    const nav = document.createElement('nav'); nav.className = 'bottomnav'; nav.setAttribute('aria-label', 'Main');
+    nav.innerHTML = NAV.map(n => `<a href="${n.href}" class="${n.id === opts.active ? 'active' : ''}" ${n.id === opts.active ? 'aria-current="page"' : ''}>
+      <span class="nav-ic">${ic(n.icon)}</span><span>${t(n.id)}</span></a>`).join('');
+    document.body.appendChild(nav);
+    document.body.classList.add('has-nav');
+  }
+  const off = document.createElement('div'); off.className = 'offline-bar'; off.textContent = t('offline'); document.body.appendChild(off);
+  const upd = () => off.classList.toggle('show', !navigator.onLine);
+  window.addEventListener('online', upd); window.addEventListener('offline', upd); upd();
+}
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  $$('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  $$('[data-ar]').forEach(el => { el.textContent = lang === 'ar' ? el.dataset.ar : el.dataset.en; });
+}
+/* section heading with havan bar (brand style) */
+const sectionHead = (title, sub, extra) => `<div class="sec-head"><div><h2>${esc(title)}</h2>${sub ? `<p class="muted">${esc(sub)}</p>` : ''}</div>${extra || ''}</div>`;
+/* ring progress */
+function ring(pct, size, label) {
+  const r = 16, c = 2 * Math.PI * r, off = c * (1 - Math.max(0, Math.min(100, pct)) / 100);
+  return `<span class="ring" style="--s:${size || 56}px"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="${r}" class="ring-bg"/><circle cx="20" cy="20" r="${r}" class="ring-fg" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}"/></svg><b>${label != null ? label : Math.round(pct) + '%'}</b></span>`;
+}
+
+/* ---------- PWA service worker ---------- */
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+/* page boot: set direction early */
+applyLang();
