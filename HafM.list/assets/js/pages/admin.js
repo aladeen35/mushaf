@@ -18,6 +18,36 @@ hafmBoot(function () {
   }
   const fail = err => toast(apiErrorText(err), 'error');
   const hasData = l => state.reports.some(r => r.checklistId === l.id && Object.keys(r.checks).length);
+  const entryCount = l => state.reports.filter(r => r.checklistId === l.id && !r.seed).reduce((n, r) => n + Object.keys(r.checks).length, 0);
+  const admin = isAdmin();
+  /* who may do what: admins everything (except changing the beverage items, tied to the Excel template); editors their own lists */
+  const canEdit = l => (admin ? l.id !== 1 : !l.locked);
+  const canDelete = l => (admin ? true : !l.locked && !hasData(l));
+
+  /* delete with TWO warnings; the server keeps a recovery copy of the list and its entries */
+  async function deleteList(l, after) {
+    const n = entryCount(l), name = listName(l);
+    const ok1 = await dialog({title: L(`حذف «${name}»؟`, `Delete “${name}”?`), danger: true, okText: L('متابعة', 'Continue'),
+      body: esc(n ? L(`هذه القائمة فيها ${n} إدخال من الفروع. ستُحذف القائمة وكل إدخالاتها من كل الأسابيع، ولن تظهر في التقارير ولا في ملفات Excel، لجميع الموظفين.`,
+        `This list has ${n} branch entr${n > 1 ? 'ies' : 'y'}. The list and all its entries, in every week, will be removed for everyone, from reports and Excel files.`)
+        : L('ستُحذف القائمة من التطبيق لجميع الموظفين.', 'The list will be removed from the app for everyone.'))});
+    if (!ok1) return;
+    const ok2 = await dialog({title: L('تأكيد أخير', 'Final confirmation'), danger: true, okText: L('حذف نهائياً', 'Delete permanently'), cancelText: L('تراجع', 'Keep it'),
+      body: `<p>${esc(L(`هل أنت متأكد من حذف «${name}» نهائياً؟`, `Are you sure you want to permanently delete “${name}”?`))}</p>
+        <p class="small muted" style="margin-top:8px">${esc(L('إن كنت تريد إخفاءها فقط مع الاحتفاظ بتقاريرها فاستخدم «أرشفة» بدل الحذف.', 'To only hide it and keep its reports, use “Archive” instead.'))}</p>`});
+    if (!ok2) return;
+    try {
+      if (REMOTE) await api('hafm_delete_checklist', {p_token: getSession().token, p_id: l.id});
+      state.checklists = state.checklists.filter(x => x.id !== l.id); state.reports = state.reports.filter(r => r.checklistId !== l.id); save();
+      toast(L(`حُذفت «${name}»`, `“${name}” deleted`)); after();
+    } catch (err) { fail(err); }
+  }
+  async function restoreBuiltIns() {
+    try {
+      for (const b of defaultChecklists()) if (!getList(b.id)) await persist(b);
+      toast(L('استُعيدت القوائم المدمجة', 'Built-in lists restored')); overview();
+    } catch (err) { fail(err); }
+  }
 
   /* ---------- overview ---------- */
   function overview() {
@@ -27,17 +57,32 @@ hafmBoot(function () {
       return `<div class="item-row"><span class="lead ${listTone(l)}">${ic(listIcon(l))}</span>
         <div class="grow"><div class="title">${esc(listName(l))}</div>
         <div class="sub">${l.kind === 'fixed' ? t('fixed') : t('survey')} · ${l.items.length} ${t('items')}${rep ? ` · ${doneCount(rep)}/${TOTAL_BRANCHES} ${t('submitted')}` : ''}${l.createdBy ? ' · ' + esc(l.createdBy) : ''}</div></div>
-        ${l.locked ? `<span class="badge">${ic('lock')}</span>` : l.archived
-          ? `<button class="btn sm ghost" data-restore="${l.id}" type="button">${t('restore')}</button>`
-          : `<a class="btn sm ghost" href="admin.html?edit=${l.id}">${ic('edit')} ${t('edit')}</a>`}</div>`;
+        <div class="row" style="gap:6px">
+          ${l.archived ? `<button class="btn sm ghost" data-restore="${l.id}" type="button">${t('restore')}</button>`
+            : canEdit(l) ? `<a class="btn sm ghost" href="admin.html?edit=${l.id}">${ic('edit')} ${t('edit')}</a>`
+            : `<span class="badge" title="${L('مرتبطة بقالب الإكسل', 'Tied to the Excel template')}">${ic('lock')}</span>`}
+          ${admin && !l.archived ? `<button class="icon-btn" data-archive="${l.id}" type="button" aria-label="${t('archive')}" title="${t('archive')}" style="width:38px;height:38px">${ic('archive')}</button>` : ''}
+          ${canDelete(l) ? `<button class="icon-btn" data-del="${l.id}" type="button" aria-label="${t('delete')}" title="${t('delete')}" style="width:38px;height:38px;color:var(--bad)">${ic('trash')}</button>` : ''}
+        </div></div>`;
     };
+    const missing = admin && defaultChecklists().filter(b => !getList(b.id));
     $('#page').innerHTML = `
       <a class="btn btn-arrow dark block" href="admin.html?new=1"><span class="circ">${ic('plus')}</span>${L('إنشاء قائمة أو سيرفي جديد', 'Create a new list or survey')}</a>
       ${sectionHead(L('القوائم النشطة', 'Active lists'), `${act.length}`)}
       <div class="rows">${act.map(row).join('')}</div>
       ${arch.length ? sectionHead(L('المؤرشفة', 'Archived'), `${arch.length}`) + `<div class="rows">${arch.map(row).join('')}</div>` : ''}
-      <p class="hint">${ic('lock')} ${L('القوائم المدمجة (المشروبات و Hot Cookies) مقفلة لأنها مرتبطة بقالب الإكسل ورسالة الواتساب الأصلية.', 'Built-in lists (Beverages, Hot Cookies) are locked: they mirror the original Excel template and WhatsApp survey.')}</p>`;
+      ${missing && missing.length ? `<button class="btn ghost block" id="restoreBuiltIns" type="button">${ic('refresh')} ${L('استعادة القوائم المدمجة', 'Restore built-in lists')}: ${missing.map(b => esc(listName(b))).join('، ')}</button>` : ''}
+      <p class="hint">${admin
+        ? L('بصفتك مشرفاً: تستطيع تعديل وأرشفة وحذف أي قائمة. بنود «فحص جودة المشروبات» ثابتة لأنها مرتبطة بقالب الإكسل الأصلي. الحذف يطلب تأكيدين.', 'As an admin you can edit, archive and delete any list. The beverage list’s items stay fixed (original Excel template). Deleting asks twice.')
+        : L('محرّر القوائم يعدّل قوائمه ويحذف ما لا إدخالات فيه. القوائم المدمجة يديرها المشرف.', 'List editors edit their lists and delete lists with no entries. Built-in lists are managed by admins.')}</p>`;
     $$('[data-restore]').forEach(b => b.addEventListener('click', () => { const l = getList(b.dataset.restore); persist(Object.assign({}, l, {archived: false})).then(() => { toast(t('saved')); overview(); }).catch(fail); }));
+    $$('[data-archive]').forEach(b => b.addEventListener('click', async () => {
+      const l = getList(b.dataset.archive);
+      if (await dialog({title: t('archive'), body: esc(L(`ستختفي «${listName(l)}» من الصفحة الرئيسية، وتبقى تقاريرها محفوظة. يمكنك استعادتها لاحقاً.`, `“${listName(l)}” leaves the home page; its reports stay. You can restore it later.`)), okText: t('archive')}))
+        persist(Object.assign({}, l, {archived: true})).then(() => { toast(t('saved')); overview(); }).catch(fail);
+    }));
+    $$('[data-del]').forEach(b => b.addEventListener('click', () => deleteList(getList(b.dataset.del), overview)));
+    const rb = $('#restoreBuiltIns'); if (rb) rb.addEventListener('click', restoreBuiltIns);
   }
 
   /* ---------- editor ---------- */
@@ -45,7 +90,7 @@ hafmBoot(function () {
     const creating = !list;
     const d = creating ? {name: '', nameAr: '', kind: 'survey', icon: 'clipboard', tone: 'havan', items: [{id: '', label: '', labelAr: ''}]}
       : JSON.parse(JSON.stringify(list));
-    if (!creating && list.locked) { location.replace('admin.html'); return; }
+    if (!creating && !canEdit(list)) { location.replace('admin.html'); return; }
     const kindLocked = !creating && hasData(list);
 
     function draw() {
@@ -89,7 +134,7 @@ hafmBoot(function () {
           <p class="err" id="fErr"></p>
           <button class="btn primary block" type="submit">${ic('check')} ${creating ? t('create') : t('save')}</button>
           ${!creating ? `<div class="row wrap"><button class="btn ghost" id="archBtn" type="button">${ic('archive')} ${t('archive')}</button>
-            ${!hasData(list) ? `<button class="btn ghost" id="delBtn" type="button" style="color:var(--bad)">${ic('trash')} ${t('delete')}</button>` : ''}</div>` : ''}
+            ${canDelete(list) ? `<button class="btn ghost" id="delBtn" type="button" style="color:var(--bad)">${ic('trash')} ${t('delete')}</button>` : ''}</div>` : ''}
         </form>`;
       bind();
     }
@@ -143,14 +188,7 @@ hafmBoot(function () {
         }
       });
       const del = $('#delBtn');
-      if (del) del.addEventListener('click', async () => {
-        if (await dialog({title: t('delete'), body: esc(L('حذف نهائي لقائمة بلا إدخالات.', 'Permanently delete a list with no entries.')), okText: t('delete'), danger: true})) {
-          try {
-            if (REMOTE) await api('hafm_delete_checklist', {p_token: getSession().token, p_id: list.id});
-            state.checklists = state.checklists.filter(x => x.id !== list.id); state.reports = state.reports.filter(r => r.checklistId !== list.id); save(); go('admin.html');
-          } catch (err) { fail(err); }
-        }
-      });
+      if (del) del.addEventListener('click', () => deleteList(list, () => go('admin.html')));
     }
     draw();
   }

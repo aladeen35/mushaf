@@ -65,7 +65,7 @@ hafmBoot(function () {
       const bad = Object.values(x.c.s || {}).filter(s => statusKey(s) === 'bad').length;
       return `<a class="item-row" href="entry.html?list=${x.l.id}&branch=${b.no}${x.r.weekStart !== ws ? '&week=' + x.r.weekStart : ''}">
         <span class="lead ${listTone(x.l)}">${ic(listIcon(x.l))}</span>
-        <div class="grow"><div class="title">${esc(b.name)} <span class="small muted">${esc(b.code)}</span></div>
+        <div class="grow"><div class="title">${esc(bName(b))} <span class="small muted">${esc(b.code)}</span></div>
         <div class="sub">${esc(listName(x.l))} · ${esc(timeAgo(x.c.at))}</div></div>
         ${bad ? `<span class="badge red">${bad} ${t('notFixed')}</span>` : `<span class="badge ok">${ic('check')}</span>`}</a>`;
     }).join('')}</div>` : ''}

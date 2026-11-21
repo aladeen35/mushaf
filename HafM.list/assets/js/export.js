@@ -58,7 +58,8 @@ async function exportBeverage(list, rep, into) {
     cell.font = XL.font({bold: true, color: {argb: 'FFFFFFFF'}}); cell.fill = XL.fill(i >= 13 && i <= 17 ? XL.blue : XL.navy);
     cell.alignment = {horizontal: 'center', vertical: 'middle', wrapText: true}; cell.border = XL.border;
   });
-  // rows 5..110
+  // rows 5..(4 + number of branches) — 106 branches = rows 5..110 as in the original
+  const LR = 4 + BRANCHES.length, SR = LR + 2;
   const ids = list.items.map(it => it.id);
   BRANCHES.forEach((b, idx) => {
     const r = 5 + idx, row = ws.getRow(r); row.height = 18;
@@ -75,25 +76,25 @@ async function exportBeverage(list, rep, into) {
     row.getCell(19).value = chk && chk.remarks ? chk.remarks : null;
     row.getCell(19).alignment = {vertical: 'middle', wrapText: false};
   });
-  ws.dataValidations.add('E5:M110', {type: 'list', allowBlank: true, formulae: ['"Okay,Not okay and fixed,Not fixed,Not checked , not available"']});
-  ws.addConditionalFormatting({ref: 'C5:D110', rules: [{type: 'expression', priority: 1, formulae: ['$P5>0'], style: {font: {color: {argb: 'FF9C0006'}}}}]});
-  ws.addConditionalFormatting({ref: 'E5:M110', rules: statusRules('E5:M110', 2)});
-  // summary 112..117
-  ws.getRow(112).height = 41.25;
-  ws.mergeCells('A112:C112');
-  const sh = ws.getCell('A112'); sh.value = 'SUMMARY BY PRODUCT';
+  ws.dataValidations.add(`E5:M${LR}`, {type: 'list', allowBlank: true, formulae: ['"Okay,Not okay and fixed,Not fixed,Not checked , not available"']});
+  ws.addConditionalFormatting({ref: `C5:D${LR}`, rules: [{type: 'expression', priority: 1, formulae: ['$P5>0'], style: {font: {color: {argb: 'FF9C0006'}}}}]});
+  ws.addConditionalFormatting({ref: `E5:M${LR}`, rules: statusRules(`E5:M${LR}`, 2)});
+  // summary SR..SR+5 (112..117 in the original)
+  ws.getRow(SR).height = 41.25;
+  ws.mergeCells(`A${SR}:C${SR}`);
+  const sh = ws.getCell(`A${SR}`); sh.value = 'SUMMARY BY PRODUCT';
   sh.font = XL.font({bold: true, color: {argb: 'FFFFFFFF'}}); sh.fill = XL.fill(XL.navy); sh.alignment = {horizontal: 'center', vertical: 'middle'};
   PRODUCTS.forEach((p, i) => {
-    const cell = ws.getCell(112, 5 + i); cell.value = p;
+    const cell = ws.getCell(SR, 5 + i); cell.value = p;
     cell.font = XL.font({bold: true, color: {argb: 'FFFFFFFF'}}); cell.fill = XL.fill(XL.navy);
     cell.alignment = {horizontal: 'center', vertical: 'middle', wrapText: true}; cell.border = XL.border;
   });
   ['Okay', 'Not okay and fixed', 'Not fixed', 'Not checked ', 'not available'].forEach((label, li) => {
-    const r = 113 + li; ws.mergeCells(`A${r}:C${r}`);
+    const r = SR + 1 + li; ws.mergeCells(`A${r}:C${r}`);
     const lc = ws.getCell(r, 1); lc.value = label; lc.font = XL.font({bold: true}); lc.border = XL.border;
     PRODUCTS.forEach((p, i) => {
       const col = XL.col(5 + i), cell = ws.getCell(r, 5 + i);
-      cell.value = {formula: `COUNTIF(${col}$5:${col}$110,$A${r})`}; cell.font = XL.font(); cell.border = XL.border; cell.alignment = {horizontal: 'center'};
+      cell.value = {formula: `COUNTIF(${col}$5:${col}$${LR},$A${r})`}; cell.font = XL.font(); cell.border = XL.border; cell.alignment = {horizontal: 'center'};
     });
   });
   ws.views = [{state: 'frozen', xSplit: 4, ySplit: 4, topLeftCell: 'E5', activeCell: 'E5'}];
@@ -197,7 +198,7 @@ async function exportAll(weekStart) {
   head.forEach((h, i) => { const c = ws.getCell(3, i + 1); c.value = h; c.font = XL.font({bold: true, color: {argb: 'FFFFFFFF'}}); c.fill = XL.fill(XL.navy); c.border = XL.border; c.alignment = {horizontal: 'center', vertical: 'middle', wrapText: true}; });
   ws.getRow(3).height = 32;
   const by = {};
-  lists.forEach((l, li) => state.reports.filter(r => r.checklistId === l.id && r.weekStart === weekStart).forEach(r => Object.values(r.checks).forEach(c => {
+  lists.forEach((l, li) => state.reports.filter(r => r.checklistId === l.id && r.weekStart === weekStart).forEach(r => Object.entries(r.checks).filter(([no]) => branchByNo(no)).map(([, c]) => c).forEach(c => {
     const key = c.email || c.auditor || 'Original file';
     const a = by[key] || (by[key] = {name: c.auditor || 'Original file', email: c.email || '', n: lists.map(() => 0), bad: 0});
     a.n[li]++; if (Object.values(c.s || {}).some(v => statusKey(v) === 'bad')) a.bad++;

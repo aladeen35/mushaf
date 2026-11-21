@@ -13,7 +13,7 @@ hafmBoot(function () {
     if (!week || !reps.find(r => r.weekStart === week)) week = reps[0] && reps[0].weekStart;
     const rep = reps.find(r => r.weekStart === week);
     history.replaceState({}, '', `reports.html?list=${list.id}&week=${week}`);
-    const checks = rep ? Object.entries(rep.checks) : [];
+    const checks = rep ? Object.entries(rep.checks).filter(([no]) => branchByNo(no)) : [];
     const cnt = {ok: 0, fixed: 0, bad: 0, nc: 0, na: 0, empty: 0};
     const perItem = list.items.map(() => ({ok: 0, fixed: 0, bad: 0, nc: 0, na: 0}));
     const problems = [], auditors = {};
@@ -65,7 +65,7 @@ hafmBoot(function () {
       ${sectionHead(L('المشاكل غير المُصلحة', 'Open (not fixed) problems'), problems.length ? L(`${problems.length} فرع يحتاج متابعة`, `${problems.length} branch(es) need follow-up`) : '')}
       <div class="rows">${problems.length ? problems.map(p => `<a class="item-row" href="entry.html?list=${list.id}&branch=${p.b.no}${week !== currentWeekStart() ? '&week=' + week : ''}">
           <span class="lead" style="background:var(--bad-bg);color:var(--bad)">${ic('alert')}</span>
-          <div class="grow"><div class="title">${esc(p.b.name)} <span class="small muted ltr">${esc(p.b.code)}</span></div>
+          <div class="grow"><div class="title">${esc(bName(p.b))} <span class="small muted ltr">${esc(p.b.code)}</span></div>
           <div class="sub">${p.bad.map(it => esc(itemLabel(it))).join(' · ')}${p.c.remarks ? ' — «' + esc(p.c.remarks) + '»' : ''}</div></div>
           ${p.c.auditor ? `<span class="badge">${esc(p.c.auditor)}</span>` : ''}</a>`).join('')
         : `<div class="empty">${ic('check')}<b>${L('لا مشاكل غير مصلحة', 'No open problems')}</b></div>`}</div>
@@ -86,7 +86,7 @@ hafmBoot(function () {
 
       ${sectionHead(L('فروع لم تُدخل', 'Pending branches'), `${TOTAL_BRANCHES - done} ${t('branchesWord')}`)}
       <div class="rows">${pendingByCity.map(x => `<details class="card flat"><summary class="row spread" style="cursor:pointer"><b>${esc(lang === 'ar' ? x.c.ar : x.c.en)}</b><span class="badge">${x.list.length}</span></summary>
-        <div class="small muted" style="margin-top:8px">${x.list.map(b => `<a href="entry.html?list=${list.id}&branch=${b.no}${week !== currentWeekStart() ? '&week=' + week : ''}" style="text-decoration:underline">${esc(b.name)}</a>`).join(' · ')}</div></details>`).join('') || `<div class="empty">${ic('check')}<b>${L('كل الفروع أُدخلت 🎉', 'All branches submitted 🎉')}</b></div>`}</div>`;
+        <div class="small muted" style="margin-top:8px">${x.list.map(b => `<a href="entry.html?list=${list.id}&branch=${b.no}${week !== currentWeekStart() ? '&week=' + week : ''}" style="text-decoration:underline">${esc(bName(b))}</a>`).join(' · ')}</div></details>`).join('') || `<div class="empty">${ic('check')}<b>${L('كل الفروع أُدخلت 🎉', 'All branches submitted 🎉')}</b></div>`}</div>`;
 
     $$('#listSeg button').forEach(b => b.addEventListener('click', () => { listId = +b.dataset.id; week = null; render(); }));
     $('#weekSel').addEventListener('change', e => { week = e.target.value; render(); });

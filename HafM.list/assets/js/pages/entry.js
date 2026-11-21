@@ -6,7 +6,7 @@ hafmBoot(function () {
   const rep = (weekParam && state.reports.find(r => r.checklistId === list.id && r.weekStart === weekParam)) || ensureCurrentWeek(list.id);
   const isPast = rep.weekStart !== currentWeekStart();
   const backUrl = `list.html?id=${list.id}&city=${encodeURIComponent(b.cityEn)}`;
-  renderShell({active: 'home', back: backUrl, title: b.name, sub: listName(list)});
+  renderShell({active: 'home', back: backUrl, title: bName(b), sub: listName(list)});
   const u = currentUser();
   const sts = statusesFor(list);
   const existing = rep.checks[b.no];
@@ -24,7 +24,7 @@ hafmBoot(function () {
     $('#page').innerHTML = `
       <section class="branch-card">
         <span class="code ltr">${esc(b.code)}</span> <span class="small" style="color:#cfc4b6">#${b.no}</span>
-        <h2>${esc(b.name)}</h2>
+        <h2>${esc(bName(b))}</h2>
         <div class="meta">
           <span>${ic('pin')} ${esc(cityName(b))} · ${esc(lang === 'ar' ? b.regionAr : b.regionEn)}</span>
           <span>${ic('user')} ${esc(b.manager)}</span>
@@ -63,8 +63,8 @@ hafmBoot(function () {
         <button class="btn dark" id="saveNextBtn" type="button">${t('saveNext')} ${ic('chevron', 'flip-ltr')}</button>
       </div>
       <div class="row spread no-print" style="margin-top:6px">
-        <a class="btn sm ghost" href="${link(prevB)}">${ic('back', 'flip-ltr')} ${esc(prevB.name)}</a>
-        <a class="btn sm ghost" href="${link(nextB)}">${esc(nextB.name)} ${ic('chevron', 'flip-ltr')}</a>
+        <a class="btn sm ghost" href="${link(prevB)}">${ic('back', 'flip-ltr')} ${esc(bName(prevB))}</a>
+        <a class="btn sm ghost" href="${link(nextB)}">${esc(bName(nextB))} ${ic('chevron', 'flip-ltr')}</a>
       </div>`;
     bind();
   }
@@ -99,9 +99,9 @@ hafmBoot(function () {
       $$('.sticky-actions .btn').forEach(x => { x.disabled = true; });
       const sent = await saveEntryRemote(list.id, rep.weekStart, b.no, s, draft.remarks.trim());
       rep.checks[b.no].pending = !sent; save();
-      if (sent) toast(t('saved') + ' — ' + b.name);
+      if (sent) toast(t('saved') + ' — ' + bName(b));
       else toast(L('حُفظ على جهازك — سيُرسل تلقائياً عند عودة الاتصال', 'Saved on this device — it will be sent when you are back online'), 'error');
-    } else toast(t('saved') + ' — ' + b.name);
+    } else toast(t('saved') + ' — ' + bName(b));
     if (goNext) {
       const after = inCity.slice(idx + 1).concat(inCity.slice(0, idx));
       const nxt = after.find(x => !rep.checks[x.no]);

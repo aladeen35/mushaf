@@ -12,7 +12,7 @@ hafmBoot(function () {
     const bad = c ? Object.values(c.s || {}).filter(s => statusKey(s) === 'bad').length : 0;
     return `<a class="item-row" href="entry.html?list=${list.id}&branch=${b.no}">
       <span class="lead ${c ? 'done' : ''}">${c ? ic('check') : b.no}</span>
-      <div class="grow"><div class="title">${esc(b.name)} <span class="small muted ltr">${esc(b.code)}</span></div>
+      <div class="grow"><div class="title">${esc(bName(b))} <span class="small muted ltr">${esc(b.code)}</span></div>
       <div class="sub">${esc(b.manager)}${c ? ' · ' + esc(c.auditor || L('الملف الأصلي', 'original file')) : ''}</div></div>
       ${c && c.pending ? `<span class="badge pending">${ic('cloud')} ${L('بانتظار الإرسال', 'Not sent yet')}</span>` : c ? (bad ? `<span class="badge red">${bad} ${ic('alert')}</span>` : `<span class="badge ok">${t('submitted')}</span>`) : `<span class="badge">${t('pending')}</span>`}
       <span class="trail">${ic('chevron', 'flip-ltr')}</span></a>`;
@@ -79,11 +79,11 @@ hafmBoot(function () {
       const showNear = pos => {
         const near = nearestBranches(pos, 3);
         const at = near[0] && near[0].km < 0.35;
-        $('#nearOut').innerHTML = `${at ? `<p class="near-hit">${ic('check')} ${L('أنت في فرع', 'You are at')} <b>${esc(near[0].b.name)}</b></p>` : ''}
+        $('#nearOut').innerHTML = `${at ? `<p class="near-hit">${ic('check')} ${L('أنت في فرع', 'You are at')} <b>${esc(bName(near[0].b))}</b></p>` : ''}
           <div class="rows" style="margin-top:10px">${near.map((x, i) => { const c = rep.checks[x.b.no];
             return `<a class="item-row ${i === 0 ? 'near-first' : ''}" href="entry.html?list=${list.id}&branch=${x.b.no}">
               <span class="lead ${i === 0 ? 'done' : ''}">${i === 0 ? ic('pin') : x.b.no}</span>
-              <div class="grow"><div class="title">${esc(x.b.name)} <span class="small muted ltr">${esc(x.b.code)}</span></div>
+              <div class="grow"><div class="title">${esc(bName(x.b))} <span class="small muted ltr">${esc(x.b.code)}</span></div>
               <div class="sub">${esc(cityName(x.b))} · ${fmtDist(x.km)}${i === 0 ? ' · ' + L('الأقرب إليك', 'closest to you') : ''}${c ? ' · ' + t('submitted') : ''}</div></div>
               <span class="btn sm ${i === 0 ? 'primary' : 'ghost'}">${c ? t('edit') : t('start')}</span></a>`; }).join('')}</div>
           ${pos.acc > 500 ? `<p class="hint">${L('دقة الموقع ضعيفة', 'Low accuracy')} (±${fmtDist(pos.acc / 1000)})</p>` : ''}`;
@@ -100,7 +100,7 @@ hafmBoot(function () {
       $('#q').addEventListener('input', e => {
         const q = e.target.value.trim().toLowerCase();
         $('#tiles').classList.toggle('hidden', !!q);
-        $('#results').innerHTML = q ? (BRANCHES.filter(b => b.name.toLowerCase().includes(q) || b.code.toLowerCase().includes(q) || b.cityAr.includes(q) || b.cityEn.toLowerCase().includes(q)).map(branchRow).join('') || `<div class="empty">${ic('search')}<b>${t('noResults')}</b></div>`) : '';
+        $('#results').innerHTML = q ? (BRANCHES.filter(b => branchMatches(b, q)).map(branchRow).join('') || `<div class="empty">${ic('search')}<b>${t('noResults')}</b></div>`) : '';
       });
     } else {
       $('#changeCity').addEventListener('click', () => { city = null; history.pushState({}, '', `list.html?id=${list.id}`); render(); });
@@ -108,7 +108,7 @@ hafmBoot(function () {
       const draw = () => {
         const arr = BRANCHES.filter(b => b.cityEn === city)
           .filter(b => f === 'all' || (f === 'done' ? rep.checks[b.no] : !rep.checks[b.no]))
-          .filter(b => !q || b.name.toLowerCase().includes(q) || b.code.toLowerCase().includes(q) || b.manager.toLowerCase().includes(q));
+          .filter(b => branchMatches(b, q));
         $('#bl').innerHTML = arr.map(branchRow).join('') || `<div class="empty">${ic('check')}<b>${t('noResults')}</b></div>`;
       };
       $$('#segF button').forEach(b => b.addEventListener('click', () => { f = b.dataset.f; $$('#segF button').forEach(x => x.classList.toggle('on', x === b)); draw(); }));

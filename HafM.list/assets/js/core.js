@@ -5,7 +5,9 @@ const CFG = window.HAFM_CONFIG || {};
 const LS_KEY = 'hafmList.v2';
 const LS_V1 = 'halfMillionQualityAppV1';
 const SS_SESSION = 'hafmList.session';
-const TOTAL_BRANCHES = BRANCHES.length;
+/* BRANCHES (data.js) is the base list; admins' edits / additions / deletions (state.branchEdits, synced) are applied on top */
+const BASE_BRANCHES = BRANCHES.map(b => Object.assign({}, b));
+let TOTAL_BRANCHES = BRANCHES.length;
 const REMOTE = !!(CFG.SUPABASE_URL && CFG.SUPABASE_KEY);
 
 /* ---------- tiny DOM helpers ---------- */
@@ -255,6 +257,25 @@ if (REMOTE && !state.remoteMode) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
 }
 if (!state.outbox) state.outbox = [];
+if (!state.branchEdits) state.branchEdits = {};
+/* rebuild BRANCHES from the base + edits: {no: {data:{…fields}, deleted:bool}} */
+function applyBranchEdits() {
+  const edits = state.branchEdits || {};
+  const out = [];
+  BASE_BRANCHES.forEach(b => { const e = edits[b.no]; if (e && e.deleted) return; out.push(e ? Object.assign({}, b, e.data || {}, {no: b.no}) : Object.assign({}, b)); });
+  Object.keys(edits).map(Number).filter(no => !BASE_BRANCHES.some(b => b.no === no)).sort((a, b) => a - b).forEach(no => {
+    const e = edits[no]; if (e.deleted) return;
+    out.push(Object.assign({no, code: '', name: '', manager: '', regionEn: '', regionAr: '', cityEn: '', cityAr: '', checks: {}, remarks: null}, e.data || {}, {no}));
+  });
+  BRANCHES.length = 0; out.forEach(b => BRANCHES.push(b));
+  TOTAL_BRANCHES = BRANCHES.length;
+}
+const deletedBranches = () => Object.entries(state.branchEdits || {}).filter(([, e]) => e.deleted).map(([no, e]) => Object.assign({}, BASE_BRANCHES.find(b => b.no === +no) || {}, e.data || {}, {no: +no}));
+applyBranchEdits();
+/* official name plus the name the team uses (e.g. Mansurah · معن) */
+function branchAlias(b) { return (lang === 'ar' ? (b.aliasAr || b.aliasEn) : (b.aliasEn || b.aliasAr)) || ''; }
+const bName = b => (branchAlias(b) ? `${b.name} · ${branchAlias(b)}` : b.name);
+const branchMatches = (b, q) => !q || [b.name, b.code, b.manager, b.cityAr, b.cityEn, b.aliasAr, b.aliasEn].some(x => x && String(x).toLowerCase().includes(q));
 function save() {
   state.lang = lang;
   try { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
@@ -274,7 +295,7 @@ function ensureCurrentWeek(listId) {
   return r;
 }
 const reportsOf = listId => state.reports.filter(r => r.checklistId === listId).sort((a, b) => b.weekStart.localeCompare(a.weekStart));
-const doneCount = rep => Object.keys(rep.checks).length;
+const doneCount = rep => Object.keys(rep.checks).filter(no => branchByNo(no)).length; // deleted branches do not count
 function cities() {
   const m = new Map();
   BRANCHES.forEach(b => { if (!m.has(b.cityEn)) m.set(b.cityEn, {en: b.cityEn, ar: b.cityAr, count: 0}); m.get(b.cityEn).count++; });
@@ -283,7 +304,8 @@ function cities() {
 const branchByNo = no => BRANCHES.find(b => b.no === +no);
 
 /* ---------- location: nearest branch (BRANCH_GEO from branch-geo.js, Linktree map links) ---------- */
-const geoOf = b => (typeof BRANCH_GEO !== 'undefined' && BRANCH_GEO[b.no]) || null;
+const geoOf = b => (b && b.lat != null && b.lng != null && b.lat !== '' ? {lat: +b.lat, lng: +b.lng, maps: `https://www.google.com/maps/search/?api=1&query=${b.lat},${b.lng}`, place: b.name}
+  : (typeof BRANCH_GEO !== 'undefined' && BRANCH_GEO[b.no]) || null);
 function distKm(a, b) {
   const r = x => x * Math.PI / 180, dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng);
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLng / 2) ** 2;
@@ -423,6 +445,10 @@ async function syncPull() {
     const r = reportFor(e.l, e.w, true);
     r.checks[e.b] = {s: e.s || {}, remarks: e.r || '', auditor: e.a, email: e.e, at: e.t, history: e.h || []};
   });
+  if (Array.isArray(res.branches)) {
+    const ed = {}; res.branches.forEach(x => { ed[x.no] = {data: x.data || {}, deleted: !!x.deleted}; });
+    state.branchEdits = ed; applyBranchEdits();
+  }
   state.lastSync = res.server_time;
   if (res.me) updateSession({name: res.me.name, role: res.me.role});
   save();
