@@ -120,9 +120,8 @@ function addDays(d, n) { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n)
 function weekStartOf(d) { const sd = CFG.WEEK_START_DAY == null ? 6 : CFG.WEEK_START_DAY; return addDays(d, -((d.getUTCDay() - sd + 7) % 7)); }
 const todayStr = () => fmtDate(riyadhToday());
 /* Week number of the year. Weeks run Saturday → Friday.
-   'jan1' (default, = Excel WEEKNUM(date,16)): week 1 is the Sat–Fri week that contains 1 January
-     → 2026: 14–20 Nov = week 47, 21–27 Nov = week 48; the week 26 Dec 2026 – 1 Jan 2027 = week 1 of 2027.
-   'first-full': week 1 starts on the first Saturday of the year → 21–27 Nov 2026 = week 47. */
+   'first-full' (config default): week 1 starts on the first Saturday of the year → 2026: 14–20 Nov = 46, 21–27 Nov = 47.
+   'jan1' (= Excel WEEKNUM(date,16)): week 1 is the Sat–Fri week that contains 1 January → 21–27 Nov 2026 = 48. */
 function weekInfo(ws) {
   const s = typeof ws === 'string' ? parseDate(ws) : ws;
   if (CFG.WEEK1_RULE === 'first-full') {
@@ -276,6 +275,38 @@ function cities() {
 }
 const branchByNo = no => BRANCHES.find(b => b.no === +no);
 
+/* ---------- location: nearest branch (BRANCH_GEO from branch-geo.js, Linktree map links) ---------- */
+const geoOf = b => (typeof BRANCH_GEO !== 'undefined' && BRANCH_GEO[b.no]) || null;
+function distKm(a, b) {
+  const r = x => x * Math.PI / 180, dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
+const fmtDist = km => km < 1 ? L(`${Math.round(km * 1000)} م`, `${Math.round(km * 1000)} m`) : L(`${km < 10 ? km.toFixed(1) : Math.round(km)} كم`, `${km < 10 ? km.toFixed(1) : Math.round(km)} km`);
+/* current position, cached 5 minutes in this tab so the browser does not ask again on every page */
+function getPosition() {
+  try { const c = JSON.parse(sessionStorage.getItem('hafmList.pos') || 'null'); if (c && Date.now() - c.t < 300000) return Promise.resolve(c); } catch (e) {}
+  return new Promise((res, rej) => {
+    if (!navigator.geolocation) { rej(new Error('unsupported')); return; }
+    navigator.geolocation.getCurrentPosition(p => {
+      const c = {lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, t: Date.now()};
+      try { sessionStorage.setItem('hafmList.pos', JSON.stringify(c)); } catch (e) {}
+      res(c);
+    }, err => rej(err), {enableHighAccuracy: true, timeout: 15000, maximumAge: 60000});
+  });
+}
+const cachedPosition = () => { try { const c = JSON.parse(sessionStorage.getItem('hafmList.pos') || 'null'); return c && Date.now() - c.t < 300000 ? c : null; } catch (e) { return null; } };
+function nearestBranches(pos, n) {
+  return BRANCHES.map(b => ({b, g: geoOf(b)})).filter(x => x.g).map(x => ({b: x.b, g: x.g, km: distKm(pos, x.g)}))
+    .sort((a, c) => a.km - c.km).slice(0, n || 3);
+}
+function geoErrorText(err) {
+  if (err && err.code === 1) return L('لم يُسمح بالوصول للموقع — فعّله من إعدادات المتصفح ثم أعد المحاولة.', 'Location permission denied — allow it in browser settings and retry.');
+  if (err && err.message === 'unsupported') return L('المتصفح لا يدعم تحديد الموقع.', 'This browser does not support location.');
+  if (!window.isSecureContext) return L('تحديد الموقع يعمل فقط عبر https.', 'Location only works over https.');
+  return L('تعذّر تحديد الموقع — تأكد من تشغيل GPS وأعد المحاولة.', 'Could not get your location — check GPS and retry.');
+}
+
 /* ---------- auth: name + work e-mail + 4-digit PIN (device-local) ---------- */
 const normEmail = e => String(e || '').trim().toLowerCase();
 const pinHash = (email, pin) => sha256('hafm-pin|' + normEmail(email) + '|' + pin);
@@ -342,6 +373,7 @@ const ICONS = {
   cookie:'<path d="M20.5 12.5A8.5 8.5 0 1 1 11.5 3.5a3 3 0 0 0 4 3.5 3 3 0 0 0 5 5.5z"/><circle cx="8.5" cy="10" r=".9"/><circle cx="13" cy="15" r=".9"/><circle cx="8.5" cy="15.5" r=".9"/><circle cx="12" cy="10.5" r=".6"/>',
   clipboard:'<rect x="5" y="4.5" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5"/><path d="M8.5 10.5l1.3 1.3 2.4-2.4M14 11h2M8.5 16.5l1.3 1.3 2.4-2.4M14 17h2"/>',
   calendar:'<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  nav:'<path d="M12 2.5l7 18-7-4-7 4z"/>',
   pin:'<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
   edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
   trash:'<path d="M4 7h16"/><path d="M9.5 7V4h5v3"/><path d="M6 7l1 14h10l1-14"/>',

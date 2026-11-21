@@ -4,7 +4,7 @@
   renderShell({active: 'branches', title: t('branches'), sub: `${TOTAL_BRANCHES} ${t('branchesWord')} · ${cities().length} ${L('مدينة', 'cities')}`});
   const lists = activeLists();
   const reps = lists.map(l => ({l, rep: ensureCurrentWeek(l.id)}));
-  let city = '', q = '', f = 'all';
+  let city = '', q = '', f = 'all', pos = cachedPosition(), byDist = false;
 
   const doneIn = b => reps.filter(x => x.rep.checks[b.no]).length;
   const hasBad = b => reps.some(x => { const c = x.rep.checks[b.no]; return c && Object.values(c.s || {}).some(s => statusKey(s) === 'bad'); });
@@ -18,13 +18,15 @@
       <button data-f="partial" type="button">${L('ناقصة', 'Incomplete')}</button>
       <button data-f="bad" type="button">${L('بها مشاكل', 'With problems')}</button>
     </div>
-    <p class="small muted" id="count"></p>
+    <div class="row spread"><p class="small muted" id="count"></p>
+      <button class="btn sm ghost" id="nearSort" type="button">${ic('nav')} ${L('الأقرب إليّ', 'Nearest to me')}</button></div>
     <div class="rows" id="list"></div>`;
 
   function draw() {
     const arr = BRANCHES.filter(b => (!city || b.cityEn === city)
       && (!q || b.name.toLowerCase().includes(q) || b.code.toLowerCase().includes(q) || b.manager.toLowerCase().includes(q) || b.cityAr.includes(q))
       && (f === 'all' || (f === 'complete' ? doneIn(b) === reps.length : f === 'partial' ? doneIn(b) < reps.length : hasBad(b))));
+    if (byDist && pos) arr.sort((a, c) => (geoOf(a) ? distKm(pos, geoOf(a)) : 1e9) - (geoOf(c) ? distKm(pos, geoOf(c)) : 1e9));
     $('#count').textContent = `${arr.length} / ${TOTAL_BRANCHES} ${t('branchesWord')} · ${t('thisWeek')}`;
     $('#list').innerHTML = arr.map(b => {
       const d = doneIn(b);
@@ -34,6 +36,7 @@
         <div class="sub">${esc(cityName(b))} · ${esc(b.manager)}</div>
         <div class="row" style="gap:4px;margin-top:6px;flex-wrap:wrap">${reps.map(x => { const c = x.rep.checks[b.no]; const bad = c && Object.values(c.s || {}).some(s => statusKey(s) === 'bad');
           return `<span class="badge ${c ? (bad ? 'red' : 'ok') : ''}" title="${esc(listName(x.l))}">${ic(listIcon(x.l))}${c ? (bad ? '!' : '✓') : '…'}</span>`; }).join('')}</div></div>
+        ${pos && geoOf(b) ? `<span class="dist">${fmtDist(distKm(pos, geoOf(b)))}</span>` : ''}
         <span class="trail">${ic('chevron', 'flip-ltr')}</span></button>`;
     }).join('') || `<div class="empty">${ic('search')}<b>${t('noResults')}</b></div>`;
     $$('#list .item-row').forEach(r => r.addEventListener('click', () => openBranch(branchByNo(r.dataset.no))));
@@ -41,7 +44,7 @@
   function openBranch(b) {
     const hist = state.reports.filter(r => r.checks[b.no]).sort((a, c) => c.weekStart.localeCompare(a.weekStart)).slice(0, 6);
     sheet(`<div class="branch-card" style="margin-bottom:14px"><span class="code ltr">${esc(b.code)}</span> <span class="small" style="color:#cfc4b6">#${b.no}</span>
-        <h2>${esc(b.name)}</h2><div class="meta"><span>${ic('pin')} ${esc(cityName(b))} · ${esc(lang === 'ar' ? b.regionAr : b.regionEn)}</span><span>${ic('user')} ${esc(b.manager)}</span></div></div>
+        <h2>${esc(b.name)}</h2><div class="meta"><span>${ic('pin')} ${esc(cityName(b))} · ${esc(lang === 'ar' ? b.regionAr : b.regionEn)}</span><span>${ic('user')} ${esc(b.manager)}</span>${geoOf(b) ? `<a class="map-link" href="${esc(geoOf(b).maps)}" target="_blank" rel="noopener">${ic('nav')} ${L('الخريطة', 'Map')}${pos ? ' · ' + fmtDist(distKm(pos, geoOf(b))) : ''}</a>` : ''}</div></div>
       <h3>${t('thisWeek')}</h3>
       <div class="rows" style="margin-top:10px">${reps.map(x => { const c = x.rep.checks[b.no];
         const bad = c ? list2bad(x.l, c) : [];
@@ -54,6 +57,14 @@
   }
   const list2bad = (l, c) => l.items.filter(it => statusKey(c.s[it.id]) === 'bad');
 
+  $('#nearSort').addEventListener('click', async e => {
+    const btn = e.currentTarget;
+    if (byDist) { byDist = false; btn.classList.remove('primary'); draw(); return; }
+    btn.disabled = true;
+    try { pos = await getPosition(); byDist = true; btn.classList.add('primary'); draw(); window.scrollTo({top: 0}); }
+    catch (err) { toast(geoErrorText(err), 'error'); }
+    btn.disabled = false;
+  });
   $('#q').addEventListener('input', e => { q = e.target.value.trim().toLowerCase(); draw(); });
   $('#city').addEventListener('change', e => { city = e.target.value; draw(); });
   $$('#seg button').forEach(b => b.addEventListener('click', () => { f = b.dataset.f; $$('#seg button').forEach(x => x.classList.toggle('on', x === b)); draw(); }));

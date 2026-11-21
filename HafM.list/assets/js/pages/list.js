@@ -44,7 +44,13 @@
 
     let body;
     if (!city) {
-      body = `${sectionHead(t('chooseRegion'), L('مرتبة حسب عدد الفروع.', 'Sorted by number of branches.'))}
+      body = `<section class="card near" id="near">
+          <div class="row"><span class="lead teal" style="width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none">${ic('nav')}</span>
+            <div class="grow"><h3>${L('اقتراح الفرع حسب موقعك', 'Suggest a branch from your location')}</h3><p class="small muted">${L('يُحدَّد أقرب فرع من مواقع الفروع على خرائط Google.', 'Finds the closest branch from the branches’ Google Maps locations.')}</p></div></div>
+          <div id="nearOut"></div>
+          <button class="btn primary block" id="nearBtn" type="button" style="margin-top:12px">${ic('pin')} ${L('حدد موقعي', 'Use my location')}</button>
+        </section>
+        ${sectionHead(t('chooseRegion'), L('مرتبة حسب عدد الفروع.', 'Sorted by number of branches.'))}
         <div class="search-box">${ic('search')}<input class="input" id="q" type="search" placeholder="${L('أو ابحث مباشرة عن فرع بالاسم أو الكود…', 'Or search any branch by name or code…')}"></div>
         <div id="results" class="rows"></div>
         <div class="tiles" id="tiles">${allCities.map(c => {
@@ -71,6 +77,26 @@
       <p class="small muted" style="margin-top:12px">${L('الحالات', 'Statuses')}: ${statusesFor(list).map(s => esc(statusText(s))).join(' · ')}</p>`));
 
     if (!city) {
+      const showNear = pos => {
+        const near = nearestBranches(pos, 3);
+        const at = near[0] && near[0].km < 0.35;
+        $('#nearOut').innerHTML = `${at ? `<p class="near-hit">${ic('check')} ${L('أنت في فرع', 'You are at')} <b>${esc(near[0].b.name)}</b></p>` : ''}
+          <div class="rows" style="margin-top:10px">${near.map((x, i) => { const c = rep.checks[x.b.no];
+            return `<a class="item-row ${i === 0 ? 'near-first' : ''}" href="entry.html?list=${list.id}&branch=${x.b.no}">
+              <span class="lead ${i === 0 ? 'done' : ''}">${i === 0 ? ic('pin') : x.b.no}</span>
+              <div class="grow"><div class="title">${esc(x.b.name)} <span class="small muted ltr">${esc(x.b.code)}</span></div>
+              <div class="sub">${esc(cityName(x.b))} · ${fmtDist(x.km)}${i === 0 ? ' · ' + L('الأقرب إليك', 'closest to you') : ''}${c ? ' · ' + t('submitted') : ''}</div></div>
+              <span class="btn sm ${i === 0 ? 'primary' : 'ghost'}">${c ? t('edit') : t('start')}</span></a>`; }).join('')}</div>
+          ${pos.acc > 500 ? `<p class="hint">${L('دقة الموقع ضعيفة', 'Low accuracy')} (±${fmtDist(pos.acc / 1000)})</p>` : ''}`;
+        $('#nearBtn').innerHTML = `${ic('refresh')} ${L('تحديث الموقع', 'Refresh location')}`;
+      };
+      $('#nearBtn').addEventListener('click', async () => {
+        const btn = $('#nearBtn'); btn.disabled = true; btn.innerHTML = L('جارٍ تحديد الموقع…', 'Locating…');
+        try { sessionStorage.setItem('hafmList.pos', 'null'); showNear(await getPosition()); }
+        catch (err) { $('#nearOut').innerHTML = `<p class="err">${esc(geoErrorText(err))}</p>`; btn.innerHTML = `${ic('pin')} ${L('حدد موقعي', 'Use my location')}`; }
+        btn.disabled = false;
+      });
+      const cp = cachedPosition(); if (cp) showNear(cp);
       $$('#tiles .tile').forEach(b => b.addEventListener('click', () => { city = b.dataset.city; history.pushState({city}, '', `list.html?id=${list.id}&city=${encodeURIComponent(city)}`); render(); window.scrollTo(0, 0); }));
       $('#q').addEventListener('input', e => {
         const q = e.target.value.trim().toLowerCase();

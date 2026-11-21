@@ -14,12 +14,13 @@ body.auth{background:var(--warm);overflow-x:hidden}
 .splash-logo{width:150px;height:auto;overflow:visible}
 .splash-logo path{fill:var(--ink);opacity:0;transform-box:fill-box;transform-origin:center}
 .splash-logo .p1{animation:rise .55s .25s forwards}
-.splash-logo .p2{animation:slash .55s .45s forwards}
-.splash-logo .p3{animation:rise .55s .6s forwards}
-.splash-logo .p4{animation:rise .6s .75s forwards}
+.splash-logo .chk{fill:none;opacity:1;stroke:var(--teal-d);stroke-width:11.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;stroke-dashoffset:100;animation:draw .6s 1s cubic-bezier(.6,0,.3,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.splash-logo .p3{animation:rise .55s .45s forwards}
+.splash-logo .p4{animation:rise .6s .6s forwards}
 @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
 @keyframes slash{from{opacity:0;transform:translateY(-22px) scaleY(.4)}to{opacity:1;transform:none}}
-.splash-title{display:flex;flex-direction:column;align-items:center;opacity:0;animation:rise .6s 1s forwards}
+.splash-title{display:flex;flex-direction:column;align-items:center;opacity:0;animation:rise .6s 1.3s forwards}
 .splash-title b{font-size:20px;letter-spacing:.06em}
 .splash-title span{font-size:14px;color:var(--muted);position:relative;padding-top:10px}
 .splash-title span::before{content:"";position:absolute;top:0;left:50%;width:46px;height:6px;margin-left:-23px;background:var(--havan)}

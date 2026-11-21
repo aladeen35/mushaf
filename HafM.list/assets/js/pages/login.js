@@ -18,7 +18,7 @@
 
   // splash first (shorter on repeat visits)
   const seen = sessionStorage.getItem('hafm.splash');
-  setTimeout(() => { $('#splash').classList.add('out'); }, seen ? 700 : 1900);
+  setTimeout(() => { $('#splash').classList.add('out'); }, seen ? 700 : 2300);
   sessionStorage.setItem('hafm.splash', '1');
 
   const known = state.lastEmail && state.users[state.lastEmail];

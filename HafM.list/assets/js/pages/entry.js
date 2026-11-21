@@ -29,6 +29,7 @@
         <div class="meta">
           <span>${ic('pin')} ${esc(cityName(b))} · ${esc(lang === 'ar' ? b.regionAr : b.regionEn)}</span>
           <span>${ic('user')} ${esc(b.manager)}</span>
+          ${geoOf(b) ? `<a class="map-link" href="${esc(geoOf(b).maps)}" target="_blank" rel="noopener">${ic('nav')} ${L('الموقع على الخريطة', 'Open in Maps')}${cachedPosition() ? ' · ' + fmtDist(distKm(cachedPosition(), geoOf(b))) : ''}</a>` : ''}
           <span>${ic('clipboard')} ${esc(listName(list))}</span>
           <span>${ic('calendar')} ${isPast ? esc(weekLabel(rep.weekStart)) : esc(D(todayStr()))}</span>
         </div>
