@@ -25,5 +25,10 @@ window.HAFM_CONFIG = {
   TIME_ZONE: 'Asia/Riyadh',
   WEEK_START_DAY: 6,
   WEEK1_RULE: 'first-full',
+  /* Shared database (Supabase project "fazat-dam", tables hafm_*). The publishable key is meant to be public:
+     every table is closed and the app can only call the hafm_* functions, which check the session.
+     Leave SUPABASE_URL empty to run the app on this device only (localStorage). */
+  SUPABASE_URL: 'https://vptpkjlxgrwzajrcyxfn.supabase.co',
+  SUPABASE_KEY: 'sb_publishable_NBuP5FEB426TS4OlKRWycw_RnLi52X4',
   EXCELJS_URL: 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'
 };

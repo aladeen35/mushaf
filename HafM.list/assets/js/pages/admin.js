@@ -1,6 +1,5 @@
 /* admin.html[?new=1|?edit=N] — manage checklists & surveys (admins and list editors only) */
-(function () {
-  if (!requireAuth()) return;
+hafmBoot(function () {
   const editId = qs('edit'), isNew = qs('new') === '1';
   renderShell({active: 'account', back: editId || isNew ? 'admin.html' : 'home.html', title: t('manageLists'), sub: L('القوائم والسيرفيات', 'Lists & surveys')});
   if (!canEditLists()) {
@@ -8,6 +7,16 @@
     return;
   }
   const u = currentUser();
+  /* save a list: shared database when connected, else this device */
+  async function persist(l) {
+    if (!REMOTE) { if (!getList(l.id)) state.checklists.push(l); save(); return l; }
+    const saved = await api('hafm_save_checklist', {p_token: getSession().token, p_list: l});
+    saved.archived = !!saved.archived;
+    const i = state.checklists.findIndex(x => x.id === saved.id || x.id === l.id);
+    if (i >= 0) state.checklists[i] = saved; else state.checklists.push(saved);
+    save(); return saved;
+  }
+  const fail = err => toast(apiErrorText(err), 'error');
   const hasData = l => state.reports.some(r => r.checklistId === l.id && Object.keys(r.checks).length);
 
   /* ---------- overview ---------- */
@@ -28,7 +37,7 @@
       <div class="rows">${act.map(row).join('')}</div>
       ${arch.length ? sectionHead(L('المؤرشفة', 'Archived'), `${arch.length}`) + `<div class="rows">${arch.map(row).join('')}</div>` : ''}
       <p class="hint">${ic('lock')} ${L('القوائم المدمجة (المشروبات و Hot Cookies) مقفلة لأنها مرتبطة بقالب الإكسل ورسالة الواتساب الأصلية.', 'Built-in lists (Beverages, Hot Cookies) are locked: they mirror the original Excel template and WhatsApp survey.')}</p>`;
-    $$('[data-restore]').forEach(b => b.addEventListener('click', () => { const l = getList(b.dataset.restore); l.archived = false; save(); toast(t('saved')); overview(); }));
+    $$('[data-restore]').forEach(b => b.addEventListener('click', () => { const l = getList(b.dataset.restore); persist(Object.assign({}, l, {archived: false})).then(() => { toast(t('saved')); overview(); }).catch(fail); }));
   }
 
   /* ---------- editor ---------- */
@@ -104,7 +113,7 @@
         lines.forEach(line => { const [en, ar] = line.split('|').map(s => (s || '').trim()); d.items.push({id: '', label: en || ar, labelAr: ar || en}); });
         draw(); toast(L(`أُضيف ${lines.length} بند`, `${lines.length} item(s) added`));
       });
-      $('#f').addEventListener('submit', e => {
+      $('#f').addEventListener('submit', async e => {
         e.preventDefault(); sync();
         const nameAr = d.nameAr.trim(), nameEn = d.name.trim();
         const items = d.items.map(it => ({id: it.id, label: it.label.trim() || it.labelAr.trim(), labelAr: it.labelAr.trim() || it.label.trim()})).filter(it => it.label);
@@ -113,26 +122,33 @@
         const used = new Set();
         items.forEach(it => { if (!it.id) { let base = slugify(it.label), id = base, k = 2; const taken = x => used.has(x) || items.some(o => o !== it && o.id === x); while (taken(id)) id = base + '-' + k++; it.id = id; } used.add(it.id); });
         if (creating) {
-          const l = {id: state.nextId++, name: nameEn || nameAr, nameAr: nameAr || nameEn, kind: d.kind, slug: null, icon: d.icon, tone: d.tone, items,
-            createdBy: u.name, createdAt: new Date().toISOString()};
-          state.checklists.push(l); save(); toast(L('تم إنشاء القائمة', 'List created'));
-          setTimeout(() => go(`list.html?id=${l.id}`), 400);
+          const btn = $('#f button[type=submit]'); btn.disabled = true;
+          try {
+            const l = await persist({id: REMOTE ? null : state.nextId++, name: nameEn || nameAr, nameAr: nameAr || nameEn, kind: d.kind, slug: null, icon: d.icon, tone: d.tone, items,
+              createdBy: u.name, createdAt: new Date().toISOString()});
+            toast(L('تم إنشاء القائمة', 'List created')); setTimeout(() => go(`list.html?id=${l.id}`), 400);
+          } catch (err) { btn.disabled = false; fail(err); }
         } else {
-          Object.assign(list, {name: nameEn || nameAr, nameAr: nameAr || nameEn, kind: kindLocked ? list.kind : d.kind, icon: d.icon, tone: d.tone, items,
-            updatedBy: u.name, updatedAt: new Date().toISOString()});
-          save(); toast(t('saved')); setTimeout(() => go('admin.html'), 400);
+          try {
+            await persist(Object.assign({}, list, {name: nameEn || nameAr, nameAr: nameAr || nameEn, kind: kindLocked ? list.kind : d.kind, icon: d.icon, tone: d.tone, items,
+              updatedBy: u.name, updatedAt: new Date().toISOString()}));
+            toast(t('saved')); setTimeout(() => go('admin.html'), 400);
+          } catch (err) { fail(err); }
         }
       });
       const arch = $('#archBtn');
       if (arch) arch.addEventListener('click', async () => {
         if (await dialog({title: t('archive'), body: esc(L('ستختفي القائمة من الصفحة الرئيسية، وتبقى تقاريرها محفوظة. يمكنك استعادتها لاحقاً.', 'The list leaves the home page; its reports stay. You can restore it later.')), okText: t('archive')})) {
-          list.archived = true; save(); go('admin.html');
+          persist(Object.assign({}, list, {archived: true})).then(() => go('admin.html')).catch(fail);
         }
       });
       const del = $('#delBtn');
       if (del) del.addEventListener('click', async () => {
         if (await dialog({title: t('delete'), body: esc(L('حذف نهائي لقائمة بلا إدخالات.', 'Permanently delete a list with no entries.')), okText: t('delete'), danger: true})) {
-          state.checklists = state.checklists.filter(x => x.id !== list.id); state.reports = state.reports.filter(r => r.checklistId !== list.id); save(); go('admin.html');
+          try {
+            if (REMOTE) await api('hafm_delete_checklist', {p_token: getSession().token, p_id: list.id});
+            state.checklists = state.checklists.filter(x => x.id !== list.id); state.reports = state.reports.filter(r => r.checklistId !== list.id); save(); go('admin.html');
+          } catch (err) { fail(err); }
         }
       });
     }
@@ -142,4 +158,4 @@
   if (isNew) editor(null);
   else if (editId) { const l = getList(editId); if (!l) location.replace('admin.html'); else editor(l); }
   else overview();
-})();
+});

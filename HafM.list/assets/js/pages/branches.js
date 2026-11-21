@@ -1,6 +1,5 @@
 /* branches.html — all 106 branches: search, region filter, status this week per list; tap → branch sheet */
-(function () {
-  if (!requireAuth()) return;
+hafmBoot(function () {
   renderShell({active: 'branches', title: t('branches'), sub: `${TOTAL_BRANCHES} ${t('branchesWord')} · ${cities().length} ${L('مدينة', 'cities')}`});
   const lists = activeLists();
   const reps = lists.map(l => ({l, rep: ensureCurrentWeek(l.id)}));
@@ -69,4 +68,4 @@
   $('#city').addEventListener('change', e => { city = e.target.value; draw(); });
   $$('#seg button').forEach(b => b.addEventListener('click', () => { f = b.dataset.f; $$('#seg button').forEach(x => x.classList.toggle('on', x === b)); draw(); }));
   draw();
-})();
+});

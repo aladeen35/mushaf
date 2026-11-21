@@ -1,6 +1,5 @@
 /* home.html — dashboard: greeting, list cards (each opens its own page), daily issue, quiz, my recent entries */
-(function () {
-  if (!requireAuth()) return;
+hafmBoot(function () {
   renderShell({active: 'home'});
   const u = currentUser();
   const ws = currentWeekStart(), we = fmtDate(addDays(parseDate(ws), 6));
@@ -73,4 +72,4 @@
 
     <div class="foot-note"><img src="assets/img/logo.svg" alt="">${t('appFull')} · HafM.list</div>`;
   renderQuiz($('#quiz'));
-})();
+});

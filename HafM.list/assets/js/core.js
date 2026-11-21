@@ -6,6 +6,7 @@ const LS_KEY = 'hafmList.v2';
 const LS_V1 = 'halfMillionQualityAppV1';
 const SS_SESSION = 'hafmList.session';
 const TOTAL_BRANCHES = BRANCHES.length;
+const REMOTE = !!(CFG.SUPABASE_URL && CFG.SUPABASE_KEY);
 
 /* ---------- tiny DOM helpers ---------- */
 const $ = (s, r) => (r || document).querySelector(s);
@@ -242,12 +243,18 @@ function migrateV1(st) {
 }
 function loadState() {
   try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s && s.version === 2 && Array.isArray(s.checklists)) return s; } catch (e) {}
-  const st = migrateV1(freshState());
+  const st = REMOTE ? freshState() : migrateV1(freshState());
   try { localStorage.setItem(LS_KEY, JSON.stringify(st)); } catch (e) {}
   return st;
 }
 let state = loadState();
 lang = state.lang || 'ar';
+/* first start in shared mode: entries typed only on this device before the database existed are not kept */
+if (REMOTE && !state.remoteMode) {
+  state.reports = state.reports.filter(r => r.seed); state.outbox = []; state.lastSync = null; state.remoteMode = new Date().toISOString();
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+}
+if (!state.outbox) state.outbox = [];
 function save() {
   state.lang = lang;
   try { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
@@ -319,15 +326,19 @@ function emailAllowed(email) {
 }
 function roleOf(email) {
   const e = normEmail(email); if (!e) return 'auditor';
+  if (REMOTE) { const s = getSession(); return s && s.email === e ? (s.role || 'auditor') : 'auditor'; }
   if ((CFG.ADMIN_EMAIL_HASHES || []).includes(adminHash(e))) return 'admin';
   return state.perms[e] || 'auditor';
 }
 const roleName = r => t(r === 'admin' ? 'admin' : r === 'editor' ? 'editor' : 'auditorRole');
 function getSession() {
-  try { const s = JSON.parse(sessionStorage.getItem(SS_SESSION) || 'null'); if (s && s.email && state.users[s.email]) return s; } catch (e) {}
+  try { const s = JSON.parse(sessionStorage.getItem(SS_SESSION) || 'null'); if (s && s.email && (REMOTE ? s.token : state.users[s.email])) return s; } catch (e) {}
   return null;
 }
-function currentUser() { const s = getSession(); return s ? state.users[s.email] : null; }
+function currentUser() {
+  const s = getSession(); if (!s) return null;
+  return REMOTE ? {email: s.email, name: s.name, role: s.role} : state.users[s.email];
+}
 const canEditLists = () => { const u = currentUser(); return !!u && ['admin', 'editor'].includes(roleOf(u.email)); };
 const isAdmin = () => { const u = currentUser(); return !!u && roleOf(u.email) === 'admin'; };
 function signIn(email) {
@@ -335,7 +346,11 @@ function signIn(email) {
   sessionStorage.setItem(SS_SESSION, JSON.stringify({email: e, at: new Date().toISOString()}));
   state.lastEmail = e; state.users[e].lastLogin = new Date().toISOString(); save();
 }
-function signOut() { sessionStorage.removeItem(SS_SESSION); go('index.html'); }
+function signOut() {
+  const s = getSession();
+  if (REMOTE && s && s.token) api('hafm_logout', {p_token: s.token}).catch(() => {});
+  sessionStorage.removeItem(SS_SESSION); setTimeout(() => go('index.html'), REMOTE ? 150 : 0);
+}
 function requireAuth() {
   if (!getSession()) {
     const page = location.pathname.split('/').pop() + location.search;
@@ -344,10 +359,113 @@ function requireAuth() {
   }
   return true;
 }
+/* ---------- shared database (Supabase RPC; see supabase/hafm_schema.sql) ---------- */
+class ApiError extends Error { constructor(code, msg) { super(msg || code); this.code = code; } }
+async function api(fn, body) {
+  let res;
+  try {
+    res = await fetch(`${CFG.SUPABASE_URL}/rest/v1/rpc/${fn}`, {method: 'POST', keepalive: fn === 'hafm_logout',
+      headers: {'apikey': CFG.SUPABASE_KEY, 'Content-Type': 'application/json'}, body: JSON.stringify(body || {})});
+  } catch (e) { throw new ApiError('network', e.message); }
+  const txt = await res.text(); let data = null; try { data = txt ? JSON.parse(txt) : null; } catch (e) {}
+  if (!res.ok) {
+    const m = (data && data.message) || ('http_' + res.status);
+    throw new ApiError(m.startsWith('hafm:') ? m.slice(5).split(':')[0] : 'server', m);
+  }
+  return data;
+}
+function apiErrorText(err) {
+  const c = err && err.code;
+  if (c === 'network') return L('لا يوجد اتصال بالإنترنت.', 'No internet connection.');
+  if (c === 'email_domain') return L('الدخول بإيميل العمل فقط (@halfm.sa).', 'Work e-mail only (@halfm.sa).');
+  if (c === 'forbidden') return L('ليست لديك صلاحية لهذا الإجراء.', 'You do not have permission for this.');
+  if (c === 'session_expired') return L('انتهت الجلسة — أدخل رمزك من جديد.', 'Session expired — enter your PIN again.');
+  if (c === 'locked') { const s = String(err.message).split(':').pop(); return L(`محاولات كثيرة — انتظر ${s} ثانية.`, `Too many attempts — wait ${s}s.`); }
+  if (c === 'has_entries') return L('لا يمكن حذف قائمة لها إدخالات — استخدم الأرشفة.', 'A list with entries cannot be deleted — archive it.');
+  if (c === 'wrong_pin') return L('الرمز غير صحيح.', 'Wrong PIN.');
+  return L('تعذّر الاتصال بالخادم — حاول مجدداً.', 'Server error — please try again.');
+}
+function remoteSignIn(res) {
+  const e = normEmail(res.email);
+  if (state.syncUser !== e) { state.lastSync = null; state.syncUser = e; } // full pull for a new user on this device
+  sessionStorage.setItem(SS_SESSION, JSON.stringify({email: e, name: res.name, role: res.role, token: res.token, at: new Date().toISOString()}));
+  state.lastEmail = e; state.lastName = res.name; save();
+}
+function updateSession(patch) { const s = getSession(); if (s) sessionStorage.setItem(SS_SESSION, JSON.stringify(Object.assign(s, patch))); }
+function reportFor(listId, ws, create) {
+  let r = state.reports.find(x => x.checklistId === +listId && x.weekStart === ws && !x.seed);
+  if (!r && create) { r = {id: state.nextId++, checklistId: +listId, weekStart: ws, weekEnd: fmtDate(addDays(parseDate(ws), 6)), date: ws, checks: {}}; state.reports.push(r); }
+  return r;
+}
+const outboxKey = x => `${x.l}|${x.w}|${x.b}`;
+async function syncPull() {
+  const s = getSession(); if (!s) return;
+  const res = await api('hafm_pull', {p_token: s.token, p_since: state.lastSync || null});
+  if (Array.isArray(res.checklists) && res.checklists.length) state.checklists = res.checklists.map(l => Object.assign({}, l, {archived: !!l.archived}));
+  const pending = new Set(state.outbox.map(outboxKey));
+  (res.entries || []).forEach(e => {
+    if (pending.has(outboxKey(e))) return;
+    const r = reportFor(e.l, e.w, true);
+    r.checks[e.b] = {s: e.s || {}, remarks: e.r || '', auditor: e.a, email: e.e, at: e.t, history: e.h || []};
+  });
+  state.lastSync = res.server_time;
+  if (res.me) updateSession({name: res.me.name, role: res.me.role});
+  save();
+}
+async function flushOutbox() {
+  const s = getSession(); if (!s || !state.outbox.length) return 0;
+  let sent = 0;
+  for (const x of state.outbox.slice()) {
+    if (x.email !== s.email) continue;
+    try {
+      const r = await api('hafm_save_entry', {p_token: s.token, p_checklist_id: x.l, p_week_start: x.w, p_branch_no: x.b, p_statuses: x.s, p_remarks: x.r});
+      state.outbox = state.outbox.filter(o => outboxKey(o) !== outboxKey(x));
+      const rep2 = reportFor(x.l, x.w, true); if (rep2.checks[x.b]) { rep2.checks[x.b].at = r.t; rep2.checks[x.b].auditor = r.a; rep2.checks[x.b].pending = false; }
+      sent++; save();
+    } catch (err) {
+      if (err.code === 'network' || err.code === 'session_expired') throw err;
+      state.outbox = state.outbox.filter(o => outboxKey(o) !== outboxKey(x)); save(); // rejected by the server (e.g. list deleted)
+      toast(apiErrorText(err), 'error');
+    }
+  }
+  return sent;
+}
+/* save one branch entry: local first, then send (queued if offline). Returns true when it reached the server. */
+async function saveEntryRemote(listId, ws, no, s, remarks) {
+  const u = getSession();
+  state.outbox = state.outbox.filter(o => outboxKey(o) !== `${listId}|${ws}|${no}`);
+  state.outbox.push({l: +listId, w: ws, b: +no, s, r: remarks, email: u.email, at: new Date().toISOString()});
+  save();
+  try { await flushOutbox(); return !state.outbox.some(o => outboxKey(o) === `${listId}|${ws}|${no}`); }
+  catch (err) { if (err.code === 'session_expired') handleExpired(); return false; }
+}
+function handleExpired() {
+  sessionStorage.removeItem(SS_SESSION);
+  const page = location.pathname.split('/').pop() + location.search;
+  location.replace('index.html?expired=1&next=' + encodeURIComponent(page));
+}
+/* page boot: auth check, then (shared mode) send queued entries + pull the latest data before drawing the page */
+function hafmBoot(render) {
+  if (!requireAuth()) return;
+  if (!REMOTE) { render(); return; }
+  const first = !state.lastSync;
+  let ov = null;
+  if (first) { ov = document.createElement('div'); ov.className = 'sync-overlay'; ov.innerHTML = `<div class="spinner"></div><p>${L('جارٍ تحميل بيانات الفريق…', 'Loading team data…')}</p>`; document.body.appendChild(ov); }
+  let done = false;
+  const finish = () => { if (done) return; done = true; if (ov) ov.remove(); render(); };
+  const work = (async () => { await flushOutbox(); await syncPull(); })();
+  work.then(finish).catch(err => {
+    if (err.code === 'session_expired') { handleExpired(); return; }
+    finish(); if (err.code === 'network') toast(t('offline'), 'error'); else toast(apiErrorText(err), 'error');
+  });
+  setTimeout(finish, first ? 9000 : 3500);
+  window.addEventListener('online', () => { flushOutbox().then(n => { if (n) toast(L(`أُرسل ${n} إدخال محفوظ`, `${n} saved entr${n > 1 ? 'ies' : 'y'} sent`)); }).catch(() => {}); });
+}
 const initials = name => String(name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
 /* ---------- icons (line style, 24px grid, currentColor) ---------- */
 const ICONS = {
+  cloud:'<path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 9.5 4.3 4.3 0 0 0 7 18z"/>',
   home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
   chart:'<path d="M3 21h18"/><rect x="5" y="11" width="3" height="7" rx="1"/><rect x="10.5" y="6" width="3" height="12" rx="1"/><rect x="16" y="13" width="3" height="5" rx="1"/>',
   store:'<path d="M4 4h16l1.5 5H2.5z"/><path d="M2.5 9a3.2 3.2 0 0 0 6.3 0 3.2 3.2 0 0 0 6.4 0 3.2 3.2 0 0 0 6.3 0"/><path d="M4.5 12v9h15v-9"/><path d="M10 21v-5h4v5"/>',

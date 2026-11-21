@@ -32,9 +32,9 @@ const statusRules = (ref, start) => [
 ];
 
 /* ---------- beverage — original template ---------- */
-async function exportBeverage(list, rep) {
+async function exportBeverage(list, rep, into) {
   await loadExcelJS();
-  const wb = new ExcelJS.Workbook(); wb.creator = 'HafM.list'; wb.created = new Date();
+  const wb = into || new ExcelJS.Workbook(); wb.creator = 'HafM.list'; wb.created = new Date();
   const ws = wb.addWorksheet('All_Branches');
   ws.columns = [6.46, 7.53, 25.42, 25.42, 13.18, 13.18, 13.18, 13.18, 13.18, 13.18, 13.18, 13.18, 13.18, 9.14, 9.14, 9.14, 9.14, 9.14, 29.19].map(width => ({width}));
   ws.getColumn(4).hidden = true; // Area Manager is hidden in the original
@@ -98,14 +98,14 @@ async function exportBeverage(list, rep) {
   });
   ws.views = [{state: 'frozen', xSplit: 4, ySplit: 4, topLeftCell: 'E5', activeCell: 'E5'}];
   ws.pageSetup = {orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: '4:4'};
-  await downloadWorkbook(wb, `Beverage_Tasting_${rep.weekStart}.xlsx`);
+  if (!into) await downloadWorkbook(wb, `Beverage_Tasting_${rep.weekStart}.xlsx`);
 }
 
 /* ---------- any other list — dynamic columns ---------- */
-async function exportGeneric(list, rep) {
+async function exportGeneric(list, rep, into, sheetName) {
   await loadExcelJS();
-  const wb = new ExcelJS.Workbook(); wb.creator = 'HafM.list'; wb.created = new Date();
-  const ws = wb.addWorksheet('All_Branches');
+  const wb = into || new ExcelJS.Workbook(); wb.creator = 'HafM.list'; wb.created = new Date();
+  const ws = wb.addWorksheet(sheetName || 'All_Branches');
   const sts = statusesFor(list), n = list.items.length;
   const firstItem = 6, lastItem = firstItem + n - 1, firstCnt = lastItem + 1, lastCnt = firstCnt + sts.length - 1;
   const audCol = lastCnt + 1, remCol = lastCnt + 2, lastCol = remCol;
@@ -163,9 +163,49 @@ async function exportGeneric(list, rep) {
   ws.views = [{state: 'frozen', xSplit: 5, ySplit: 4, topLeftCell: XL.col(firstItem) + '5'}];
   ws.pageSetup = {orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: '4:4'};
   const safe = String(list.name || 'List').replace(/[^\w-]+/g, '_').replace(/^_|_$/g, '') || 'List';
-  await downloadWorkbook(wb, `${safe}_W${weekInfo(rep.weekStart).no}_${rep.weekStart}.xlsx`);
+  if (!into) await downloadWorkbook(wb, `${safe}_W${weekInfo(rep.weekStart).no}_${rep.weekStart}.xlsx`);
 }
 async function exportReport(list, rep) {
   if (list.slug === 'beverage') return exportBeverage(list, rep);
   return exportGeneric(list, rep);
+}
+
+/* ---------- one workbook for the whole week: every list (one sheet each) + auditors summary ---------- */
+async function exportAll(weekStart) {
+  await loadExcelJS();
+  const wb = new ExcelJS.Workbook();
+  const lists = state.checklists.filter(l => !l.archived || state.reports.some(r => r.checklistId === l.id && r.weekStart === weekStart && Object.keys(r.checks).length));
+  const used = new Set(['All_Branches', 'Auditors']);
+  const sheetFor = l => {
+    let base = String(l.name || l.nameAr || 'List').replace(/[\\/?*\[\]:]/g, ' ').trim().slice(0, 28) || 'List', n = base, k = 2;
+    while (used.has(n)) n = base.slice(0, 26) + ' ' + k++;
+    used.add(n); return n;
+  };
+  const empty = l => ({checklistId: l.id, weekStart, weekEnd: fmtDate(addDays(parseDate(weekStart), 6)), date: weekStart, checks: {}});
+  for (const l of lists) {
+    const rep = state.reports.find(r => r.checklistId === l.id && r.weekStart === weekStart && !r.seed) || state.reports.find(r => r.checklistId === l.id && r.weekStart === weekStart) || empty(l);
+    if (l.slug === 'beverage') await exportBeverage(l, rep, wb); else await exportGeneric(l, rep, wb, sheetFor(l));
+  }
+  // auditors summary
+  const ws = wb.addWorksheet('Auditors');
+  ws.columns = [{width: 28}, {width: 32}].concat(lists.map(() => ({width: 16})), [{width: 12}, {width: 14}]);
+  ws.mergeCells(1, 1, 1, 4 + lists.length);
+  const c1 = ws.getCell('A1'); c1.value = `AUDITORS – WEEK ${weekInfo(weekStart).no} (${weekStart} → ${fmtDate(addDays(parseDate(weekStart), 6))})`;
+  c1.font = XL.font({size: 14, bold: true, color: {argb: 'FFFFFFFF'}}); c1.fill = XL.fill(XL.navy); c1.alignment = {horizontal: 'center', vertical: 'middle'};
+  ws.getRow(1).height = 28;
+  const head = ['Auditor', 'E-mail', ...lists.map(l => l.name || l.nameAr), 'Total', 'Not fixed / ❌'];
+  head.forEach((h, i) => { const c = ws.getCell(3, i + 1); c.value = h; c.font = XL.font({bold: true, color: {argb: 'FFFFFFFF'}}); c.fill = XL.fill(XL.navy); c.border = XL.border; c.alignment = {horizontal: 'center', vertical: 'middle', wrapText: true}; });
+  ws.getRow(3).height = 32;
+  const by = {};
+  lists.forEach((l, li) => state.reports.filter(r => r.checklistId === l.id && r.weekStart === weekStart).forEach(r => Object.values(r.checks).forEach(c => {
+    const key = c.email || c.auditor || 'Original file';
+    const a = by[key] || (by[key] = {name: c.auditor || 'Original file', email: c.email || '', n: lists.map(() => 0), bad: 0});
+    a.n[li]++; if (Object.values(c.s || {}).some(v => statusKey(v) === 'bad')) a.bad++;
+  })));
+  Object.values(by).sort((a, b) => b.n.reduce((x, y) => x + y, 0) - a.n.reduce((x, y) => x + y, 0)).forEach((a, i) => {
+    const row = [a.name, a.email, ...a.n, a.n.reduce((x, y) => x + y, 0), a.bad];
+    row.forEach((v, j) => { const c = ws.getCell(4 + i, j + 1); c.value = v; c.font = XL.font({bold: j === 0}); c.border = XL.border; if (j >= 2) c.alignment = {horizontal: 'center'}; });
+  });
+  ws.views = [{state: 'frozen', ySplit: 3}];
+  await downloadWorkbook(wb, `HafM_All_Lists_W${weekInfo(weekStart).no}_${weekStart}.xlsx`);
 }

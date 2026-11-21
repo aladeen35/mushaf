@@ -1,6 +1,5 @@
 /* reports.html[?list=N&week=YYYY-MM-DD] — weekly report per list: KPIs, distribution, problems, by item, by city, auditors, pending, Excel */
-(function () {
-  if (!requireAuth()) return;
+hafmBoot(function () {
   renderShell({active: 'reports', title: t('reports'), sub: L('تقارير أسبوعية لكل قائمة', 'Weekly reports per list')});
   const lists = state.checklists.filter(l => !l.archived || reportsOf(l.id).length);
   let listId = +qs('list') || (lists[0] && lists[0].id);
@@ -44,6 +43,7 @@
         <select class="input" id="weekSel">${reps.map(r => `<option value="${r.weekStart}" ${r.weekStart === week ? 'selected' : ''}>${esc(weekLabel(r.weekStart))}${r.weekStart === currentWeekStart() ? ' · ' + t('thisWeek') : ''}${r.seed ? ' · ' + L('الملف الأصلي', 'original file') : ''}</option>`).join('')}</select>
         <div class="row wrap no-print" style="margin-top:14px">
           <button class="btn primary" id="xlsBtn" type="button" ${rep ? '' : 'disabled'}>${ic('download')} ${t('exportExcel')}</button>
+          <button class="btn dark" id="xlsAllBtn" type="button">${ic('download')} ${L('Excel لكل القوائم والموظفين', 'Excel: all lists & auditors')}</button>
           <button class="btn ghost" id="printBtn" type="button">${ic('printer')} ${t('print')}</button>
         </div>
         <p class="hint">${list.slug === 'beverage' ? L('ملف Excel بنفس قالب «All_Branches» الأصلي: الألوان، القوائم المنسدلة، المعادلات، والعمود D مخفي.', 'Excel in the original “All_Branches” template: colours, drop-downs, formulas, hidden column D.') : L('ملف Excel بنفس تنسيق قالب المشروبات مع أعمدة بنود هذه القائمة.', 'Excel in the beverage template style with this list’s item columns.')}</p>
@@ -91,6 +91,12 @@
     $$('#listSeg button').forEach(b => b.addEventListener('click', () => { listId = +b.dataset.id; week = null; render(); }));
     $('#weekSel').addEventListener('change', e => { week = e.target.value; render(); });
     $('#printBtn').addEventListener('click', () => window.print());
+    $('#xlsAllBtn').addEventListener('click', async e => {
+      const btn = e.currentTarget; btn.disabled = true; const old = btn.innerHTML; btn.innerHTML = L('جارٍ التجهيز…', 'Preparing…');
+      try { await exportAll(week); toast(L('تم تنزيل ملف كل القوائم', 'All-lists Excel downloaded')); }
+      catch (err) { console.error(err); toast(L('تعذّر تحميل مكتبة Excel — تحقق من الاتصال.', 'Could not load the Excel library — check your connection.'), 'error'); }
+      btn.disabled = false; btn.innerHTML = old;
+    });
     $('#xlsBtn').addEventListener('click', async e => {
       const btn = e.currentTarget; btn.disabled = true; const old = btn.innerHTML; btn.innerHTML = L('جارٍ التجهيز…', 'Preparing…');
       try { await exportReport(list, rep); toast(L('تم تنزيل ملف Excel', 'Excel file downloaded')); }
@@ -100,4 +106,4 @@
     const on = $('#listSeg .on'); if (on) on.scrollIntoView({inline: 'center', block: 'nearest'});
   }
   render();
-})();
+});

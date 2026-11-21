@@ -1,6 +1,5 @@
 /* review.html — 56 quality-audit issues (bilingual) with search + level filter, plus quiz */
-(function () {
-  if (!requireAuth()) return;
+hafmBoot(function () {
   renderShell({active: 'review', title: t('review'), sub: L('مخالفات تدقيق الجودة — تدريب ومراجعة', 'Quality-audit issues — training & review')});
   const n = lvl => AUDIT_ISSUES.filter(i => i.levelEn === lvl).length;
   let level = 'all', q = '';
@@ -40,4 +39,4 @@
   $('#q').addEventListener('input', e => { q = e.target.value.trim().toLowerCase(); draw(); });
   $$('#seg button').forEach(b => b.addEventListener('click', () => { level = b.dataset.l; $$('#seg button').forEach(x => x.classList.toggle('on', x === b)); draw(); }));
   draw();
-})();
+});

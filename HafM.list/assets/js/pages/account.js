@@ -1,9 +1,10 @@
 /* account.html — profile, language, change PIN, sign out; admins: users & permissions on this device, backup/restore */
-(function () {
-  if (!requireAuth()) return;
+hafmBoot(function () {
   renderShell({active: 'account', title: t('account')});
   const u = currentUser();
   const myRole = roleOf(u.email);
+  let remoteUsers = null; // admins in shared mode: everyone registered (from the database)
+  const loadUsers = () => api('hafm_list_users', {p_token: getSession().token}).then(list => { remoteUsers = list; render(); }).catch(err => toast(apiErrorText(err), 'error'));
 
   function stats() {
     let total = 0, weeks = new Set(), bad = 0;
@@ -12,8 +13,10 @@
   }
   function render() {
     const st = stats();
-    const users = Object.values(state.users).sort((a, b) => (b.lastLogin || '').localeCompare(a.lastLogin || ''));
-    const grants = Object.entries(state.perms);
+    const users = REMOTE ? (remoteUsers || []).map(x => ({email: x.email, name: x.name, role: x.role, lastLogin: x.last_login, hasPin: x.has_pin, entries: x.entries}))
+      : Object.values(state.users).sort((a, b) => (b.lastLogin || '').localeCompare(a.lastLogin || ''));
+    const grants = REMOTE ? users.filter(x => x.role !== 'auditor').map(x => [x.email, x.role]) : Object.entries(state.perms);
+    const roleFor = x => REMOTE ? x.role : roleOf(x.email);
     $('#page').innerHTML = `
       <section class="card profile">
         <span class="avatar">${esc(initials(u.name))}</span>
@@ -48,22 +51,23 @@
       </form>
       <div class="rows">${grants.length ? grants.map(([e, r]) => `<div class="item-row"><span class="lead havan">${ic('shield')}</span><div class="grow"><div class="title ltr" style="text-align:start">${esc(e)}</div><div class="sub">${esc(roleName(r))}</div></div><button class="btn sm ghost" data-revoke="${esc(e)}" type="button">${L('سحب', 'Revoke')}</button></div>`).join('') : `<p class="small muted">${L('لا صلاحيات ممنوحة على هذا الجهاز بعد. المشرفون الدائمون في config.js.', 'No grants on this device yet. Permanent admins live in config.js.')}</p>`}</div>
 
-      ${sectionHead(L('المستخدمون على هذا الجهاز', 'Users on this device'), `${users.length}`)}
+      ${sectionHead(REMOTE ? L('المستخدمون', 'Users') : L('المستخدمون على هذا الجهاز', 'Users on this device'), REMOTE && !remoteUsers ? L('جارٍ التحميل…', 'Loading…') : `${users.length}`)}
       <div class="rows">${users.map(x => `<div class="item-row"><span class="avatar" style="width:40px;height:40px;font-size:14px">${esc(initials(x.name))}</span>
-        <div class="grow"><div class="title">${esc(x.name)}</div><div class="sub ltr" style="text-align:start">${esc(x.email)} · ${esc(roleName(roleOf(x.email)))}</div><div class="sub">${x.lastLogin ? L('آخر دخول ', 'last sign-in ') + esc(timeAgo(x.lastLogin)) : ''}</div></div>
+        <div class="grow"><div class="title">${esc(x.name)}</div><div class="sub ltr" style="text-align:start">${esc(x.email)} · ${esc(roleName(roleFor(x)))}</div><div class="sub">${x.lastLogin ? L('آخر دخول ', 'last sign-in ') + esc(timeAgo(x.lastLogin)) : L('لم يدخل بعد', 'never signed in')}${REMOTE ? ' · ' + L(`${x.entries} إدخال`, `${x.entries} entries`) + (x.hasPin ? '' : ' · ' + L('بانتظار اختيار رمز', 'PIN not set')) : ''}</div></div>
         ${x.email !== u.email ? `<button class="btn sm ghost" data-reset="${esc(x.email)}" type="button">${ic('key')} ${L('إعادة الرمز', 'Reset PIN')}</button>` : ''}</div>`).join('')}</div>
 
 ` : ''}
 
 
+      ${REMOTE ? `<div class="card cream flat small" style="margin-top:22px">${ic('cloud')} ${L('متصل بقاعدة بيانات الفريق — كل الإدخالات والقوائم مشتركة بين جميع الموظفين.', 'Connected to the team database — all entries and lists are shared by every employee.')}${state.outbox.length ? ' · ' + L(`${state.outbox.length} بانتظار الإرسال`, `${state.outbox.length} waiting to be sent`) : ''}</div>` : `
       ${sectionHead(L('النسخ الاحتياطي ونقل البيانات', 'Backup & data transfer'), L('البيانات محفوظة على هذا الجهاز — نزّل نسختك وأرسلها للمشرف ليدمجها في جهازه.', 'Data lives on this device — download your copy and send it to an admin to merge.'))}
       <div class="row wrap">
         <button class="btn ghost" id="backup" type="button">${ic('download')} ${L('تنزيل نسخة JSON', 'Download JSON backup')}</button>
         ${canEditLists() ? `<label class="btn ghost" for="restoreIn">${ic('upload')} ${L('استيراد / دمج نسخة', 'Import / merge backup')}</label>
         <input id="restoreIn" type="file" accept="application/json,.json" class="hidden">` : ''}
-      </div>
+      </div>`}
 
-      <div class="foot-note"><img src="assets/img/logo.svg" alt="">HafM.list · ${t('appFull')}<br>${L('البيانات محفوظة على هذا الجهاز (localStorage).', 'Data is stored on this device (localStorage).')}</div>`;
+      <div class="foot-note"><img src="assets/img/logo.svg" alt="">HafM.list · ${t('appFull')}<br>${REMOTE ? L('قاعدة بيانات مشتركة', 'Shared database') : L('البيانات محفوظة على هذا الجهاز (localStorage).', 'Data is stored on this device (localStorage).')}</div>`;
     bind();
   }
   function bind() {
@@ -76,21 +80,31 @@
     });
     $('#editName').addEventListener('click', () => sheet(`<h3>${L('تعديل الاسم', 'Edit name')}</h3>
       <input class="input" id="nm" value="${esc(u.name)}" maxlength="60" style="margin-top:12px"><button class="btn primary block" id="nmSave" style="margin-top:12px" type="button">${t('save')}</button>`,
-      (w, close) => $('#nmSave', w).addEventListener('click', () => { const v = $('#nm', w).value.trim(); if (v.length < 3) return; u.name = v; save(); close(); toast(t('saved')); render(); })));
+      (w, close) => $('#nmSave', w).addEventListener('click', async () => {
+        const v = $('#nm', w).value.trim(); if (v.length < 3) return;
+        if (REMOTE) { try { await api('hafm_set_name', {p_token: getSession().token, p_name: v}); updateSession({name: v}); state.lastName = v; } catch (err) { toast(apiErrorText(err), 'error'); return; } }
+        u.name = v; save(); close(); toast(t('saved')); render(); })));
     $('#changePin').addEventListener('click', () => sheet(`<h3>${L('تغيير رمز الدخول', 'Change PIN')}</h3>
       <label class="lbl">${L('الرمز الحالي', 'Current PIN')}</label><input class="input ltr" id="p0" inputmode="numeric" maxlength="4" type="password" autocomplete="off">
       <label class="lbl">${L('الرمز الجديد (4 أرقام)', 'New PIN (4 digits)')}</label><input class="input ltr" id="p1" inputmode="numeric" maxlength="4" type="password" autocomplete="off">
       <label class="lbl">${L('تأكيد الرمز الجديد', 'Confirm new PIN')}</label><input class="input ltr" id="p2" inputmode="numeric" maxlength="4" type="password" autocomplete="off">
       <p class="err" id="pErr"></p><button class="btn primary block" id="pSave" type="button">${t('save')}</button>`, (w, close) => {
-      $('#pSave', w).addEventListener('click', () => {
+      $('#pSave', w).addEventListener('click', async () => {
         const p0 = $('#p0', w).value, p1 = $('#p1', w).value, p2 = $('#p2', w).value;
+        if (REMOTE) {
+          if (!/^\d{4}$/.test(p1)) { $('#pErr', w).textContent = L('الرمز 4 أرقام.', 'PIN must be 4 digits.'); return; }
+          if (p1 !== p2) { $('#pErr', w).textContent = L('الرمزان غير متطابقين.', 'PINs do not match.'); return; }
+          try { await api('hafm_change_pin', {p_token: getSession().token, p_old: p0, p_new: p1}); close(); toast(L('تم تغيير الرمز', 'PIN changed')); }
+          catch (err) { $('#pErr', w).textContent = err.code === 'wrong_pin' ? L('الرمز الحالي غير صحيح.', 'Current PIN is wrong.') : apiErrorText(err); }
+          return;
+        }
         if (pinHash(u.email, p0) !== u.pinHash) { $('#pErr', w).textContent = L('الرمز الحالي غير صحيح.', 'Current PIN is wrong.'); return; }
         if (!/^\d{4}$/.test(p1)) { $('#pErr', w).textContent = L('الرمز 4 أرقام.', 'PIN must be 4 digits.'); return; }
         if (p1 !== p2) { $('#pErr', w).textContent = L('الرمزان غير متطابقين.', 'PINs do not match.'); return; }
         u.pinHash = pinHash(u.email, p1); save(); close(); toast(L('تم تغيير الرمز', 'PIN changed'));
       });
     }));
-    $('#backup').addEventListener('click', () => {
+    if ($('#backup')) $('#backup').addEventListener('click', () => {
       const data = JSON.stringify({app: 'HafM.list', exportedAt: new Date().toISOString(), checklists: state.checklists, reports: state.reports, perms: state.perms}, null, 1);
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], {type: 'application/json'})); a.download = `HafM.list_backup_${todayStr()}.json`; a.click();
     });
@@ -110,23 +124,29 @@
       } catch (err) { toast(L('ملف غير صالح', 'Invalid file'), 'error'); }
     });
     if (myRole !== 'admin') return;
+    if (REMOTE && !remoteUsers) loadUsers();
     let gRole = 'editor';
     $$('#gRole button').forEach(b => b.addEventListener('click', () => { gRole = b.dataset.r; $$('#gRole button').forEach(x => x.classList.toggle('on', x === b)); }));
     $('#grantForm').addEventListener('submit', e => {
       e.preventDefault(); const em = normEmail($('#gEmail').value);
       if (!emailAllowed(em)) { $('#gErr').textContent = L('إيميل عمل غير صالح.', 'Invalid work e-mail.'); return; }
+      if (REMOTE) { api('hafm_set_role', {p_token: getSession().token, p_email: em, p_role: gRole}).then(() => { toast(L('تم منح الصلاحية', 'Permission granted')); loadUsers(); }).catch(err => { $('#gErr').textContent = apiErrorText(err); }); return; }
       state.perms[em] = gRole; save(); toast(L('تم منح الصلاحية', 'Permission granted')); render();
     });
     $$('[data-revoke]').forEach(b => b.addEventListener('click', async () => {
       if (b.dataset.revoke === u.email && !(CFG.ADMIN_EMAIL_HASHES || []).includes(adminHash(u.email))) { toast(L('لا يمكنك سحب صلاحيتك الوحيدة.', 'You cannot revoke your own only admin role.'), 'error'); return; }
-      if (await dialog({title: L('سحب الصلاحية', 'Revoke'), body: esc(b.dataset.revoke), danger: true, okText: L('سحب', 'Revoke')})) { delete state.perms[b.dataset.revoke]; save(); render(); }
+      if (!(await dialog({title: L('سحب الصلاحية', 'Revoke'), body: esc(b.dataset.revoke), danger: true, okText: L('سحب', 'Revoke')}))) return;
+      if (REMOTE) { api('hafm_set_role', {p_token: getSession().token, p_email: b.dataset.revoke, p_role: 'auditor'}).then(loadUsers).catch(err => toast(apiErrorText(err), 'error')); return; }
+      delete state.perms[b.dataset.revoke]; save(); render();
     }));
     $$('[data-reset]').forEach(b => b.addEventListener('click', async () => {
-      const x = state.users[b.dataset.reset];
+      const x = REMOTE ? users0().find(y => y.email === b.dataset.reset) : state.users[b.dataset.reset];
       if (await dialog({title: L('إعادة تعيين الرمز', 'Reset PIN'), body: esc(L(`سيختار ${x.name} رمزاً جديداً عند دخوله القادم.`, `${x.name} will choose a new PIN at next sign-in.`)), okText: L('إعادة تعيين', 'Reset')})) {
+        if (REMOTE) { api('hafm_reset_pin', {p_token: getSession().token, p_email: x.email}).then(() => { toast(L('تمت إعادة التعيين', 'PIN reset')); loadUsers(); }).catch(err => toast(apiErrorText(err), 'error')); return; }
         x.pinHash = null; x.fails = 0; x.lockUntil = 0; save(); toast(L('تمت إعادة التعيين', 'PIN reset')); render();
       }
     }));
   }
+  const users0 = () => remoteUsers || [];
   render();
-})();
+});

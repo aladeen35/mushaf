@@ -1,6 +1,5 @@
 /* entry.html?list=N&branch=NO[&week=YYYY-MM-DD] — fill one branch for one checklist (separate page) */
-(function () {
-  if (!requireAuth()) return;
+hafmBoot(function () {
   const list = getList(qs('list')), b = branchByNo(qs('branch'));
   if (!list || !b) { location.replace('home.html'); return; }
   const weekParam = qs('week');
@@ -96,7 +95,13 @@
     rep.checks[b.no] = {s, remarks: draft.remarks.trim(), auditor: u.name, email: u.email, at: new Date().toISOString(),
       history: ((existing && existing.history) || []).concat(existing && existing.auditor ? [{auditor: existing.auditor, at: existing.at}] : []).slice(-5)};
     save(); dirty = false;
-    toast(t('saved') + ' — ' + b.name);
+    if (REMOTE) {
+      $$('.sticky-actions .btn').forEach(x => { x.disabled = true; });
+      const sent = await saveEntryRemote(list.id, rep.weekStart, b.no, s, draft.remarks.trim());
+      rep.checks[b.no].pending = !sent; save();
+      if (sent) toast(t('saved') + ' — ' + b.name);
+      else toast(L('حُفظ على جهازك — سيُرسل تلقائياً عند عودة الاتصال', 'Saved on this device — it will be sent when you are back online'), 'error');
+    } else toast(t('saved') + ' — ' + b.name);
     if (goNext) {
       const after = inCity.slice(idx + 1).concat(inCity.slice(0, idx));
       const nxt = after.find(x => !rep.checks[x.no]);
@@ -106,4 +111,4 @@
   }
   window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
   render();
-})();
+});

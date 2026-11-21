@@ -21,9 +21,10 @@
   setTimeout(() => { $('#splash').classList.add('out'); }, seen ? 700 : 2300);
   sessionStorage.setItem('hafm.splash', '1');
 
-  const known = state.lastEmail && state.users[state.lastEmail];
-  if (known) { show('login'); openPin('enter', state.lastEmail); }
+  const known = state.lastEmail && (REMOTE ? state.lastName : state.users[state.lastEmail]);
+  if (known) { pendingName = state.lastName || null; show('login'); openPin('enter', state.lastEmail); }
   else show('welcome');
+  if (qs('expired')) setTimeout(() => toast(L('انتهت الجلسة — أدخل رمزك من جديد.', 'Session expired — enter your PIN again.'), 'error'), 900);
 
   $('#startBtn').addEventListener('click', () => { show('login'); step('stepEmail'); setTimeout(() => $('#emailIn').focus(), 300); });
   $('#loginBack').addEventListener('click', () => {
@@ -44,6 +45,15 @@
     }
     $('#emailErr').textContent = '';
     pendingEmail = em;
+    if (REMOTE) {
+      const btn = $('#stepEmail button[type=submit]'); btn.disabled = true;
+      api('hafm_user_status', {p_email: em}).then(st => {
+        if (st.exists && st.has_pin) { pendingName = st.name; openPin('enter', em); }
+        else if (st.exists) { pendingName = st.name; openPin('create', em); }
+        else { $('#newEmailLbl').textContent = em; step('stepName'); setTimeout(() => $('#nameIn').focus(), 200); }
+      }).catch(err => { $('#emailErr').textContent = apiErrorText(err); }).finally(() => { btn.disabled = false; });
+      return;
+    }
     const u = state.users[em];
     if (u && u.pinHash) openPin('enter', em);
     else if (u && !u.pinHash) { pendingName = u.name; openPin('create', em); } // PIN was reset by an admin
@@ -63,7 +73,7 @@
     step('stepPin'); renderPinText(); drawDots(); $('#pinErr').textContent = '';
   }
   function renderPinText() {
-    const u = state.users[pin.email];
+    const u = REMOTE ? null : state.users[pin.email];
     const name = (u && u.name) || pendingName || '';
     $('#pinWho').innerHTML = `<span class="avatar">${esc(initials(name))}</span><div><b>${esc(name)}</b><small class="ltr">${esc(pin.email || '')}</small></div>`;
     const txt = {
@@ -91,8 +101,26 @@
     pin.value += k; drawDots(); $('#pinErr').textContent = '';
     if (pin.value.length === 4) submitPin();
   }
+  let busy = false;
+  function remoteDone(res) { drawDots('ok'); remoteSignIn(res); setTimeout(() => location.replace(next), 250); }
   function submitPin() {
     const em = pin.email;
+    if (REMOTE && pin.mode === 'enter') {
+      if (busy) return; busy = true;
+      api('hafm_login', {p_email: em, p_pin: pin.value})
+        .then(res => { if (res && res.error) fail(L('الرمز غير صحيح.', 'Wrong PIN.')); else remoteDone(res); })
+        .catch(err => { if (err.code === 'not_registered') { openPin('create', em); toast(L('اختر رمزاً جديداً لحسابك.', 'Choose a new PIN for your account.')); } else fail(apiErrorText(err)); })
+        .finally(() => { busy = false; });
+      return;
+    }
+    if (REMOTE && pin.mode === 'confirm' && pin.value === pin.first) {
+      if (busy) return; busy = true;
+      api('hafm_register', {p_email: em, p_name: pendingName || '', p_pin: pin.value})
+        .then(res => { toast(L('تم إنشاء حسابك', 'Account created')); remoteDone(res); })
+        .catch(err => { pin.mode = 'create'; pin.first = ''; renderPinText(); fail(apiErrorText(err)); })
+        .finally(() => { busy = false; });
+      return;
+    }
     if (pin.mode === 'enter') {
       const u = state.users[em];
       if (u.lockUntil && Date.now() < u.lockUntil) {
@@ -127,7 +155,9 @@
   });
   $('#forgotBtn').addEventListener('click', () => dialog({
     title: L('نسيت رمز الدخول؟', 'Forgot your PIN?'),
-    body: esc(L('اطلب من مشرف النظام إعادة تعيين رمزك من: حسابي ← المستخدمون على هذا الجهاز. بعدها اكتب إيميلك واختر رمزاً جديداً.',
+    body: esc(REMOTE ? L('اطلب من المشرف إعادة تعيين رمزك من: حسابي ← المستخدمون. بعدها اكتب إيميلك واختر رمزاً جديداً — يعمل على أي جهاز.',
+      'Ask an admin to reset your PIN from: Account → Users. Then enter your e-mail and choose a new PIN — on any device.')
+      : L('اطلب من مشرف النظام إعادة تعيين رمزك من: حسابي ← المستخدمون على هذا الجهاز. بعدها اكتب إيميلك واختر رمزاً جديداً.',
       'Ask an admin to reset your PIN from: Account → Users on this device. Then enter your e-mail and choose a new PIN.')),
     okText: L('حسناً', 'OK'), cancelText: L('إغلاق', 'Close')
   }));

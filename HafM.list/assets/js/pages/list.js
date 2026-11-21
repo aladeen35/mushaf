@@ -1,6 +1,5 @@
 /* list.html?id=N[&city=X] — one checklist's own page: week progress → region → branch (opens entry.html) */
-(function () {
-  if (!requireAuth()) return;
+hafmBoot(function () {
   const list = getList(qs('id'));
   if (!list || list.archived) { location.replace('home.html'); return; }
   renderShell({active: 'home', back: 'home.html', title: listName(list), sub: list.kind === 'fixed' ? t('fixed') : t('survey')});
@@ -15,7 +14,7 @@
       <span class="lead ${c ? 'done' : ''}">${c ? ic('check') : b.no}</span>
       <div class="grow"><div class="title">${esc(b.name)} <span class="small muted ltr">${esc(b.code)}</span></div>
       <div class="sub">${esc(b.manager)}${c ? ' · ' + esc(c.auditor || L('الملف الأصلي', 'original file')) : ''}</div></div>
-      ${c ? (bad ? `<span class="badge red">${bad} ${ic('alert')}</span>` : `<span class="badge ok">${t('submitted')}</span>`) : `<span class="badge">${t('pending')}</span>`}
+      ${c && c.pending ? `<span class="badge pending">${ic('cloud')} ${L('بانتظار الإرسال', 'Not sent yet')}</span>` : c ? (bad ? `<span class="badge red">${bad} ${ic('alert')}</span>` : `<span class="badge ok">${t('submitted')}</span>`) : `<span class="badge">${t('pending')}</span>`}
       <span class="trail">${ic('chevron', 'flip-ltr')}</span></a>`;
   }
 
@@ -119,4 +118,4 @@
   }
   window.addEventListener('popstate', () => { city = qs('city'); render(); });
   render();
-})();
+});
