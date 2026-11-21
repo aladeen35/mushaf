@@ -52,7 +52,7 @@
       api('hafm_user_status', {p_email: em}).then(st => {
         codeRequired = !!st.code_required;
         if (st.exists && st.has_pin) { pendingName = st.name; openPin('enter', em); }
-        else if (codeRequired) { pendingName = st.exists ? st.name : null; startCode(st.exists ? 'reset' : 'new', em); }
+        else if (codeRequired) { pendingName = st.exists ? st.name : null; startCode('new', em); }
         else if (st.exists) { pendingName = st.name; openPin('create', em); }
         else { $('#newEmailLbl').textContent = em; step('stepName'); setTimeout(() => $('#nameIn').focus(), 200); }
       }).catch(err => { $('#emailErr').textContent = apiErrorText(err); }).finally(() => { btn.disabled = false; });
@@ -83,7 +83,7 @@
     const c = $('#codeIn').value;
     if (!/^\d{6}$/.test(c)) { $('#codeErr').textContent = L('الرمز 6 أرقام.', 'The code has 6 digits.'); return; }
     pendingCode = c; $('#codeErr').textContent = '';
-    if (codeFlow === 'new') { $('#newEmailLbl').textContent = pendingEmail; step('stepName'); setTimeout(() => $('#nameIn').focus(), 200); }
+    if (codeFlow === 'new') { $('#newEmailLbl').textContent = pendingEmail; if (pendingName && !$('#nameIn').value) $('#nameIn').value = /[\s]/.test(pendingName) ? pendingName : ''; step('stepName'); setTimeout(() => $('#nameIn').focus(), 200); }
     else openPin('create', pendingEmail);
   });
 
