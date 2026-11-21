@@ -119,6 +119,31 @@ const parseDate = s => new Date(s + 'T00:00:00Z');
 function addDays(d, n) { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x; }
 function weekStartOf(d) { const sd = CFG.WEEK_START_DAY == null ? 6 : CFG.WEEK_START_DAY; return addDays(d, -((d.getUTCDay() - sd + 7) % 7)); }
 const todayStr = () => fmtDate(riyadhToday());
+/* Week number of the year. Weeks run Saturday → Friday.
+   'jan1' (default, = Excel WEEKNUM(date,16)): week 1 is the Sat–Fri week that contains 1 January
+     → 2026: 14–20 Nov = week 47, 21–27 Nov = week 48; the week 26 Dec 2026 – 1 Jan 2027 = week 1 of 2027.
+   'first-full': week 1 starts on the first Saturday of the year → 21–27 Nov 2026 = week 47. */
+function weekInfo(ws) {
+  const s = typeof ws === 'string' ? parseDate(ws) : ws;
+  if (CFG.WEEK1_RULE === 'first-full') {
+    let y = s.getUTCFullYear(), first = weekStartOf(addDays(new Date(Date.UTC(y, 0, 1)), 6));
+    if (s < first) { y--; first = weekStartOf(addDays(new Date(Date.UTC(y, 0, 1)), 6)); }
+    return {no: Math.round((s - first) / 604800000) + 1, year: y};
+  }
+  const y = addDays(s, 6).getUTCFullYear(); // the year of the week's Friday
+  return {no: Math.round((s - weekStartOf(new Date(Date.UTC(y, 0, 1)))) / 604800000) + 1, year: y};
+}
+/* "21–27 نوفمبر 2026" / "21–27 Nov 2026" (spans months/years when needed) */
+function weekSpan(ws) {
+  const a = parseDate(ws), b = addDays(a, 6);
+  const loc = lang === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB';
+  const f = o => new Intl.DateTimeFormat(loc, Object.assign({timeZone: 'UTC'}, o));
+  if (a.getUTCMonth() === b.getUTCMonth()) return `${a.getUTCDate()}–${b.getUTCDate()} ${f({month: 'long', year: 'numeric'}).format(b)}`;
+  if (a.getUTCFullYear() === b.getUTCFullYear()) return `${f({day: 'numeric', month: 'short'}).format(a)} – ${f({day: 'numeric', month: 'short', year: 'numeric'}).format(b)}`;
+  return `${f({day: 'numeric', month: 'short', year: 'numeric'}).format(a)} – ${f({day: 'numeric', month: 'short', year: 'numeric'}).format(b)}`;
+}
+const weekName = ws => { const w = weekInfo(ws); return L(`الأسبوع ${w.no}`, `Week ${w.no}`); };
+const weekLabel = ws => `${weekName(ws)} · ${weekSpan(ws)}`;
 const currentWeekStart = () => fmtDate(weekStartOf(riyadhToday()));
 const riyadhDayNumber = () => Math.floor(riyadhToday().getTime() / 86400000);
 function niceDate(s) {

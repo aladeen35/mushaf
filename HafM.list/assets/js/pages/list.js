@@ -28,7 +28,7 @@
           <div class="row" style="gap:8px"><span class="badge ${listTone(list) === 'havan' ? 'havan' : 'teal'}">${ic(listIcon(list))} ${list.kind === 'fixed' ? t('fixed') : t('survey')}</span>
           ${list.locked ? `<span class="badge">${ic('lock')} ${L('مدمجة', 'Built-in')}</span>` : ''}</div>
           <h2 style="font-size:20px;margin-top:6px">${esc(listName(list))}</h2>
-          <p class="small muted">${t('weekRange', {a: rep.weekStart, b: rep.weekEnd})} · ${done}/${TOTAL_BRANCHES} ${t('submitted')} · ${list.items.length} ${t('items')}</p>
+          <p class="small muted">${esc(weekLabel(rep.weekStart))} · ${done}/${TOTAL_BRANCHES} ${t('submitted')} · ${list.items.length} ${t('items')}</p>
         </div>
       </section>
       <div class="row wrap">

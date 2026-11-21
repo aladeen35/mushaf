@@ -41,7 +41,7 @@
           ${ring(done / TOTAL_BRANCHES * 100, 72)}
         </div>
         <label class="lbl" for="weekSel">${t('week')}</label>
-        <select class="input" id="weekSel">${reps.map(r => `<option value="${r.weekStart}" ${r.weekStart === week ? 'selected' : ''}>${t('weekRange', {a: r.weekStart, b: r.weekEnd})}${r.weekStart === currentWeekStart() ? ' · ' + t('thisWeek') : ''}${r.seed ? ' · ' + L('الملف الأصلي', 'original file') : ''}</option>`).join('')}</select>
+        <select class="input" id="weekSel">${reps.map(r => `<option value="${r.weekStart}" ${r.weekStart === week ? 'selected' : ''}>${esc(weekLabel(r.weekStart))}${r.weekStart === currentWeekStart() ? ' · ' + t('thisWeek') : ''}${r.seed ? ' · ' + L('الملف الأصلي', 'original file') : ''}</option>`).join('')}</select>
         <div class="row wrap no-print" style="margin-top:14px">
           <button class="btn primary" id="xlsBtn" type="button" ${rep ? '' : 'disabled'}>${ic('download')} ${t('exportExcel')}</button>
           <button class="btn ghost" id="printBtn" type="button">${ic('printer')} ${t('print')}</button>

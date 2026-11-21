@@ -36,10 +36,11 @@
   const hr = riyadhHour();
   $('#page').innerHTML = `
     <section class="hero">
+      <div class="week-no" aria-label="${esc(weekName(ws))}"><b>${weekInfo(ws).no}</b><span>${L('الأسبوع', 'Week')}</span></div>
       <span class="eyebrow">${esc(niceDate(todayStr()))}</span>
       <h1>${hr < 12 ? t('goodMorning') : t('goodEvening')}، ${esc(firstName)}</h1>
       <p>${L('اختر قائمة لتبدأ فحص الفروع — التقرير الأسبوعي يُفتح تلقائياً.', 'Pick a list to start checking branches — the weekly report opens automatically.')}</p>
-      <div class="chips"><span class="chip">${ic('calendar')} ${t('weekRange', {a: ws, b: we})}</span><span class="chip">${ic('shield')} ${esc(roleName(roleOf(u.email)))}</span></div>
+      <div class="chips"><span class="chip">${ic('calendar')} ${esc(weekLabel(ws))}</span><span class="chip">${ic('shield')} ${esc(roleName(roleOf(u.email)))}</span></div>
     </section>
 
     <div class="kpis">

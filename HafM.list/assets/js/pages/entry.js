@@ -30,7 +30,7 @@
           <span>${ic('pin')} ${esc(cityName(b))} · ${esc(lang === 'ar' ? b.regionAr : b.regionEn)}</span>
           <span>${ic('user')} ${esc(b.manager)}</span>
           <span>${ic('clipboard')} ${esc(listName(list))}</span>
-          <span>${ic('calendar')} ${isPast ? t('weekRange', {a: rep.weekStart, b: rep.weekEnd}) : esc(D(todayStr()))}</span>
+          <span>${ic('calendar')} ${isPast ? esc(weekLabel(rep.weekStart)) : esc(D(todayStr()))}</span>
         </div>
       </section>
       ${isPast ? `<div class="card cream flat small">${ic('alert')} ${L('تعدّل تقرير أسبوع سابق.', 'You are editing a past week’s report.')}</div>` : ''}
@@ -80,7 +80,7 @@
       const prev = reportsOf(list.id).filter(r => r.id !== rep.id && r.weekStart < rep.weekStart && r.checks[b.no])[0];
       if (!prev) { toast(t('noPrev'), 'error'); return; }
       const pc = prev.checks[b.no]; draft = {s: Object.assign({}, pc.s), remarks: pc.remarks || ''}; dirty = true; render();
-      toast(L(`نُسخ من أسبوع ${D(prev.weekStart)}`, `Copied from week ${prev.weekStart}`));
+      toast(L(`نُسخ من ${weekLabel(prev.weekStart)}`, `Copied from ${weekLabel(prev.weekStart)}`));
     });
     $('#saveBtn').addEventListener('click', () => doSave(false));
     $('#saveNextBtn').addEventListener('click', () => doSave(true));

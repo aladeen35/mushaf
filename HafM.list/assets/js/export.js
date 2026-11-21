@@ -117,7 +117,7 @@ async function exportGeneric(list, rep) {
   c1.font = XL.font({size: 16, bold: true, color: {argb: 'FFFFFFFF'}}); c1.fill = XL.fill(XL.navy); c1.alignment = {horizontal: 'center', vertical: 'middle'};
   ws.getRow(1).height = 32.1;
   ws.getCell('A2').value = 'Week:'; ws.getCell('A2').font = XL.font({bold: true});
-  ws.getCell('C2').value = `${rep.weekStart} → ${rep.weekEnd}`; ws.getCell('C2').fill = XL.fill(XL.cream); ws.getCell('C2').border = XL.border;
+  ws.getCell('C2').value = `Week ${weekInfo(rep.weekStart).no} · ${rep.weekStart} → ${rep.weekEnd}`; ws.getCell('C2').fill = XL.fill(XL.cream); ws.getCell('C2').border = XL.border;
   ws.getCell(2, firstItem).value = (list.nameAr && list.nameAr !== list.name ? list.nameAr + ' · ' : '') + 'Status options: ' + sts.map(s => s.trim()).join(' · ');
   ws.getCell(2, firstItem).font = XL.font({italic: true, color: {argb: 'FF595959'}});
   const headers = ['No.', 'Code', 'Branch Name', 'Area Manager', 'City', ...list.items.map(it => it.labelAr && it.labelAr !== it.label ? `${it.label}\n${it.labelAr}` : it.label), ...sts, 'Auditor', 'Remarks'];
@@ -163,7 +163,7 @@ async function exportGeneric(list, rep) {
   ws.views = [{state: 'frozen', xSplit: 5, ySplit: 4, topLeftCell: XL.col(firstItem) + '5'}];
   ws.pageSetup = {orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: '4:4'};
   const safe = String(list.name || 'List').replace(/[^\w-]+/g, '_').replace(/^_|_$/g, '') || 'List';
-  await downloadWorkbook(wb, `${safe}_${rep.weekStart}.xlsx`);
+  await downloadWorkbook(wb, `${safe}_W${weekInfo(rep.weekStart).no}_${rep.weekStart}.xlsx`);
 }
 async function exportReport(list, rep) {
   if (list.slug === 'beverage') return exportBeverage(list, rep);

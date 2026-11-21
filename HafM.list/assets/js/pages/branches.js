@@ -49,7 +49,7 @@
           <div class="grow"><div class="title">${esc(listName(x.l))}</div><div class="sub">${c ? `${esc(c.auditor || L('الملف الأصلي', 'original file'))}${bad.length ? ' · ' + bad.map(it => esc(itemLabel(it))).join('، ') : ''}` : L('لم يُدخل بعد — اضغط للبدء', 'Not entered yet — tap to start')}</div></div>
           ${c ? (bad.length ? `<span class="badge red">${bad.length}</span>` : `<span class="badge ok">${ic('check')}</span>`) : `<span class="btn sm primary">${t('start')}</span>`}</a>`; }).join('')}</div>
       ${hist.length ? `<h3 style="margin-top:18px">${L('السجل', 'History')}</h3><div class="rows" style="margin-top:10px">${hist.map(r => { const l = getList(r.checklistId); if (!l) return ''; const c = r.checks[b.no]; const bad = list2bad(l, c);
-        return `<div class="item-row"><div class="grow"><div class="title">${esc(listName(l))}</div><div class="sub">${t('weekRange', {a: r.weekStart, b: r.weekEnd})}${c.auditor ? ' · ' + esc(c.auditor) : ''}</div></div>${bad.length ? `<span class="badge red">${bad.length} ${t('notFixed')}</span>` : `<span class="badge ok">${ic('check')}</span>`}</div>`; }).join('')}</div>` : ''}
+        return `<div class="item-row"><div class="grow"><div class="title">${esc(listName(l))}</div><div class="sub">${esc(weekLabel(r.weekStart))}${c.auditor ? ' · ' + esc(c.auditor) : ''}</div></div>${bad.length ? `<span class="badge red">${bad.length} ${t('notFixed')}</span>` : `<span class="badge ok">${ic('check')}</span>`}</div>`; }).join('')}</div>` : ''}
       <button class="btn ghost block" data-close style="margin-top:16px" type="button">${L('إغلاق', 'Close')}</button>`);
   }
   const list2bad = (l, c) => l.items.filter(it => statusKey(c.s[it.id]) === 'bad');
