@@ -438,7 +438,7 @@ const outboxKey = x => `${x.l}|${x.w}|${x.b}`;
 async function syncPull() {
   const s = getSession(); if (!s) return;
   const res = await api('hafm_pull', {p_token: s.token, p_since: state.lastSync || null});
-  if (Array.isArray(res.checklists) && res.checklists.length) state.checklists = res.checklists.map(l => Object.assign({}, l, {archived: !!l.archived}));
+  if (Array.isArray(res.checklists)) { state.checklists = res.checklists.map(l => Object.assign({}, l, {archived: !!l.archived})); const ids = new Set(state.checklists.map(l => l.id)); state.reports = state.reports.filter(r => ids.has(r.checklistId)); }
   const pending = new Set(state.outbox.map(outboxKey));
   (res.entries || []).forEach(e => {
     if (pending.has(outboxKey(e))) return;
