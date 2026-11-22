@@ -29,7 +29,8 @@ hafmBoot(function () {
     const pendingByCity = cities().map(c => ({c, list: BRANCHES.filter(b => b.cityEn === c.en && !(rep && rep.checks[b.no]))})).filter(x => x.list.length);
     const isFixed = list.kind === 'fixed';
     const lbl = {ok: isFixed ? t('okay') : L('نعم ✅', 'Yes ✅'), fixed: t('fixedLbl'), bad: isFixed ? t('notFixed') : L('لا ❌', 'No ❌'), nc: t('notChecked'), na: t('na')};
-    const keys = isFixed ? ['ok', 'fixed', 'bad', 'nc', 'na'] : ['ok', 'bad', 'na'];
+    if (!isFixed) Object.assign(lbl, toneLabels(list));
+    const keys = isFixed ? ['ok', 'fixed', 'bad', 'nc', 'na'] : TONES.filter(k => surveyOptions(list).some(o => o.tone === k));
 
     $('#page').innerHTML = `
       <div class="seg no-print" id="listSeg">${lists.map(l => `<button type="button" data-id="${l.id}" class="${l.id === list.id ? 'on' : ''}">${esc(listName(l))}</button>`).join('')}</div>

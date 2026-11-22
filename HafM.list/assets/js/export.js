@@ -119,7 +119,7 @@ async function exportGeneric(list, rep, into, sheetName) {
   ws.getRow(1).height = 32.1;
   ws.getCell('A2').value = 'Week:'; ws.getCell('A2').font = XL.font({bold: true});
   ws.getCell('C2').value = `Week ${weekInfo(rep.weekStart).no} · ${rep.weekStart} → ${rep.weekEnd}`; ws.getCell('C2').fill = XL.fill(XL.cream); ws.getCell('C2').border = XL.border;
-  ws.getCell(2, firstItem).value = (list.nameAr && list.nameAr !== list.name ? list.nameAr + ' · ' : '') + 'Status options: ' + sts.map(s => s.trim()).join(' · ');
+  ws.getCell(2, firstItem).value = (list.nameAr && list.nameAr !== list.name ? list.nameAr + ' · ' : '') + 'Status options: ' + (list.kind === 'survey' ? surveyOptions(list).map(o => o.en && o.en !== o.v ? `${o.v} = ${o.en}` : o.v) : sts.map(s => s.trim())).join(' · ');
   ws.getCell(2, firstItem).font = XL.font({italic: true, color: {argb: 'FF595959'}});
   const headers = ['No.', 'Code', 'Branch Name', 'Area Manager', 'City', ...list.items.map(it => it.labelAr && it.labelAr !== it.label ? `${it.label}\n${it.labelAr}` : it.label), ...sts, 'Auditor', 'Remarks'];
   ws.getRow(4).height = 48;
@@ -145,10 +145,9 @@ async function exportGeneric(list, rep, into, sheetName) {
   const ref = `${L1}5:${L2}${lastRow}`;
   ws.dataValidations.add(ref, {type: 'list', allowBlank: true, formulae: ['"' + sts.join(',') + '"']});
   if (list.kind === 'survey') {
-    ws.addConditionalFormatting({ref, rules: [
-      {type: 'cellIs', operator: 'equal', priority: 1, formulae: ['"✅"'], style: {font: {color: {argb: 'FF006100'}}, fill: {type: 'pattern', pattern: 'solid', bgColor: {argb: 'FFC6EFCE'}}}},
-      {type: 'cellIs', operator: 'equal', priority: 2, formulae: ['"❌"'], style: {font: {color: {argb: 'FF9C0006'}}, fill: {type: 'pattern', pattern: 'solid', bgColor: {argb: 'FFFFC7CE'}}}},
-      {type: 'cellIs', operator: 'equal', priority: 3, formulae: ['"N/A"'], style: {font: {color: {argb: 'FF404040'}}, fill: {type: 'pattern', pattern: 'solid', bgColor: {argb: 'FFE7E6E6'}}}}]});
+    const TC = {ok: ['FF006100', 'FFC6EFCE'], bad: ['FF9C0006', 'FFFFC7CE'], fixed: ['FF9C5700', 'FFFFEB9C'], nc: ['FF404040', 'FFE7E6E6'], na: ['FF5D4396', 'FFECE6F7']};
+    ws.addConditionalFormatting({ref, rules: surveyOptions(list).map((o, i) => ({type: 'cellIs', operator: 'equal', priority: i + 1, formulae: ['"' + String(o.v).replace(/"/g, '""') + '"'],
+      style: {font: {color: {argb: (TC[o.tone] || TC.nc)[0]}}, fill: {type: 'pattern', pattern: 'solid', bgColor: {argb: (TC[o.tone] || TC.nc)[1]}}}}))});
   } else ws.addConditionalFormatting({ref, rules: statusRules(ref, 1)});
   // summary
   const sr = lastRow + 2;

@@ -31,7 +31,8 @@ hafmBoot(function () {
     const weeks = (n > 0 ? all.slice(0, n) : all).map(r => weekStats(list, r)); // newest first
     history.replaceState({}, '', `dashboard.html?list=${list.id}&n=${n}${incCur ? '&cur=1' : ''}`);
     const isFixed = list.kind === 'fixed';
-    const okLbl = isFixed ? t('okay') : L('نعم ✅', 'Yes ✅'), badLbl = isFixed ? t('notFixed') : L('لا ❌', 'No ❌');
+    const tl = isFixed ? {} : toneLabels(list);
+    const okLbl = isFixed ? t('okay') : (tl.ok || L('نعم ✅', 'Yes ✅')), badLbl = isFixed ? t('notFixed') : (tl.bad || L('لا ❌', 'No ❌'));
 
     const head = `
       <div class="seg no-print" id="listSeg">${lists.map(l => `<button type="button" data-id="${l.id}" class="${l.id === list.id ? 'on' : ''}">${esc(listName(l))}</button>`).join('')}</div>

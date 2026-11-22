@@ -92,6 +92,12 @@ hafmBoot(function () {
       : JSON.parse(JSON.stringify(list));
     if (!creating && !canEdit(list)) { location.replace('admin.html'); return; }
     const kindLocked = !creating && hasData(list);
+    if (!d.options || !d.options.length) d.options = DEFAULT_SURVEY_OPTIONS.map(o => Object.assign({}, o));
+    const usedValues = new Set(); if (!creating) state.reports.filter(r => r.checklistId === list.id).forEach(r => Object.values(r.checks).forEach(c => Object.values(c.s || {}).forEach(v => { if (v) usedValues.add(v); })));
+    const TONE_NAMES = {ok: L('سليم / إيجابي (أخضر)', 'Good (green)'), bad: L('مشكلة / انحراف (أحمر)', 'Problem (red)'), fixed: L('أُصلح (أصفر)', 'Fixed (amber)'),
+      nc: L('لم يُفحص (رمادي)', 'Not checked (grey)'), na: L('غير متوفر / لا ينطبق (بنفسجي)', 'Not available (purple)')};
+    const PRESETS = [{v: 'لا يوجد', ar: 'لا يوجد', en: 'Not available', tone: 'na'}, {v: 'لم يتم التحقق', ar: 'لم يتم التحقق', en: 'Not checked', tone: 'nc'},
+      {v: 'أُصلح', ar: 'أُصلح في الزيارة', en: 'Fixed on visit', tone: 'fixed'}, {v: '⚠️', ar: 'جزئي', en: 'Partial', tone: 'fixed'}];
 
     function draw() {
       $('#page').innerHTML = `
@@ -107,12 +113,30 @@ hafmBoot(function () {
               <button type="button" data-k="survey" class="${d.kind === 'survey' ? 'on' : ''}" ${kindLocked ? 'disabled' : ''}>${t('survey')} — ✅ / ❌ / N/A</button>
               <button type="button" data-k="fixed" class="${d.kind === 'fixed' ? 'on' : ''}" ${kindLocked ? 'disabled' : ''}>${t('fixed')} — ${L('5 حالات', '5 statuses')}</button>
             </div>
-            <p class="hint">${kindLocked ? L('لا يمكن تغيير النوع بعد وجود إدخالات.', 'Type cannot change once entries exist.') : d.kind === 'fixed' ? 'Okay · Not okay and fixed · Not fixed · Not checked · not available' : L('نعم ✅ · لا ❌ · لا ينطبق — و❌ يُعلَّم كانحراف فوراً.', 'Yes ✅ · No ❌ · N/A — ❌ is flagged as a deviation.')}</p>
+            <p class="hint">${kindLocked ? L('لا يمكن تغيير النوع بعد وجود إدخالات.', 'Type cannot change once entries exist.') : d.kind === 'fixed' ? 'Okay · Not okay and fixed · Not fixed · Not checked · not available' : L('خيارات الإجابة تُحدَّد في الأسفل — ما معناه «مشكلة» يُعلَّم كانحراف فوراً.', 'Answer options are set below — anything meaning “problem” is flagged at once.')}</p>
             <label class="lbl">${L('الأيقونة', 'Icon')}</label>
             <div class="row wrap" id="icons">${LIST_ICONS.map(i => `<button type="button" class="icon-btn ${d.icon === i ? 'sel' : ''}" data-i="${i}" style="${d.icon === i ? 'background:var(--teal);border-color:var(--teal)' : ''}">${ic(i)}</button>`).join('')}</div>
             <label class="lbl">${L('اللون', 'Colour')}</label>
             <div class="seg" id="tone">${[['teal', L('تيل', 'Teal')], ['havan', L('هافان', 'Havan')], ['dark', L('داكن', 'Dark')]].map(([k, n]) => `<button type="button" data-t="${k}" class="${(d.tone || 'teal') === k ? 'on' : ''}">${n}</button>`).join('')}</div>
           </div>
+
+          ${d.kind === 'survey' ? `<div class="card">
+            <div class="row spread"><h3>${L('خيارات الإجابة', 'Answer options')} (${d.options.length})</h3><button class="btn sm ghost" id="addOpt" type="button">${ic('plus')} ${L('خيار', 'Option')}</button></div>
+            <p class="hint">${L('الرمز أو القيمة هو ما يُحفظ ويظهر في Excel. «المعنى» يحدد اللون والعدّ في التقارير، و«مشكلة» يُعلَّم كانحراف.', 'The value is what is saved and shown in Excel. The meaning sets the colour and the report counts; “problem” is flagged as a deviation.')}</p>
+            <div class="stack" id="opts" style="margin-top:10px">${d.options.map((o, i) => `
+              <div class="q-card" style="padding:12px">
+                <div class="row"><span class="pill ${o.tone}">${esc(o.v || '…')}</span><div class="grow"></div>
+                  <button class="icon-btn" data-oup="${i}" type="button" ${i === 0 ? 'disabled' : ''} aria-label="up" style="width:34px;height:34px">${ic('up')}</button>
+                  <button class="icon-btn" data-odel="${i}" type="button" aria-label="${t('delete')}" style="width:34px;height:34px;color:var(--bad)">${ic('trash')}</button></div>
+                <div style="display:grid;gap:8px;margin-top:8px"><input class="input" data-ov="${i}" value="${esc(o.v)}" maxlength="20" placeholder="${L('الرمز / القيمة: ✅', 'Value: ✅')}">
+                  <select class="input" data-ot="${i}">${TONES.map(k => `<option value="${k}" ${o.tone === k ? 'selected' : ''}>${TONE_NAMES[k]}</option>`).join('')}</select></div>
+                <div class="row" style="margin-top:8px"><input class="input" data-oar="${i}" value="${esc(o.ar || '')}" maxlength="30" placeholder="${L('الاسم بالعربية: متصل', 'Arabic name')}">
+                  <input class="input ltr" data-oen="${i}" value="${esc(o.en || '')}" maxlength="30" placeholder="English: Connected"></div>
+                ${usedValues.has(o.v) ? `<p class="hint">${ic('alert')} ${L('هذا الخيار مستخدم في إدخالات سابقة — تغيير الرمز يُبقيها بالرمز القديم.', 'Used in past entries — changing the value leaves them with the old one.')}</p>` : ''}
+              </div>`).join('')}</div>
+            <p class="small muted" style="margin-top:10px">${L('إضافة سريعة:', 'Quick add:')}</p>
+            <div class="row wrap" style="gap:6px">${PRESETS.map((o, i) => `<button class="chip" data-preset="${i}" type="button">${ic('plus')} ${esc(o.v === o.ar ? o.ar : o.v + ' ' + o.ar)}</button>`).join('')}</div>
+          </div>` : ''}
 
           <div class="card">
             <div class="row spread"><h3>${L('البنود', 'Items')} (${d.items.length})</h3><button class="btn sm ghost" id="addItem" type="button">${ic('plus')} ${L('بند', 'Item')}</button></div>
@@ -141,11 +165,19 @@ hafmBoot(function () {
     const sync = () => {
       d.nameAr = $('#nAr').value; d.name = $('#nEn').value;
       d.items.forEach((it, i) => { it.labelAr = $(`[data-ar="${i}"]`).value; it.label = $(`[data-en="${i}"]`).value; });
+      if (d.kind === 'survey') d.options.forEach((o, i) => { const g = a => $(`[${a}="${i}"]`); if (!g('data-ov')) return;
+        o.v = g('data-ov').value.trim(); o.ar = g('data-oar').value.trim(); o.en = g('data-oen').value.trim(); o.tone = g('data-ot').value; });
     };
     function bind() {
       $$('#kind button').forEach(b => b.addEventListener('click', () => { sync(); d.kind = b.dataset.k; if (creating) { d.tone = d.kind === 'fixed' ? 'teal' : 'havan'; d.icon = d.kind === 'fixed' ? 'list' : 'clipboard'; } draw(); }));
       $$('#icons button').forEach(b => b.addEventListener('click', () => { sync(); d.icon = b.dataset.i; draw(); }));
       $$('#tone button').forEach(b => b.addEventListener('click', () => { sync(); d.tone = b.dataset.t; draw(); }));
+      const ao = $('#addOpt'); if (ao) ao.addEventListener('click', () => { sync(); d.options.push({v: '', ar: '', en: '', tone: 'nc'}); draw(); const last = $$('[data-ov]').pop(); if (last) last.focus(); });
+      $$('[data-odel]').forEach(b => b.addEventListener('click', () => { sync(); d.options.splice(+b.dataset.odel, 1); draw(); }));
+      $$('[data-oup]').forEach(b => b.addEventListener('click', () => { sync(); const i = +b.dataset.oup; [d.options[i - 1], d.options[i]] = [d.options[i], d.options[i - 1]]; draw(); }));
+      $$('[data-preset]').forEach(b => b.addEventListener('click', () => { sync(); const o = PRESETS[+b.dataset.preset];
+        if (d.options.some(x => x.v === o.v)) { toast(L('موجود مسبقاً', 'Already there'), 'error'); return; } d.options.push(Object.assign({}, o)); draw(); }));
+      $$('[data-ot]').forEach(x => x.addEventListener('change', () => { sync(); draw(); }));
       $('#addItem').addEventListener('click', () => { sync(); d.items.push({id: '', label: '', labelAr: ''}); draw(); const last = $$('[data-ar]').pop(); if (last) last.focus(); });
       $$('[data-del]').forEach(b => b.addEventListener('click', () => { sync(); d.items.splice(+b.dataset.del, 1); if (!d.items.length) d.items.push({id: '', label: '', labelAr: ''}); draw(); }));
       $$('[data-up]').forEach(b => b.addEventListener('click', () => { sync(); const i = +b.dataset.up; [d.items[i - 1], d.items[i]] = [d.items[i], d.items[i - 1]]; draw(); }));
@@ -164,18 +196,27 @@ hafmBoot(function () {
         const items = d.items.map(it => ({id: it.id, label: it.label.trim() || it.labelAr.trim(), labelAr: it.labelAr.trim() || it.label.trim()})).filter(it => it.label);
         if (!nameAr && !nameEn) { $('#fErr').textContent = L('اكتب اسم القائمة.', 'Enter a list name.'); return; }
         if (!items.length) { $('#fErr').textContent = L('أضف بنداً واحداً على الأقل.', 'Add at least one item.'); return; }
+        let options = null;
+        if (d.kind === 'survey') {
+          options = d.options.filter(o => o.v || o.ar || o.en).map(o => ({v: (o.v || o.ar || o.en).trim(), ar: o.ar, en: o.en, tone: TONES.includes(o.tone) ? o.tone : 'nc'}));
+          const vals = options.map(o => o.v);
+          if (options.length < 2) { $('#fErr').textContent = L('أضف خيارين على الأقل.', 'Add at least two options.'); return; }
+          if (options.length > 8) { $('#fErr').textContent = L('8 خيارات كحد أقصى.', 'At most 8 options.'); return; }
+          if (new Set(vals).size !== vals.length) { $('#fErr').textContent = L('كل خيار يحتاج رمزاً مختلفاً.', 'Each option needs a different value.'); return; }
+          if (vals.some(v => /[,"]/.test(v))) { $('#fErr').textContent = L('لا تستخدم الفاصلة أو علامة التنصيص في الرمز.', 'Do not use commas or quotes in a value.'); return; }
+        }
         const used = new Set();
         items.forEach(it => { if (!it.id) { let base = slugify(it.label), id = base, k = 2; const taken = x => used.has(x) || items.some(o => o !== it && o.id === x); while (taken(id)) id = base + '-' + k++; it.id = id; } used.add(it.id); });
         if (creating) {
           const btn = $('#f button[type=submit]'); btn.disabled = true;
           try {
-            const l = await persist({id: REMOTE ? null : state.nextId++, name: nameEn || nameAr, nameAr: nameAr || nameEn, kind: d.kind, slug: null, icon: d.icon, tone: d.tone, items,
+            const l = await persist({id: REMOTE ? null : state.nextId++, name: nameEn || nameAr, nameAr: nameAr || nameEn, kind: d.kind, slug: null, icon: d.icon, tone: d.tone, items, options: options || undefined,
               createdBy: u.name, createdAt: new Date().toISOString()});
             toast(L('تم إنشاء القائمة', 'List created')); setTimeout(() => go(`list.html?id=${l.id}`), 400);
           } catch (err) { btn.disabled = false; fail(err); }
         } else {
           try {
-            await persist(Object.assign({}, list, {name: nameEn || nameAr, nameAr: nameAr || nameEn, kind: kindLocked ? list.kind : d.kind, icon: d.icon, tone: d.tone, items,
+            await persist(Object.assign({}, list, {name: nameEn || nameAr, nameAr: nameAr || nameEn, kind: kindLocked ? list.kind : d.kind, icon: d.icon, tone: d.tone, items, options: options || undefined,
               updatedBy: u.name, updatedAt: new Date().toISOString()}));
             toast(t('saved')); setTimeout(() => go('admin.html'), 400);
           } catch (err) { fail(err); }

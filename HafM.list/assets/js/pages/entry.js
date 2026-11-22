@@ -48,7 +48,8 @@ hafmBoot(function () {
           const v = draft.s[it.id]; const k = statusKey(v);
           return `<div class="q-card ${k ? 'filled' : ''} ${k === 'bad' ? 'flag' : ''}">
             <div class="q-head"><span class="q-num">${k ? ic('check') : i + 1}</span><div class="grow"><h3>${esc(itemLabel(it))}</h3>${itemSub(it) ? `<p>${esc(itemSub(it))}</p>` : ''}</div></div>
-            <div class="st-grid ${list.kind === 'survey' ? 'three' : ''}">${sts.map((s, si) => `<button type="button" class="st-btn ${list.kind === 'survey' ? 'big' : ''} ${v === s ? 'sel-' + statusKey(s) : ''}" data-item="${esc(it.id)}" data-sidx="${si}" aria-pressed="${v === s}">${list.kind === 'survey' ? esc(s) : esc(statusText(s))}</button>`).join('')}</div>
+            <div class="st-grid ${list.kind === 'survey' && sts.length <= 3 ? 'three' : ''}">${sts.map((s, si) => { const o = list.kind === 'survey' ? surveyOptions(list)[si] : null;
+              return `<button type="button" class="st-btn ${o && sts.length <= 3 && optName(o) === o.v ? 'big' : ''} ${v === s ? 'sel-' + (o ? o.tone : statusKey(s)) : ''}" data-item="${esc(it.id)}" data-sidx="${si}" aria-pressed="${v === s}">${o ? esc(optText(o)) : esc(statusText(s))}</button>`; }).join('')}</div>
             ${k === 'bad' ? `<div class="warn">${ic('alert')} ${list.kind === 'survey' ? t('deviation') : t('notFixedWarn')}</div>` : ''}
           </div>`;
         }).join('')}
@@ -74,7 +75,7 @@ hafmBoot(function () {
       draft.s[id] = draft.s[id] === s ? null : s; dirty = true; keepRemarks(); render();
     }));
     $('#remarks').addEventListener('input', e => { draft.remarks = e.target.value; dirty = true; });
-    $('#allOk').addEventListener('click', () => { keepRemarks(); list.items.forEach(it => { draft.s[it.id] = list.kind === 'survey' ? '✅' : 'Okay'; }); dirty = true; render(); });
+    $('#allOk').addEventListener('click', () => { keepRemarks(); const okV = list.kind === 'survey' ? (surveyOptions(list).find(o => o.tone === 'ok') || {}).v : 'Okay'; if (!okV) return; list.items.forEach(it => { draft.s[it.id] = okV; }); dirty = true; render(); });
     $('#clear').addEventListener('click', () => { draft = {s: {}, remarks: ''}; dirty = true; render(); });
     $('#copyPrev').addEventListener('click', () => {
       const prev = reportsOf(list.id).filter(r => r.id !== rep.id && r.weekStart < rep.weekStart && r.checks[b.no])[0];

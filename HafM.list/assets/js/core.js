@@ -163,7 +163,20 @@ function timeAgo(iso) {
 
 /* ---------- statuses ---------- */
 const SURVEY_STATUSES = ['✅', '❌', 'N/A'];
-const statusesFor = list => (list.kind === 'survey' ? SURVEY_STATUSES : BEVERAGE_STATUSES);
+/* survey answer options: each {v: value saved, ar, en: names, tone: ok | bad | fixed | nc | na} — editable per list by admins */
+const DEFAULT_SURVEY_OPTIONS = [{v: '✅', ar: 'نعم', en: 'Yes', tone: 'ok'}, {v: '❌', ar: 'لا', en: 'No', tone: 'bad'}, {v: 'N/A', ar: 'لا ينطبق', en: 'N/A', tone: 'na'}];
+const TONES = ['ok', 'bad', 'fixed', 'nc', 'na'];
+const surveyOptions = list => (list && list.options && list.options.length ? list.options : DEFAULT_SURVEY_OPTIONS);
+const statusesFor = list => (list.kind === 'survey' ? surveyOptions(list).map(o => o.v) : BEVERAGE_STATUSES);
+const optName = o => (lang === 'ar' ? (o.ar || o.en) : (o.en || o.ar)) || o.v;
+const optText = o => { const n = optName(o); return n === o.v ? o.v : `${o.v} ${n}`; };
+let OPT = {};
+function refreshOptions() { OPT = {}; ((typeof state !== 'undefined' && state && state.checklists) || []).forEach(l => { if (l.kind === 'survey' && l.options) l.options.forEach(o => { if (!(o.v in OPT)) OPT[o.v] = o; }); }); }
+/* names for a survey list's meanings (e.g. ok → "✅ متصل") */
+function toneLabels(list) {
+  const m = {}; surveyOptions(list).forEach(o => { (m[o.tone] = m[o.tone] || []).push(optText(o)); });
+  const out = {}; Object.keys(m).forEach(k => { out[k] = m[k].join(' / '); }); return out;
+}
 function statusKey(s) {
   if (s == null || s === '') return '';
   if (s === 'Okay' || s === '✅') return 'ok';
@@ -171,9 +184,10 @@ function statusKey(s) {
   if (s === 'Not fixed' || s === '❌') return 'bad';
   if (String(s).trim() === 'Not checked') return 'nc';
   if (s === 'not available' || s === 'N/A') return 'na';
-  return '';
+  return OPT[s] ? OPT[s].tone : '';
 }
 function statusText(s) {
+  if (OPT[s] && !['✅', '❌', 'N/A'].includes(s)) return optText(OPT[s]);
   const k = statusKey(s);
   if (!k) return '—';
   const ar = {ok:'سليم', fixed:'غير سليم وأُصلح', bad:'غير مصلح', nc:'لم يُفحص', na:'غير متوفر'};
@@ -258,6 +272,7 @@ if (REMOTE && !state.remoteMode) {
 }
 if (!state.outbox) state.outbox = [];
 if (!state.branchEdits) state.branchEdits = {};
+refreshOptions();
 /* rebuild BRANCHES from the base + edits: {no: {data:{…fields}, deleted:bool}} */
 function applyBranchEdits() {
   const edits = state.branchEdits || {};
@@ -277,7 +292,7 @@ function branchAlias(b) { return (lang === 'ar' ? (b.aliasAr || b.aliasEn) : (b.
 const bName = b => (branchAlias(b) ? `${b.name} · ${branchAlias(b)}` : b.name);
 const branchMatches = (b, q) => !q || [b.name, b.code, b.manager, b.cityAr, b.cityEn, b.aliasAr, b.aliasEn].some(x => x && String(x).toLowerCase().includes(q));
 function save() {
-  state.lang = lang;
+  state.lang = lang; refreshOptions();
   try { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
   catch (e) { toast(L('تعذّر الحفظ — مساحة التخزين ممتلئة.', 'Could not save — storage is full.'), 'error'); }
 }
