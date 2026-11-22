@@ -354,3 +354,20 @@ tr:last-child td{border-bottom:0}
 .badge.pending{background:var(--havan-l);color:#7a5a32}
 .sync-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted)}
 .sync-chip .ic{width:16px;height:16px;color:var(--teal-d)}
+
+/* comparison dashboard */
+.kpis-4{grid-template-columns:repeat(2,1fr)}
+@media (min-width:640px){.kpis-4{grid-template-columns:repeat(4,1fr)}}
+.delta{display:block;margin-top:6px;font-size:12px;font-weight:800}
+.delta.up{color:var(--ok)}
+.delta.down{color:var(--bad)}
+.vbars{display:flex;align-items:flex-end;gap:10px;height:190px;padding-top:6px}
+.vbar{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;cursor:default}
+.vbar-v{font-size:13px;color:var(--ink)}
+.vbar-track{flex:1;width:100%;max-width:56px;display:flex;align-items:flex-end;border-bottom:2px solid var(--line-2)}
+.vbar-track i{display:block;width:100%;border-radius:4px 4px 0 0;transition:height .5s}
+.vbar-track i.teal{background:#5aa38d}
+.vbar-track i.red{background:#d9534a}
+.vbar:hover .vbar-track i{filter:brightness(.92)}
+.vbar-l{font-size:12px;font-weight:700;color:var(--muted)}
+td.heat{font-weight:700}

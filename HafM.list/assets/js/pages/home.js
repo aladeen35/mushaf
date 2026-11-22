@@ -45,9 +45,10 @@ hafmBoot(function () {
     <div class="kpis">
       <div class="kpi"><b>${fmtNum(subs)}</b><span>${L('إدخالات الأسبوع', 'Entries this week')}</span></div>
       <div class="kpi havan"><b>${fmtNum(mine)}</b><span>${L('إدخالاتك', 'Your entries')}</span></div>
-      <a class="kpi red" href="reports.html"><b>${fmtNum(open)}</b><span>${L('فروع بمشاكل مفتوحة', 'Branches with open issues')}</span></a>
+      <a class="kpi red" href="dashboard.html"><b>${fmtNum(open)}</b><span>${L('فروع بمشاكل مفتوحة', 'Branches with open issues')}</span></a>
     </div>
 
+    <a class="btn btn-arrow block" href="dashboard.html"><span class="circ">${ic('chart', '')}</span>${L('لوحة المقارنة — قارن بين الأسابيع', 'Dashboard — compare weeks')}</a>
     ${sectionHead(t('checklists'), t('checklistsHint'), canEditLists() ? `<a class="btn sm ghost" href="admin.html">${ic('edit')} ${t('manageLists')}</a>` : '')}
     <div class="list-grid">
       ${reps.map(listCard).join('')}

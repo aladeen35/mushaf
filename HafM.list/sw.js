@@ -1,9 +1,9 @@
 /* HafM.list service worker — offline app shell (cache-first for local files, network-first for pages). */
-const CACHE = 'hafm-list-v8';
-const SHELL = ['./', 'index.html', 'home.html', 'list.html', 'entry.html', 'reports.html', 'branches.html', 'review.html', 'account.html', 'admin.html',
+const CACHE = 'hafm-list-v9';
+const SHELL = ['./', 'index.html', 'home.html', 'list.html', 'entry.html', 'reports.html', 'branches.html', 'review.html', 'account.html', 'admin.html', 'dashboard.html',
   'assets/css/app.css', 'assets/css/auth.css', 'assets/js/config.js', 'assets/js/data.js', 'assets/js/branch-geo.js', 'assets/js/core.js', 'assets/js/learn.js', 'assets/js/export.js',
   'assets/js/pages/login.js', 'assets/js/pages/home.js', 'assets/js/pages/list.js', 'assets/js/pages/entry.js', 'assets/js/pages/reports.js',
-  'assets/js/pages/branches.js', 'assets/js/pages/review.js', 'assets/js/pages/account.js', 'assets/js/pages/admin.js',
+  'assets/js/pages/branches.js', 'assets/js/pages/review.js', 'assets/js/pages/account.js', 'assets/js/pages/admin.js', 'assets/js/pages/dashboard.js',
   'assets/img/logo.svg', 'assets/img/logo-light.svg', 'assets/img/halfm-logo.svg', 'assets/img/halfm-logo-light.svg', 'assets/icons/icon-192.png', 'manifest.webmanifest'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {

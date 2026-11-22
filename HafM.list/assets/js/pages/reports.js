@@ -45,6 +45,7 @@ hafmBoot(function () {
           <button class="btn primary" id="xlsBtn" type="button" ${rep ? '' : 'disabled'}>${ic('download')} ${t('exportExcel')}</button>
           <button class="btn dark" id="xlsAllBtn" type="button">${ic('download')} ${L('Excel لكل القوائم والموظفين', 'Excel: all lists & auditors')}</button>
           <button class="btn ghost" id="printBtn" type="button">${ic('printer')} ${t('print')}</button>
+          <a class="btn ghost" href="dashboard.html?list=${list.id}">${ic('chart')} ${L('لوحة المقارنة', 'Compare weeks')}</a>
         </div>
         <p class="hint">${list.slug === 'beverage' ? L('ملف Excel بنفس قالب «All_Branches» الأصلي: الألوان، القوائم المنسدلة، المعادلات، والعمود D مخفي.', 'Excel in the original “All_Branches” template: colours, drop-downs, formulas, hidden column D.') : L('ملف Excel بنفس تنسيق قالب المشروبات مع أعمدة بنود هذه القائمة.', 'Excel in the beverage template style with this list’s item columns.')}</p>
         ${rep && rep.seed ? `<p class="hint">${ic('alert')} ${L(`تقرير مأخوذ من الملف الأصلي: التاريخ داخل الإكسل ${D('2026-11-01')} بينما اسم الملف يقول 14–20 نوفمبر 2026.`, 'From the original file: its date cell said 2026-11-01 while its name said 14–20 Nov 2026.')}</p>` : ''}
