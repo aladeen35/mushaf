@@ -9,7 +9,7 @@
   }
   $("#menuBtn").onclick = () => drawer(true);
   $("#scrim").onclick = () => drawer(false);
-  $("#toc").innerHTML = `<div class="drawer-links"><a href="#home">الرئيسية</a><a href="#compare">المقارنة</a><a href="#tree">الأنساب</a><a href="#atlas">الأطلس</a><a href="#saved">محفوظاتي</a><a href="#book-${(chapters[0] || {}).id}">وضع الكتاب</a></div>` +
+  $("#toc").innerHTML = `<div class="drawer-links"><a href="#home">الرئيسية</a><a href="#compare">المقارنة</a><a href="#tree">الأنساب</a><a href="#atlas">الأطلس</a><a href="#saved">محفوظاتي</a><a href="#book-${(chapters[0] || {}).id}">وضع الكتاب</a><a href="about.html">عن المطور والمنظومة</a><a href="privacy.html">سياسة الخصوصية</a></div>` +
     chapters.map((c) => `<li><a href="#read-${c.id}" data-ch="${c.id}"><span class="n">${esc(c.num)}</span><span>${esc(c.title)}</span></a></li>`).join("");
   $("#toc").onclick = (e) => { if (e.target.closest("a")) drawer(false); };
 

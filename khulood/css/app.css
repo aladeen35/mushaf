@@ -357,6 +357,8 @@ main{min-height:calc(100vh - 60px);outline:none}
 .credit-co b{font-size:18px;color:#fff}
 .credit-co small{color:#8fd0ff}
 @media (max-width:700px){.credits{grid-template-columns:1fr}}
+.legal-links{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.legal-links .btn{min-height:44px;flex:1 1 140px;justify-content:center;font-size:14px}
 
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:41;background:var(--brand-deep)}
 @media (max-width:860px){.wrap{padding-bottom:150px}}

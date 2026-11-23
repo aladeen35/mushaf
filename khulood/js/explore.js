@@ -57,6 +57,7 @@
       <div class="credit-book"><img src="img/khulood-logo.webp" alt="خلود"><div><b>خلود</b> — موسوعة الأنبياء والرسل والصالحين<br>
         <small>ترتيب المهندس علاء الدين البشري عمر، صدقة جارية عن روح والده وأجداده وموتى المسلمين. جُمعت وحُررت بمساعدة الذكاء الاصطناعي مع مراجعة المصادر.</small></div></div>
       <div class="credit-co"><img src="img/bushra-tech.webp" alt="البشري للتكنولوجيا"><div>من إنتاج<br><b>البشري للتكنولوجيا</b><br><small dir="ltr">Al‑Bushra Technology · Building meaningful digital products</small></div></div>
+      <div class="legal-links"><a class="btn" href="about.html">عن المطور والمنظومة</a><a class="btn" href="privacy.html">سياسة الخصوصية</a></div>
     </footer>`;
   }
 

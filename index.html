@@ -650,6 +650,22 @@
       footer.site a {
         color: var(--gold);
       }
+
+      footer.site .legal {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px 18px;
+        margin-top: 14px;
+      }
+
+      footer.site .legal a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 6px;
+        font-size: 14px;
+      }
     </style>
   </head>
 
@@ -1006,6 +1022,10 @@
           نصّ المصحف وتخطيط الصفحات على رواية حفص عن عاصم بتخطيط مصحف المدينة
           النبوية.
         </p>
+        <nav class="legal" aria-label="روابط الموقع">
+          <a href="about.html">عن المطور والمنظومة</a>
+          <a href="privacy.html">سياسة الخصوصية</a>
+        </nav>
         <p class="ver">بشرى — النسخة ٢٫٩٫١</p>
       </div>
     </footer>
